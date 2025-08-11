@@ -1,0 +1,19 @@
+export interface Order {
+	id: string;
+	customer_name: string;
+	customer_phone?: string;
+	customer_email?: string;
+	order_number: string;
+	status: 'pending' | 'processing' | 'ready' | 'completed' | 'cancelled';
+	service_type: string;
+	quantity: number;
+	unit_price: number;
+	total_amount: number;
+	payment_status: 'paid' | 'unpaid' | 'partial';
+	payment_method: 'cash' | 'gcash' | 'paymaya' | 'bank_transfer' | 'credit_card';
+	pickup_date?: string;
+	delivery_date?: string;
+	remarks?: string;
+	created_at: string;
+	updated_at: string;
+}

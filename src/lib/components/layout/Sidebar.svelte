@@ -62,7 +62,7 @@
 			<a
 				href={item.href}
 				class="flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 {currentPath.startsWith(item.href) 
-					? 'bg-blue-500 text-white shadow-sm' 
+					? 'bg-gray-900 text-white shadow-sm' 
 					: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
 				}"
 			>
@@ -76,7 +76,7 @@
 	<form action="/auth/logout" method="POST" class="px-4 mb-2">
 		<button 
 			type="submit" 
-			class="w-full py-2 px-4 rounded border border-blue-500 text-blue-500 bg-white font-semibold hover:bg-blue-500 hover:text-white transition-colors text-sm flex items-center justify-center gap-2"
+			class="w-full py-2 px-4 rounded border border-gray-900 text-gray-900 bg-white font-semibold hover:bg-gray-900 hover:text-white transition-colors text-sm flex items-center justify-center gap-2"
 		>
 			<LogOut class="w-4 h-4" />
 			Logout

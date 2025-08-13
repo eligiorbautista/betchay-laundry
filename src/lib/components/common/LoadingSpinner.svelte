@@ -10,7 +10,7 @@
 		${size === 'md' ? 'text-base' : ''}
 		${size === 'lg' ? 'text-lg' : ''}
 		${size === 'xl' ? 'text-xl' : ''}
-		${color === 'primary' ? 'text-blue-500' : ''}
+		${color === 'primary' ? 'text-gray-800' : ''}
 		${color === 'secondary' ? 'text-gray-600' : ''}
 		${color === 'accent' ? 'text-amber-500' : ''}
 		${color === 'neutral' ? 'text-gray-700' : ''}

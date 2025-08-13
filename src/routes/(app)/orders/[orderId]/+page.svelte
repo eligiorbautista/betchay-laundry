@@ -65,7 +65,7 @@
 			case 'pending':
 				return 'bg-orange-100 text-orange-800 border border-orange-200';
 			case 'processing':
-				return 'bg-blue-100 text-blue-800 border border-blue-200';
+				return 'bg-gray-100 text-gray-800 border border-gray-200';
 			case 'ready':
 				return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed':
@@ -93,8 +93,6 @@
 				return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'unpaid':
 				return 'bg-red-100 text-red-800 border border-red-200';
-			case 'partial':
-				return 'bg-amber-100 text-amber-800 border border-amber-200';
 			default:
 				return 'bg-gray-100 text-gray-800 border border-gray-200';
 		}
@@ -104,7 +102,6 @@
 		switch (status) {
 			case 'paid': return CheckCircle2;
 			case 'unpaid': return AlertCircle;
-			case 'partial': return Clock;
 			default: return AlertCircle;
 		}
 	}
@@ -145,7 +142,7 @@
 			case 'cash':
 				return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'gcash':
-				return 'bg-blue-100 text-blue-800 border border-blue-200';
+				return 'bg-gray-100 text-gray-800 border border-gray-200';
 			case 'paymaya':
 				return 'bg-green-100 text-green-800 border border-green-200';
 			case 'bank_transfer':
@@ -232,7 +229,7 @@
 				<ArrowLeft class="h-5 w-5 text-gray-600" />
 			</button>			<div>
 				<div class="flex items-center gap-3 mb-2">
-					<Eye class="w-8 h-8 text-blue-600" />
+					<Eye class="w-8 h-8 text-gray-600" />
 					<h1 class="text-2xl font-bold text-gray-900">Order {order.order_number}</h1>
 				</div>
 				<p class="text-sm text-gray-500">Created on {formatDate(order.created_at)}</p>
@@ -241,7 +238,7 @@
 		<div class="flex items-center gap-3">
 			<button
 				on:click={printOrder}
-				class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+				class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:border-transparent focus:ring-2 focus:ring-gray-500"
 			>
 				<Printer class="h-4 w-4" />
 				Print Receipt
@@ -249,7 +246,7 @@
 
 			<button
 				on:click={editOrder}
-				class="inline-flex items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+				class="inline-flex items-center gap-2 rounded-lg border border-transparent bg-gray-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-700 focus:border-transparent focus:ring-2 focus:ring-gray-500"
 			>
 				<Edit2 class="h-4 w-4" />
 				Edit Order
@@ -262,7 +259,7 @@
 			<!-- Customer Information -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
 				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-					<User class="h-5 w-5 text-blue-600" />
+					<User class="h-5 w-5 text-gray-600" />
 					Customer Information
 				</h2>
 				<div class="space-y-4">
@@ -286,7 +283,7 @@
 			<!-- Service Details -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
 				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-					<Package class="h-5 w-5 text-blue-600" />
+					<Package class="h-5 w-5 text-gray-600" />
 					Service Details
 				</h2>
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -321,7 +318,7 @@
 			<!-- Schedule Information -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
 				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-					<Calendar class="h-5 w-5 text-blue-600" />
+					<Calendar class="h-5 w-5 text-gray-600" />
 					Schedule Information
 				</h2>
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -361,7 +358,7 @@
 			{#if order.remarks}
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
 					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<FileText class="h-5 w-5 text-blue-600" />
+						<FileText class="h-5 w-5 text-gray-600" />
 						Remarks
 					</h2>
 					<p class="leading-relaxed text-gray-700">{order.remarks}</p>
@@ -422,55 +419,37 @@
 					<div>
 						<span class="mb-2 block text-sm font-medium text-gray-700">Update Order Status</span>
 						<div class="grid grid-cols-2 gap-2">
-							{#if order.status !== 'pending'}
-								<button
-									on:click={() => updateOrderStatus('pending')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
-								>
-									Mark Pending
-								</button>
-							{/if}
+							<button
+								on:click={() => updateOrderStatus('processing')}
+								disabled={isUpdatingStatus || order.status === 'processing'}
+								class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+							>
+								Mark Processing
+							</button>
 
-							{#if order.status !== 'processing'}
-								<button
-									on:click={() => updateOrderStatus('processing')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-								>
-									Mark Processing
-								</button>
-							{/if}
+							<button
+								on:click={() => updateOrderStatus('ready')}
+								disabled={isUpdatingStatus || order.status === 'ready'}
+								class="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-100 focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+							>
+								Mark Ready
+							</button>
 
-							{#if order.status !== 'ready'}
-								<button
-									on:click={() => updateOrderStatus('ready')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-100 focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-								>
-									Mark Ready
-								</button>
-							{/if}
+							<button
+								on:click={() => updateOrderStatus('completed')}
+								disabled={isUpdatingStatus || order.status === 'completed'}
+								class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+							>
+								Mark Completed
+							</button>
 
-							{#if order.status !== 'completed'}
-								<button
-									on:click={() => updateOrderStatus('completed')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
-								>
-									Mark Completed
-								</button>
-							{/if}
-
-							{#if order.status !== 'cancelled'}
-								<button
-									on:click={() => updateOrderStatus('cancelled')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-								>
-									Cancel Order
-								</button>
-							{/if}
+							<button
+								on:click={() => updateOrderStatus('cancelled')}
+								disabled={isUpdatingStatus || order.status === 'cancelled'}
+								class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+							>
+								Cancel Order
+							</button>
 						</div>
 					</div>
 
@@ -478,35 +457,21 @@
 					<div>
 						<span class="mb-2 block text-sm font-medium text-gray-700">Update Payment Status</span>
 						<div class="grid grid-cols-2 gap-2">
-							{#if order.payment_status !== 'paid'}
-								<button
-									on:click={() => updatePaymentStatus('paid')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
-								>
-									Mark Paid
-								</button>
-							{/if}
+							<button
+								on:click={() => updatePaymentStatus('paid')}
+								disabled={isUpdatingStatus || order.payment_status === 'paid'}
+								class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+							>
+								Mark Paid
+							</button>
 
-							{#if order.payment_status !== 'partial'}
-								<button
-									on:click={() => updatePaymentStatus('partial')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
-								>
-									Mark Partial
-								</button>
-							{/if}
-
-							{#if order.payment_status !== 'unpaid'}
-								<button
-									on:click={() => updatePaymentStatus('unpaid')}
-									disabled={isUpdatingStatus}
-									class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-								>
-									Mark Unpaid
-								</button>
-							{/if}
+							<button
+								on:click={() => updatePaymentStatus('unpaid')}
+								disabled={isUpdatingStatus || order.payment_status === 'unpaid'}
+								class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+							>
+								Mark Unpaid
+							</button>
 						</div>
 					</div>
 
@@ -514,7 +479,7 @@
 					{#if isUpdatingStatus}
 						<div class="flex items-center justify-center py-2">
 							<div
-								class="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"
+								class="h-5 w-5 animate-spin rounded-full border-2 border-gray-600 border-t-transparent"
 							></div>
 							<span class="ml-2 text-sm text-gray-600">Updating...</span>
 						</div>

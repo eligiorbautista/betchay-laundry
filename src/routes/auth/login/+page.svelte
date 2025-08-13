@@ -34,22 +34,33 @@
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-	<div class="max-w-md w-full space-y-8">
-		<!-- Header -->
-		<div class="text-center">
-			<div class="flex justify-center mb-6">
-				<img src="/logo/logo.png" alt="App Logo" class="h-44" />
-			</div>
-			<h2 class="text-3xl font-bold text-gray-900 mb-2">
-				Welcome back
-			</h2>
-			<p class="text-gray-600">
-				Sign in to your laundry management account
-			</p>
-		</div>
+	<div class="max-w-4xl w-full">
+		<div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+			<div class="flex flex-col lg:flex-row">
+				<!-- Logo Section -->
+				<div class="lg:w-1/2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center">
+					<div class="text-center">
+						<img src="/logo/logo.png" alt="App Logo" class="h-40 lg:h-52 xl:h-60 mx-auto mb-6" />
+						<h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-3">
+							Laundry Management System
+						</h1>
+						<p class="text-gray-600 text-sm lg:text-base max-w-sm">
+							Manage your laundry business efficiently
+						</p>
+					</div>
+				</div>
 
-		<!-- Login Form -->
-		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+				<!-- Login Form Section -->
+				<div class="lg:w-1/2 p-8 lg:p-12">
+					<div class="max-w-sm mx-auto">
+						<div class="mb-8">
+							<h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+								Welcome back
+							</h2>
+							<p class="text-gray-600">
+								Sign in to your account
+							</p>
+						</div>
 			<form 
 				method="POST"
 				class="space-y-6"
@@ -70,7 +81,7 @@
 							type="email"
 							required
 							bind:value={email}
-							class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+							class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
 							placeholder="Enter your email"
 						/>
 					</div>
@@ -91,7 +102,7 @@
 							type={showPassword ? 'text' : 'password'}
 							required
 							bind:value={password}
-							class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+							class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
 							placeholder="Enter your password"
 						/>
 						<button
@@ -108,31 +119,18 @@
 					</div>
 				</div>
 
-				<!-- Remember Me & Forgot Password -->
-				<div class="flex items-center justify-between">
-					<div class="flex items-center">
-						<input
-							id="remember"
-							name="remember"
-							type="checkbox"
-							class="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-						/>
-						<label for="remember" class="ml-2 block text-sm text-gray-700">
-							Remember me
-						</label>
-					</div>
-					<div class="text-sm">
-						<a href="/auth/forgot-password" class="text-blue-500 hover:text-blue-400 font-medium">
-							Forgot password?
-						</a>
-					</div>
+				<!-- Forgot Password -->
+				<div class="text-right">
+					<a href="/auth/forgot-password" class="text-sm text-gray-700 hover:text-gray-900 font-medium">
+						Forgot password?
+					</a>
 				</div>
 
 				<!-- Submit Button -->
 				<button
 					type="submit"
 					disabled={loading}
-					class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 				>
 					{#if loading}
 						<div class="flex items-center">
@@ -143,17 +141,20 @@
 						Sign in
 					{/if}
 				</button>
-			</form>
-		</div>
 
-		<!-- Footer Links -->
-		<div class="text-center space-y-2">
-			<p class="text-sm text-gray-600">
-				Have an issue?
-				<a href="https://eligiobautista.dev" class="text-blue-500 hover:text-blue-400 font-medium">
-					Contact Developer
-				</a>
-			</p>
+				<!-- Footer Links -->
+				<div class="mt-8 text-center">
+					<p class="text-sm text-gray-600">
+						Have an issue?
+						<a href="https://eligiobautista.dev" class="text-gray-700 hover:text-gray-900 font-medium">
+							Contact Developer
+						</a>
+					</p>
+				</div>
+			</form>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div> 

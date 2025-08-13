@@ -27,7 +27,7 @@
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50">
 	<div class="text-center">
-		<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+		<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500 mx-auto mb-4"></div>
 		<h2 class="text-xl font-semibold text-gray-900 mb-2">Logging out...</h2>
 		<p class="text-gray-600">Please wait while we sign you out.</p>
 		

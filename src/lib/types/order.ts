@@ -9,7 +9,7 @@ export interface Order {
 	quantity: number;
 	unit_price: number;
 	total_amount: number;
-	payment_status: 'paid' | 'unpaid' | 'partial';
+	payment_status: 'paid' | 'unpaid';
 	payment_method: 'cash' | 'gcash' | 'paymaya' | 'bank_transfer' | 'credit_card';
 	pickup_date?: string;
 	delivery_date?: string;

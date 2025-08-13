@@ -91,7 +91,7 @@
 			</button>
 			<div class="flex-1 sm:flex-none">
 				<div class="mb-2 flex items-center gap-3">
-					<Printer class="h-8 w-8 text-blue-600" />
+					<Printer class="h-8 w-8 text-gray-800" />
 					<h1 class="text-xl font-bold text-gray-900 sm:text-2xl">Print Receipt</h1>
 				</div>
 				<p class="text-sm text-gray-500">Order {order.order_number}</p>
@@ -99,7 +99,7 @@
 		</div>
 		<button
 			on:click={() => window.print()}
-			class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700 sm:w-auto sm:text-base"
+			class="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm text-white transition-colors hover:bg-gray-900 sm:w-auto sm:text-base"
 		>
 			<svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path

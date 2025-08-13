@@ -12,7 +12,9 @@
 		Smartphone,
 		Building2,
 		FileText,
-		Printer
+		Printer,
+		Calendar,
+		Filter
 	} from 'lucide-svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
 	import Icon from '@iconify/svelte';
@@ -24,6 +26,21 @@
 	let reports: ReportsData = data.reports;
 	let loading = false;
 	let selectedPeriod = '30days';
+	
+	// Date filter variables
+	let startDate = '';
+	let endDate = '';
+	let showCustomDateFilter = false;
+	
+	// Initialize default dates (last 30 days)
+	onMount(() => {
+		const today = new Date();
+		const thirtyDaysAgo = new Date(today);
+		thirtyDaysAgo.setDate(today.getDate() - 30);
+		
+		endDate = today.toISOString().split('T')[0];
+		startDate = thirtyDaysAgo.toISOString().split('T')[0];
+	});
 
 	onMount(async () => {
 		// Initialize any client-side functionality
@@ -33,6 +50,58 @@
 	// Print functionality
 	function printReport() {
 		window.print();
+	}
+	
+	// Date filter functions
+	function handlePeriodChange(period: string) {
+		selectedPeriod = period;
+		const today = new Date();
+		
+		switch (period) {
+			case '7days':
+				const sevenDaysAgo = new Date(today);
+				sevenDaysAgo.setDate(today.getDate() - 7);
+				startDate = sevenDaysAgo.toISOString().split('T')[0];
+				endDate = today.toISOString().split('T')[0];
+				showCustomDateFilter = false;
+				break;
+			case '30days':
+				const thirtyDaysAgo = new Date(today);
+				thirtyDaysAgo.setDate(today.getDate() - 30);
+				startDate = thirtyDaysAgo.toISOString().split('T')[0];
+				endDate = today.toISOString().split('T')[0];
+				showCustomDateFilter = false;
+				break;
+			case '90days':
+				const ninetyDaysAgo = new Date(today);
+				ninetyDaysAgo.setDate(today.getDate() - 90);
+				startDate = ninetyDaysAgo.toISOString().split('T')[0];
+				endDate = today.toISOString().split('T')[0];
+				showCustomDateFilter = false;
+				break;
+			case 'custom':
+				showCustomDateFilter = true;
+				break;
+		}
+		
+		if (period !== 'custom') {
+			applyDateFilter();
+		}
+	}
+	
+	function applyDateFilter() {
+		if (!startDate || !endDate) return;
+		
+		loading = true;
+		// In a real app, this would make an API call with the date parameters
+		// For now, we'll simulate filtering by updating the reports data
+		setTimeout(() => {
+			// Update the summary period display
+			reports.summary.period = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+			reports.summary.periodStart = startDate;
+			reports.summary.periodEnd = endDate;
+			loading = false;
+		}, 500);
 	}
 
 	// Helper functions
@@ -122,7 +191,7 @@
 		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
 			<div class="flex-1">
 				<div class="flex items-center gap-2 md:gap-3 mb-2">
-					<BarChart3 class="w-7 h-7 md:w-8 md:h-8 text-blue-600" />
+					<BarChart3 class="w-7 h-7 md:w-8 md:h-8 text-gray-800" />
 					<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Reports & Analytics</h1>
 				</div>
 				<p class="text-gray-600 text-sm md:text-base mt-1">Comprehensive business insights and performance metrics.</p>
@@ -133,7 +202,7 @@
 				<!-- Print Button - More Prominent -->
 				<button 
 					on:click={printReport}
-					class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 hover:shadow-md transition-all duration-200 print:hidden shadow-sm"
+					class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gray-800 border border-gray-800 rounded-lg hover:bg-gray-900 hover:shadow-md transition-all duration-200 print:hidden shadow-sm"
 				>
 					<Printer class="w-4 h-4" />
 					<span>Print Report</span>
@@ -144,6 +213,100 @@
 					<TrendingUp class="w-4 h-4" />
 					<span>Updated: {new Date().toLocaleTimeString()}</span>
 				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Date Filter Section -->
+	<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6 md:mb-8">
+		<div class="flex flex-col sm:flex-row sm:items-center gap-4">
+			<div class="flex items-center gap-2">
+				<Filter class="w-5 h-5 text-gray-600" />
+				<h3 class="text-lg font-semibold text-gray-900">Filter Reports</h3>
+			</div>
+			
+			<!-- Period Selection -->
+			<div class="flex flex-wrap gap-2">
+				<button
+					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === '7days' 
+						? 'bg-gray-800 text-white' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+					on:click={() => handlePeriodChange('7days')}
+				>
+					Last 7 Days
+				</button>
+				<button
+					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === '30days' 
+						? 'bg-gray-800 text-white' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+					on:click={() => handlePeriodChange('30days')}
+				>
+					Last 30 Days
+				</button>
+				<button
+					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === '90days' 
+						? 'bg-gray-800 text-white' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+					on:click={() => handlePeriodChange('90days')}
+				>
+					Last 90 Days
+				</button>
+				<button
+					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === 'custom' 
+						? 'bg-gray-800 text-white' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+					on:click={() => handlePeriodChange('custom')}
+				>
+					<Calendar class="w-4 h-4 mr-1 inline" />
+					Custom Range
+				</button>
+			</div>
+		</div>
+
+		<!-- Custom Date Range Inputs -->
+		{#if showCustomDateFilter}
+			<div class="mt-4 pt-4 border-t border-gray-200">
+				<div class="flex flex-col sm:flex-row gap-4 items-end">
+					<div class="flex-1">
+						<label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">
+							Start Date
+						</label>
+						<input
+							id="start-date"
+							type="date"
+							bind:value={startDate}
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
+						/>
+					</div>
+					<div class="flex-1">
+						<label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">
+							End Date
+						</label>
+						<input
+							id="end-date"
+							type="date"
+							bind:value={endDate}
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
+						/>
+					</div>
+					<div>
+						<button
+							on:click={applyDateFilter}
+							disabled={!startDate || !endDate}
+							class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+						>
+							Apply Filter
+						</button>
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Current Filter Display -->
+		<div class="mt-4 pt-4 border-t border-gray-200">
+			<div class="flex items-center gap-2 text-sm text-gray-600">
+				<Calendar class="w-4 h-4" />
+				<span>Showing data for: <strong class="text-gray-900">{reports.summary.period}</strong></span>
 			</div>
 		</div>
 	</div>

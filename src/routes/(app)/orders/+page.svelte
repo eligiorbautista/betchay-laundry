@@ -17,7 +17,7 @@
 	const statusOptions = [
 		{ value: 'all', label: 'All Orders', count: 0, color: 'text-gray-600' },
 		{ value: 'pending', label: 'Pending', count: 0, color: 'text-orange-600' },
-		{ value: 'processing', label: 'Processing', count: 0, color: 'text-blue-600' },
+		{ value: 'processing', label: 'Processing', count: 0, color: 'text-gray-700' },
 		{ value: 'ready', label: 'Ready', count: 0, color: 'text-purple-600' },
 		{ value: 'completed', label: 'Completed', count: 0, color: 'text-emerald-600' },
 		{ value: 'cancelled', label: 'Cancelled', count: 0, color: 'text-red-600' }
@@ -126,7 +126,7 @@
 	function getStatusColor(status: string) {
 		switch (status) {
 			case 'pending': return 'bg-orange-50 text-orange-700 border-orange-200';
-			case 'processing': return 'bg-blue-50 text-blue-700 border-blue-200';
+			case 'processing': return 'bg-gray-50 text-gray-700 border-gray-200';
 			case 'ready': return 'bg-purple-50 text-purple-700 border-purple-200';
 			case 'completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
 			case 'cancelled': return 'bg-red-50 text-red-700 border-red-200';
@@ -137,7 +137,7 @@
 	function getStatusBadgeColor(status: string) {
 		switch (status) {
 			case 'pending': return 'bg-orange-100 text-orange-800 border border-orange-200';
-			case 'processing': return 'bg-blue-100 text-blue-800 border border-blue-200';
+			case 'processing': return 'bg-gray-100 text-gray-800 border border-gray-200';
 			case 'ready': return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'cancelled': return 'bg-red-100 text-red-800 border border-red-200';
@@ -200,7 +200,7 @@
 	function getPaymentMethodColor(paymentMethod: string) {
 		switch (paymentMethod) {
 			case 'cash': return 'bg-green-100 text-green-800 border border-green-200';
-			case 'gcash': return 'bg-blue-100 text-blue-800 border border-blue-200';
+			case 'gcash': return 'bg-gray-100 text-gray-800 border border-gray-200';
 			case 'paymaya': return 'bg-pink-100 text-pink-800 border border-pink-200';
 			case 'bank_transfer': return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'credit_card': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
@@ -286,13 +286,13 @@
 		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
 			<div>
 				<div class="flex items-center gap-2 md:gap-3 mb-2">
-					<Package class="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
+					<Package class="w-6 h-6 md:w-8 md:h-8 text-gray-800" />
 					<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Orders</h1>
 				</div>
 				<p class="text-gray-600 text-sm md:text-base">Manage all your laundry orders in one place.</p>
 			</div>
 			<div class="flex items-center gap-3">
-				<a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm md:text-base">
+				<a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors font-medium text-sm md:text-base">
 					<Plus class="w-4 md:w-5 h-4 md:h-5 mr-2" />
 					New Order
 				</a>
@@ -308,7 +308,7 @@
 					type="text"
 					placeholder="Search orders, customers, or phone..."
 					bind:value={searchQuery}
-					class="w-full pl-9 md:pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+					class="w-full pl-9 md:pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm md:text-base"
 				/>
 			</div>
 			
@@ -317,7 +317,7 @@
 				<Filter class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
 				<select
 					bind:value={selectedStatus}
-					class="w-full pl-9 md:pl-10 pr-8 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white text-sm md:text-base"
+					class="w-full pl-9 md:pl-10 pr-8 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 appearance-none bg-white text-sm md:text-base"
 				>
 					{#each statusOptions as option}
 						<option value={option.value} class={option.color}>{option.label} ({option.count})</option>
@@ -342,7 +342,7 @@
 					}
 					applyFilters();
 				}}
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm"
 			>
 				<option value="none">Default (Newest first)</option>
 				<option value="customer-asc" selected={sortColumn === 'customer' && sortDirection === 'asc'}>Customer (A-Z)</option>
@@ -358,7 +358,7 @@
 		
 		<!-- Sort indicator -->
 		{#if sortColumn}
-			<div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-blue-600">
+			<div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-800">
 				<div class="flex items-center gap-2">
 					<svelte:component this={getSortIcon(sortColumn)} class="w-4 h-4" />
 					<span>Sorted by {sortColumn.replace('_', ' ')} ({sortDirection === 'asc' ? 'ascending' : 'descending'})</span>
@@ -390,7 +390,7 @@
 						: 'Get started by creating your first order.'}
 				</p>
 				{#if !searchQuery && selectedStatus === 'all'}
-					<a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base">
+					<a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm md:text-base">
 						<Plus class="w-4 md:w-5 h-4 md:h-5 mr-2" />
 						Create First Order
 					</a>
@@ -408,7 +408,7 @@
 							Customer
 							<svelte:component 
 								this={getSortIcon('customer')} 
-								class="w-3 h-3 {sortColumn === 'customer' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'customer' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -422,7 +422,7 @@
 							Order Details
 							<svelte:component 
 								this={getSortIcon('created_at')} 
-								class="w-3 h-3 {sortColumn === 'created_at' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'created_at' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -436,7 +436,7 @@
 							Service
 							<svelte:component 
 								this={getSortIcon('quantity')} 
-								class="w-3 h-3 {sortColumn === 'quantity' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'quantity' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -450,7 +450,7 @@
 							Status
 							<svelte:component 
 								this={getSortIcon('status')} 
-								class="w-3 h-3 {sortColumn === 'status' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'status' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -464,7 +464,7 @@
 							Payment
 							<svelte:component 
 								this={getSortIcon('amount')} 
-								class="w-3 h-3 {sortColumn === 'amount' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'amount' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -489,7 +489,7 @@
 							Customer
 							<svelte:component 
 								this={getSortIcon('customer')} 
-								class="w-3 h-3 {sortColumn === 'customer' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'customer' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -503,7 +503,7 @@
 							Order Details
 							<svelte:component 
 								this={getSortIcon('created_at')} 
-								class="w-3 h-3 {sortColumn === 'created_at' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'created_at' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -517,7 +517,7 @@
 							Status
 							<svelte:component 
 								this={getSortIcon('status')} 
-								class="w-3 h-3 {sortColumn === 'status' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'status' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -531,7 +531,7 @@
 							Payment
 							<svelte:component 
 								this={getSortIcon('amount')} 
-								class="w-3 h-3 {sortColumn === 'amount' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}" 
+								class="w-3 h-3 {sortColumn === 'amount' ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}" 
 							/>
 						</button>
 					</div>
@@ -543,12 +543,12 @@
 			<div class="space-y-4">
 				{#each filteredOrders as order}
 					<!-- Desktop Layout (xl and up) -->
-					<div class="hidden xl:block border border-gray-200 rounded-lg p-4 md:p-6 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+					<div class="hidden xl:block border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-md transition-all duration-200">
 						<div class="grid grid-cols-12 gap-4 items-center">
 							<!-- Customer -->
 							<div class="col-span-3">
 								<div class="flex items-center space-x-3">
-									<div class="w-10 h-10 bg-blue-500 flex items-center justify-center text-white font-medium text-sm rounded-full">
+									<div class="w-10 h-10 bg-gray-800 flex items-center justify-center text-white font-medium text-sm rounded-full">
 										{order.customer_name.split(' ').map(n => n[0]).join('')}
 									</div>
 									<div>
@@ -636,7 +636,7 @@
 							</div>							<!-- Actions -->
 							<div class="col-span-1">
 								<div class="flex items-center gap-2">
-									<a href="/orders/{order.id}" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Order">
+									<a href="/orders/{order.id}" class="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors" title="View Order">
 										<Eye class="w-4 h-4" />
 									</a>
 									<a href="/orders/{order.id}/edit" class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Edit Order">
@@ -659,12 +659,12 @@
 					</div>
 
 					<!-- Tablet Layout (lg to xl) -->
-					<div class="hidden lg:block xl:hidden border border-gray-200 rounded-lg p-4 md:p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+					<div class="hidden lg:block xl:hidden border border-gray-200 rounded-lg p-4 md:p-5 hover:border-gray-300 hover:shadow-md transition-all duration-200">
 						<div class="grid grid-cols-10 gap-3 items-start">
 							<!-- Customer -->
 							<div class="col-span-3">
 								<div class="flex items-center space-x-3">
-									<div class="w-10 h-10 bg-blue-500 flex items-center justify-center text-white font-medium text-sm rounded-full">
+									<div class="w-10 h-10 bg-gray-800 flex items-center justify-center text-white font-medium text-sm rounded-full">
 										{order.customer_name.split(' ').map(n => n[0]).join('')}
 									</div>
 									<div class="min-w-0 flex-1">
@@ -720,7 +720,7 @@
 							<!-- Actions -->
 							<div class="col-span-1">
 								<div class="flex items-center gap-1">
-									<a href="/orders/{order.id}" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Order">
+									<a href="/orders/{order.id}" class="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors" title="View Order">
 										<Eye class="w-4 h-4" />
 									</a>
 									<a href="/orders/{order.id}/edit" class="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Edit Order">
@@ -772,17 +772,17 @@
 							</div>
 						{/if}
 					</div>										<!-- Mobile Card Layout -->
-					<div class="lg:hidden border border-gray-200 rounded-lg p-4 md:p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+					<div class="lg:hidden border border-gray-200 rounded-lg p-4 md:p-5 hover:border-gray-300 hover:shadow-md transition-all duration-200">
 						<div class="space-y-3 md:space-y-4">
 						<!-- Header with Customer and Order Number -->
 						<div class="flex items-start justify-between gap-4 md:gap-6">
 							<div class="flex items-center space-x-3 min-w-0 flex-1">
-								<div class="w-10 h-10 md:w-12 md:h-12 bg-blue-500 flex items-center justify-center text-white font-medium text-sm md:text-base rounded-full shrink-0">
+								<div class="w-10 h-10 md:w-12 md:h-12 bg-gray-800 flex items-center justify-center text-white font-medium text-sm md:text-base rounded-full shrink-0">
 									{order.customer_name.split(' ').map(n => n[0]).join('')}
 								</div>
 								<div class="min-w-0 flex-1">
 									<p class="font-medium text-gray-900 text-base md:text-lg truncate">{order.customer_name}</p>
-									<p class="text-sm md:text-base font-medium text-blue-600">{order.order_number}</p>
+									<p class="text-sm md:text-base font-medium text-gray-800">{order.order_number}</p>
 									{#if order.customer_phone}
 										<div class="flex items-center text-sm md:text-base text-gray-500 mt-1">
 											<Phone class="w-3 h-3 md:w-4 md:h-4 mr-1 flex-shrink-0" />
@@ -835,12 +835,12 @@
 									</p>
 								</div>
 									{#if order.pickup_date}
-									<div class="bg-blue-50 rounded-lg p-3 md:p-4">
-										<div class="flex items-center text-blue-600 mb-1">
+									<div class="bg-gray-50 rounded-lg p-3 md:p-4">
+										<div class="flex items-center text-gray-800 mb-1">
 											<Calendar class="w-3 h-3 md:w-4 md:h-4 mr-1" />
 											<span class="text-xs md:text-sm font-medium uppercase tracking-wide">Expected Pickup</span>
 										</div>
-										<p class="text-sm md:text-base font-medium text-blue-800 ml-4 md:ml-5">
+										<p class="text-sm md:text-base font-medium text-gray-800 ml-4 md:ml-5">
 											{formatDateOnly(order.pickup_date)} at {formatTime(order.pickup_date)}
 										</p>
 									</div>
@@ -859,7 +859,7 @@
 								{/if}
 							</div>							<!-- Actions -->
 							<div class="flex items-center justify-end gap-2 md:gap-3 pt-3 md:pt-4 border-t border-gray-100">
-								<a href="/orders/{order.id}" class="flex items-center gap-1 px-3 py-2 md:px-4 md:py-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm md:text-base">
+								<a href="/orders/{order.id}" class="flex items-center gap-1 px-3 py-2 md:px-4 md:py-2.5 text-gray-800 hover:bg-gray-50 rounded-lg transition-colors text-sm md:text-base">
 									<Eye class="w-4 h-4 md:w-5 md:h-5" />
 									View
 								</a>

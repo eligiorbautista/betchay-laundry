@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { Menu, Bell, Settings, LogOut, User } from 'lucide-svelte';
+	import { Menu, Settings, LogOut, User } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
 	import { createEventDispatcher } from 'svelte';
@@ -91,60 +91,10 @@
 			<div class="text-xs text-gray-500">{formattedDay} • {formattedTime}</div>
 		</div>
 
-		<!-- Notifications dropdown -->
-		<div class="dropdown dropdown-end mr-2">
-			<div tabindex="0" role="button" class="btn btn-ghost btn-circle text-gray-600 hover:text-gray-900 hover:bg-gray-100">
-				<div class="indicator">
-					<Bell class="w-5 h-5" />
-					<span class="badge badge-xs indicator-item bg-blue-500 text-white border-blue-500">3</span>
-				</div>
-			</div>
-			
-			<ul class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-white rounded-lg w-64 sm:w-72 border border-gray-200">
-				<li class="menu-title">
-					<div class="flex items-center justify-between px-2 py-1">
-						<span class="text-sm font-medium text-gray-900">Notifications</span>
-						<button class="text-xs text-blue-600 hover:text-blue-800">Mark all read</button>
-					</div>
-				</li>
-				<div class="divider my-1"></div>
-				<li>
-					<div class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-						<div class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></div>
-						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-gray-900">Failed login attempt</p>
-							<p class="text-xs text-gray-500">Invalid credentials detected</p>
-							<p class="text-xs text-gray-400 mt-1">Today, 2:30 PM</p>
-						</div>
-					</div>
-				</li>
-				<li>
-					<div class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-						<div class="w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
-						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-gray-900">Password changed</p>
-							<p class="text-xs text-gray-500">Your password was updated</p>
-							<p class="text-xs text-gray-400 mt-1">Yesterday, 4:15 PM</p>
-						</div>
-					</div>
-				</li>
-				<li>
-					<div class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-						<div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-gray-900">New login</p>
-							<p class="text-xs text-gray-500">Login from Chrome browser</p>
-							<p class="text-xs text-gray-400 mt-1">Dec 15, 9:45 AM</p>
-						</div>
-					</div>
-				</li>
-			</ul>
-		</div>
-
 		<!-- User dropdown -->
 		<div class="dropdown dropdown-end">
 			<div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-				<div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors">
+				<div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-900 transition-colors">
 					<span class="text-sm font-medium">
 						A
 					</span>

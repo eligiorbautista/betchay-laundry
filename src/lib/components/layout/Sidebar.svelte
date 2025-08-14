@@ -44,13 +44,13 @@
 	data-sidebar
 >
 	<!-- Logo/Brand -->
-	<div class="flex items-center h-20 px-6 border-b border-gray-200 bg-white">
+	<div class="flex items-center h-16 px-6 border-b border-gray-200 bg-white">
 		<div class="flex items-center space-x-3">
 			<a href="/">
 				<img 
 					src="/logo/logo_banner.png" 
 					alt="Laundry Management System" 
-					class="h-16 w-auto object-contain"
+					class="ml-5 h-12 w-auto object-contain"
 				/>
 			</a>
 		</div>

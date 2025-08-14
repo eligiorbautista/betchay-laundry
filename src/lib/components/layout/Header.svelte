@@ -62,7 +62,7 @@
 	});
 </script>
 
-<header class="navbar bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-[50] h-20 px-4 md:px-6">
+<header class="navbar bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-[50] h-16 px-4 md:px-6">
 	<div class="navbar-start">		<!-- Mobile menu button -->
 		<button
 			class="btn btn-ghost btn-square text-gray-600 hover:text-gray-900 hover:bg-gray-100 lg:hidden min-h-[44px] min-w-[44px]"

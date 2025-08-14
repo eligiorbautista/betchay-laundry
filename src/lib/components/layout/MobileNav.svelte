@@ -8,11 +8,12 @@
 		FileText, 
 		BarChart3, 
 		Settings,
-		X,
+		ChevronLeft,
 		LogOut
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { createEventDispatcher } from 'svelte';
+	import { fly } from 'svelte/transition';
 
 	export let isOpen: boolean = false;
 	const dispatch = createEventDispatcher();
@@ -45,6 +46,7 @@
 	$: currentPath = $page.url.pathname;
 
 	function closeMobileNav() {
+		console.log('MobileNav: Closing mobile navigation');
 		dispatch('close');
 	}
 
@@ -55,6 +57,8 @@
 
 <!-- Mobile Navigation Overlay -->
 {#if isOpen}
+	<!-- Debug log -->
+	{console.log('MobileNav: Rendering mobile navigation, isOpen =', isOpen)}
 	<!-- Backdrop -->
 	<div 
 		class="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden"
@@ -67,7 +71,8 @@
 
 	<!-- Mobile Navigation Panel -->
 	<div 
-		class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden mobile-nav-panel flex flex-col"
+		class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-xl z-50 lg:hidden mobile-nav-panel flex flex-col"
+		transition:fly="{{ x: -320, duration: 300, opacity: 1 }}"
 	>
 		<!-- Header -->
 		<div class="flex items-center justify-between h-20 px-6 border-b border-gray-200 bg-white">
@@ -83,7 +88,7 @@
 				on:click={closeMobileNav}
 				aria-label="Close navigation"
 			>
-				<X class="w-6 h-6" />
+				<ChevronLeft class="w-6 h-6" />
 			</button>
 		</div>
 
@@ -128,20 +133,5 @@
 {/if}
 
 <style>
-	.mobile-nav-panel {
-		transform: translateX(0);
-	}
-	
-	:global(.mobile-nav-panel) {
-		animation: slideInFromLeft 0.3s ease-out;
-	}
-	
-	@keyframes slideInFromLeft {
-		from {
-			transform: translateX(-100%);
-		}
-		to {
-			transform: translateX(0);
-		}
-	}
+	/* Svelte transitions handle the animations now */
 </style>

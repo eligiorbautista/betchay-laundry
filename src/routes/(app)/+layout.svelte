@@ -19,7 +19,9 @@
 	});
 	
 	function toggleMobileNav() {
+		console.log('Layout: toggleMobileNav called, current state:', mobileNavOpen);
 		mobileNavOpen = !mobileNavOpen;
+		console.log('Layout: mobileNavOpen set to:', mobileNavOpen);
 	}
 
 	function closeMobileNav() {

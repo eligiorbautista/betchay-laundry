@@ -14,6 +14,9 @@
 	import { APP_NAME } from '$lib/utils/constants';
 	import { createEventDispatcher } from 'svelte';
 	import { fly } from 'svelte/transition';
+	import { auth } from '$lib/stores/authStore';
+	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
 
 	export let isOpen: boolean = false;
 	const dispatch = createEventDispatcher();
@@ -52,6 +55,21 @@
 
 	function handleNavClick() {
 		closeMobileNav();
+	}
+
+	// Handle logout
+	async function handleLogout() {
+		try {
+			const result = await auth.signOut();
+			if (result.success) {
+				toast.success('Logged out successfully');
+			} else {
+				toast.error(result.error || 'Failed to logout');
+			}
+		} catch (error) {
+			console.error('Logout error:', error);
+			toast.error('An unexpected error occurred');
+		}
 	}
 </script>
 
@@ -111,15 +129,13 @@
 
 		<!-- Logout Button -->
 		<div class="p-4 border-t border-gray-200 mt-auto">
-			<form action="/auth/logout" method="POST">
-				<button 
-					type="submit" 
-					class="w-full py-3 px-4 rounded-xl border border-gray-900 text-gray-900 bg-white font-semibold hover:bg-gray-900 hover:text-white transition-colors text-base flex items-center justify-center gap-3"
-				>
-					<LogOut class="w-5 h-5" />
-					Logout
-				</button>
-			</form>
+			<button 
+				on:click={handleLogout}
+				class="w-full py-3 px-4 rounded-xl border border-gray-900 text-gray-900 bg-white font-semibold hover:bg-gray-900 hover:text-white transition-colors text-base flex items-center justify-center gap-3"
+			>
+				<LogOut class="w-5 h-5" />
+				Logout
+			</button>
 		</div>
 
 		<!-- Footer -->

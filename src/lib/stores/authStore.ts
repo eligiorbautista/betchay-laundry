@@ -25,10 +25,12 @@ export const authStore = writable<AuthState>(initialState);
 export const auth = {
 	// Initialize auth state - call this when app starts
 	async initialize() {
-		if (!browser) return;
+		if (!browser) {
+			return;
+		}
 
 		try {
-			// Get current session
+			// Get current session from our cookie-based client
 			const { data: { session }, error } = await supabase.auth.getSession();
 			
 			if (error) {
@@ -46,13 +48,23 @@ export const auth = {
 
 			// Listen for auth changes
 			supabase.auth.onAuthStateChange((event, session) => {
-				console.log('Auth state changed:', event, session?.user?.email);
-				
 				authStore.set({
 					user: session?.user || null,
 					session: session,
 					loading: false
 				});
+
+				// Handle redirects based on auth state
+				if (event === 'SIGNED_IN' && session) {
+					setTimeout(() => goto('/dashboard'), 100);
+				} else if (event === 'SIGNED_OUT') {
+					setTimeout(() => goto('/auth/login'), 100);
+				} else if (event === 'INITIAL_SESSION' && session) {
+					// If we have a session and we're on login page, redirect to dashboard
+					if (window.location.pathname === '/auth/login' || window.location.pathname === '/') {
+						setTimeout(() => goto('/dashboard'), 100);
+					}
+				}
 			});
 
 		} catch (error) {
@@ -95,6 +107,16 @@ export const auth = {
 				throw error;
 			}
 
+			// If we have a session, manually trigger redirect as backup
+			if (data.session && data.user) {
+				// Wait a bit for the auth state change to potentially fire first
+				setTimeout(() => {
+					if (window.location.pathname === '/auth/login') {
+						goto('/dashboard');
+					}
+				}, 500);
+			}
+
 			return { success: true, data };
 		} catch (error: any) {
 			console.error('Login error:', error);
@@ -108,16 +130,28 @@ export const auth = {
 	// Sign out
 	async signOut() {
 		try {
+			// Clear auth store immediately
+			authStore.set({ user: null, session: null, loading: false });
+			
 			const { error } = await supabase.auth.signOut();
 			
 			if (error) {
 				throw error;
 			}
 
-			// Navigate to login page after successful logout
-			if (browser) {
-				goto('/auth/login');
+			// Clear all cookies manually as backup
+			if (typeof document !== 'undefined') {
+				const cookies = document.cookie.split(';');
+				for (let cookie of cookies) {
+					const [name] = cookie.trim().split('=');
+					if (name.includes('sb-') || name.includes('supabase')) {
+						document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+					}
+				}
 			}
+
+			// Force redirect to login
+			setTimeout(() => goto('/auth/login'), 100);
 
 			return { success: true };
 		} catch (error: any) {

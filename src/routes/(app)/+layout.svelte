@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import Header from '$lib/components/layout/Header.svelte';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import MobileNav from '$lib/components/layout/MobileNav.svelte';
@@ -13,9 +13,24 @@
 	let loading = true;
 
 	onMount(() => {
+		let lastAuthState: any = null;
+		
 		// Subscribe to auth store to monitor authentication state
 		const unsubscribe = authStore.subscribe((state) => {
 			loading = state.loading;
+			
+			// Client-side route protection (but avoid redirect loops)
+			if (!loading && !isAuthenticated(state)) {
+				// Only redirect if we had a session before (to avoid initial load issues)
+				if (lastAuthState && isAuthenticated(lastAuthState)) {
+					goto('/auth/login');
+				} else if (!lastAuthState) {
+					// First load without authentication
+					goto('/auth/login');
+				}
+			}
+			
+			lastAuthState = { ...state };
 		});
 
 		// Close mobile navigation after route changes

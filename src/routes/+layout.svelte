@@ -18,6 +18,6 @@
 <slot/>
 
 <!-- toast notifications -->
-<Toaster richColors position="top-right" />
+<Toaster richColors position="bottom-right" />
 
 <!-- main layout wrapper -->

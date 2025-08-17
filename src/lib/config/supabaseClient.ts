@@ -16,7 +16,39 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 	auth: {
 		autoRefreshToken: true,
 		persistSession: true,
-		detectSessionInUrl: true
+		detectSessionInUrl: true,
+		// Use cookies instead of localStorage for better security
+		storage: {
+			getItem: (key: string) => {
+				if (typeof document !== 'undefined') {
+					// Client-side: read from cookies
+					const cookies = document.cookie.split(';');
+					for (let cookie of cookies) {
+						const [name, value] = cookie.trim().split('=');
+						if (name === key) {
+							return decodeURIComponent(value);
+						}
+					}
+				}
+				return null;
+			},
+			setItem: (key: string, value: string) => {
+				if (typeof document !== 'undefined') {
+					// Client-side: set secure cookie
+					// Don't use Secure flag in development (localhost)
+					const isProduction = process.env.NODE_ENV === 'production';
+					const secureFlag = isProduction ? '; Secure' : '';
+					const cookieString = `${key}=${encodeURIComponent(value)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
+					document.cookie = cookieString;
+				}
+			},
+			removeItem: (key: string) => {
+				if (typeof document !== 'undefined') {
+					// Client-side: remove cookie
+					document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+				}
+			}
+		}
 	}
 });
 

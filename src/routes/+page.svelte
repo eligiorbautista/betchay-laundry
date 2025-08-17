@@ -1,10 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { authStore, isAuthenticated } from '$lib/stores/authStore';
 
-	onMount(async () => {
-		// Redirect to the new login page
-		await goto('/auth/login');
+	onMount(() => {
+		// Subscribe to auth store and redirect based on auth state
+		const unsubscribe = authStore.subscribe((state) => {
+			if (!state.loading) {
+				if (isAuthenticated(state)) {
+					// User is authenticated, redirect to dashboard
+					goto('/dashboard');
+				} else {
+					// User is not authenticated, redirect to login
+					goto('/auth/login');
+				}
+			}
+		});
+
+		return unsubscribe;
 	});
 </script>
 

@@ -10,6 +10,8 @@
 		LogOut
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
+	import { auth } from '$lib/stores/authStore';
+	import { toast } from 'svelte-sonner';
 	
 	// nav menu items
 	const navItems = [
@@ -37,6 +39,21 @@
 
 	// track current page for highlighting
 	$: currentPath = $page.url.pathname;
+
+	// Handle logout
+	async function handleLogout() {
+		try {
+			const result = await auth.signOut();
+			if (result.success) {
+				toast.success('Logged out successfully');
+			} else {
+				toast.error(result.error || 'Failed to logout');
+			}
+		} catch (error) {
+			console.error('Logout error:', error);
+			toast.error('An unexpected error occurred');
+		}
+	}
 </script>
 
 <!-- navigation sidebar -->
@@ -74,15 +91,15 @@
 	</nav>
 
 	<!-- logout button -->
-	<form action="/auth/logout" method="POST" class="px-4 mb-2">
+	<div class="px-4 mb-2">
 		<button 
-			type="submit" 
+			on:click={handleLogout}
 			class="w-full py-2 px-4 rounded border border-gray-900 text-gray-900 bg-white font-semibold hover:bg-gray-900 hover:text-white transition-colors text-sm flex items-center justify-center gap-2"
 		>
 			<LogOut class="w-4 h-4" />
 			Logout
 		</button>
-	</form>
+	</div>
 
 	<!-- Footer at the very bottom -->
 	<div class="p-4 border-t border-gray-200 bg-gray-50">

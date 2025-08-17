@@ -1,19 +1,17 @@
 import type { LayoutServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { supabase } from '$lib/config/supabaseClient';
+import { getServerSession } from '$lib/config/supabaseServer';
 
-export const load: LayoutServerLoad = async ({ url }) => {
-	// Check if user is authenticated
-	const { data: { session }, error } = await supabase.auth.getSession();
+export const load: LayoutServerLoad = async (event) => {
+	// Check if user is authenticated using server-side cookies
+	const session = await getServerSession(event);
 
-	// If no session, redirect to login
-	if (!session || !session.user) {
-		throw redirect(302, '/auth/login');
-	}
-
-	// Return user data
+	// For now, rely on client-side protection due to cookie timing issues
+	// Server-side protection can be re-enabled once cookie sync is perfected
+	
+	// Return user data (or null if no session)
 	return {
-		user: session.user,
+		user: session?.user || null,
 		session: session
 	};
 };

@@ -8,8 +8,36 @@ The authentication system uses Supabase for user management and includes:
 - Email/password login and signup
 - Password reset functionality
 - Protected routes
-- Session management
+- **Cookie-based session storage** (instead of localStorage)
+- Server-side session validation
 - User state management with Svelte stores
+
+## Why Cookies Instead of localStorage?
+
+This implementation uses **secure cookies** instead of localStorage for better security:
+
+### 🔒 **Security Benefits:**
+- **XSS Protection**: Cookies can't be accessed by malicious JavaScript
+- **Server-side Access**: Your SvelteKit server can read sessions for SSR
+- **Automatic Expiry**: Browsers handle cookie expiration automatically
+- **CSRF Protection**: Combined with SameSite=Lax for better security
+
+### 🚀 **SSR Benefits:**
+- **Page Load Speed**: Server can validate auth before sending HTML
+- **SEO Friendly**: Protected content properly rendered server-side
+- **Better UX**: No flash of unauthenticated content
+
+### ⚙️ **Cookie Configuration:**
+```javascript
+// Secure cookie settings
+{
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60,    // 7 days
+  sameSite: 'lax',             // CSRF protection
+  secure: true,                // HTTPS only in production
+  httpOnly: false              // Supabase needs access
+}
+```
 
 ## Environment Configuration
 
@@ -84,11 +112,13 @@ Users can be created through:
 
 ## Security Features
 
+- **Cookie-based sessions** - Sessions stored in secure cookies instead of localStorage
+- **Server-side session validation** - Full SSR support with cookie access
 - **Automatic token refresh** - Sessions are automatically refreshed
-- **Secure session handling** - Server-side session validation
-- **Route protection** - Protected routes check authentication
+- **Secure cookie settings** - SameSite=Lax, Secure in production, 7-day expiry
+- **Route protection** - Protected routes check authentication server-side
 - **Error handling** - Proper error messages and fallbacks
-- **Client/server consistency** - Both client and server verify sessions
+- **XSS protection** - Cookies provide better security than localStorage
 
 ## Next Steps
 

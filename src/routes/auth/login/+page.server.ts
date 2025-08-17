@@ -1,11 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { supabase } from '$lib/config/supabaseClient';
+import { createSupabaseServerClient, getServerSession } from '$lib/config/supabaseServer';
 
-export const load: PageServerLoad = async ({ url, locals }) => {
-	// Check if user is already authenticated via Supabase
-	const session = await supabase.auth.getSession();
-	if (session.data.session) {
+export const load: PageServerLoad = async (event) => {
+	// Check if user is already authenticated via server-side cookies
+	const session = await getServerSession(event);
+	if (session) {
 		throw redirect(302, '/dashboard');
 	}
 
@@ -13,7 +13,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async (event) => {
+		const { request } = event;
 		const data = await request.formData();
 		const email = data.get('email') as string;
 		const password = data.get('password') as string;
@@ -27,6 +28,9 @@ export const actions: Actions = {
 		}
 
 		try {
+			// Create server-side Supabase client with cookie handling
+			const supabase = createSupabaseServerClient(event);
+			
 			// Attempt to sign in with Supabase
 			const { data: signInData, error } = await supabase.auth.signInWithPassword({
 				email,
@@ -41,7 +45,7 @@ export const actions: Actions = {
 			}
 
 			if (signInData.user) {
-				// Success - frontend will handle redirect via authStore
+				// Success - session is now stored in cookies via our custom storage
 				return {
 					success: true,
 					message: 'Login successful'

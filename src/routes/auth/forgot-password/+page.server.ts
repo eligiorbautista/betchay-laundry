@@ -1,12 +1,13 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { supabase } from '$lib/config/supabaseClient';
 
 export const load: PageServerLoad = async () => {
 	return {};
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, url }) => {
 		const data = await request.formData();
 		const email = data.get('email') as string;
 
@@ -27,13 +28,23 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Here you would typically send a password reset email
-			// For now, we'll simulate success
+			// Send password reset email using Supabase
+			const { error } = await supabase.auth.resetPasswordForEmail(email, {
+				redirectTo: `${url.origin}/auth/reset-password`,
+			});
+
+			if (error) {
+				return fail(400, {
+					error: error.message,
+					email
+				});
+			}
 			
 			return {
 				success: true
 			};
-		} catch (error) {
+		} catch (error: any) {
+			console.error('Password reset error:', error);
 			return fail(500, {
 				error: 'Failed to send reset email. Please try again.',
 				email

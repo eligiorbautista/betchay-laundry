@@ -1,13 +1,15 @@
 import type { LayoutServerLoad } from './$types';
+import { supabase } from '$lib/config/supabaseClient';
 
-export const load: LayoutServerLoad = async ({ cookies }) => {
-	// For frontend-only development, check if user has a session cookie
-	const session = cookies.get('session');
-	
-	// If session exists, consider user as authenticated
-	const user = session ? { id: 'demo-user', email: 'demo@example.com' } : null;
+export const load: LayoutServerLoad = async ({ cookies, url }) => {
+	// Get session from Supabase
+	const { data: { session }, error } = await supabase.auth.getSession();
+
+	// If we have session data, return user info
+	const user = session?.user || null;
 
 	return {
-		user
+		user,
+		session
 	};
 };

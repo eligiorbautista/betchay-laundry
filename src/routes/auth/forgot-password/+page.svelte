@@ -2,13 +2,40 @@
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import { Mail, ArrowLeft } from 'lucide-svelte';
+	import { auth } from '$lib/stores/authStore';
 
 	export let form: { success?: boolean; error?: string, email?: string } = {};
 
 	let loading = false;
 	let email = form?.email || '';
 
-	// Handle form submission
+	// Handle client-side password reset
+	async function handleResetPassword() {
+		if (!email) {
+			toast.error('Please enter your email address');
+			return;
+		}
+
+		loading = true;
+		
+		try {
+			const result = await auth.resetPassword(email);
+			
+			if (result.success) {
+				toast.success('Password reset link sent! Check your email.');
+				email = ''; // Clear the form
+			} else {
+				toast.error(result.error || 'Failed to send reset link. Please try again.');
+			}
+		} catch (error) {
+			console.error('Password reset error:', error);
+			toast.error('An unexpected error occurred. Please try again.');
+		} finally {
+			loading = false;
+		}
+	}
+
+	// Handle form submission (fallback for non-JS users)
 	function handleSubmit() {
 		loading = true;
 		return async ({ update, result }: { update: () => Promise<void>; result: { type: string; data?: { message?: string } } }) => {
@@ -64,6 +91,7 @@
 				method="POST"
 				class="space-y-6"
 				use:enhance={handleSubmit}
+				on:submit|preventDefault={handleResetPassword}
 			>
 				<!-- Email Field -->
 				<div>

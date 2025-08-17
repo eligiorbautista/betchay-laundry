@@ -5,17 +5,25 @@
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import MobileNav from '$lib/components/layout/MobileNav.svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
-	let mobileNavOpen = false;
-	let loading = false; // Set to false for frontend development
+	import { authStore, isAuthenticated } from '$lib/stores/authStore';
 
-	onMount(async () => {
-		// For frontend development, no authentication check needed
-		loading = false;
+	export const data: { user?: any; session?: any } = {};
+	
+	let mobileNavOpen = false;
+	let loading = true;
+
+	onMount(() => {
+		// Subscribe to auth store to monitor authentication state
+		const unsubscribe = authStore.subscribe((state) => {
+			loading = state.loading;
+		});
 
 		// Close mobile navigation after route changes
 		afterNavigate(() => {
 			mobileNavOpen = false;
 		});
+
+		return unsubscribe;
 	});
 	
 	function toggleMobileNav() {

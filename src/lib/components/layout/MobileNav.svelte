@@ -1,4 +1,4 @@
-<!-- Mobile Navigation Component -->
+<!-- mobile sidebar menu -->
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { 
@@ -18,7 +18,7 @@
 	export let isOpen: boolean = false;
 	const dispatch = createEventDispatcher();
 	
-	// Navigation items	
+	// menu links
 	const navItems = [
 		{
 			label: 'Dashboard',

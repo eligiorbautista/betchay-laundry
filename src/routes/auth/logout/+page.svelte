@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	// Automatically submit logout form when component mounts
+	// auto-logout when page loads
 	onMount(() => {
 		const form = document.querySelector('form');
 		if (form) {

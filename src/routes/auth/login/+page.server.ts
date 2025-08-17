@@ -1,9 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
+import { supabase } from '$lib/config/supabaseClient';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	// If user is already authenticated, redirect to dashboard
-	if ((locals as any).user) {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	// Check if user is already authenticated via Supabase
+	const session = await supabase.auth.getSession();
+	if (session.data.session) {
 		throw redirect(302, '/dashboard');
 	}
 
@@ -11,48 +13,49 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request }) => {
 		const data = await request.formData();
 		const email = data.get('email') as string;
 		const password = data.get('password') as string;
 
-		// Basic validation
+		// Validate inputs
 		if (!email || !password) {
 			return fail(400, {
-				error: 'Email and password are required'
+				error: 'Email and password are required',
+				email
 			});
 		}
 
 		try {
-			// For frontend-only development, simulate authentication
-			// In a real app, this would authenticate with Supabase or your auth provider
-			
-			// Simulate a successful login for demo purposes
-			// You can modify this logic for testing different scenarios
-			if (email && password) {
-				// Set authentication cookie for frontend-only development
-				cookies.set('session', 'demo-session-token', {
-					path: '/',
-					httpOnly: true,
-					secure: process.env.NODE_ENV === 'production',
-					sameSite: 'lax',
-					maxAge: 60 * 60 * 24 * 7 // 7 days
-				});
+			// Attempt to sign in with Supabase
+			const { data: signInData, error } = await supabase.auth.signInWithPassword({
+				email,
+				password
+			});
 
-				// Return success response that the frontend can handle
-				return {
-					type: 'success',
-					data: { message: 'Login successful' }
-				};
-			} else {
+			if (error) {
 				return fail(400, {
-					error: 'Invalid email or password',
+					error: error.message,
 					email
 				});
 			}
-		} catch (error) {
-			return fail(400, {
-				error: 'Login failed. Please try again.',
+
+			if (signInData.user) {
+				// Success - frontend will handle redirect via authStore
+				return {
+					success: true,
+					message: 'Login successful'
+				};
+			} else {
+				return fail(400, {
+					error: 'Login failed. Please try again.',
+					email
+				});
+			}
+		} catch (error: any) {
+			console.error('Login error:', error);
+			return fail(500, {
+				error: 'An unexpected error occurred. Please try again.',
 				email
 			});
 		}

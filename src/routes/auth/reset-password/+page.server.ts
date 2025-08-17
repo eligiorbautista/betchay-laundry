@@ -1,28 +1,26 @@
 import type { PageServerLoad, Actions } from './$types';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { supabase } from '$lib/config/supabaseClient';
 
 export const load: PageServerLoad = async ({ url }) => {
-	const token = url.searchParams.get('token');
+	// Supabase automatically handles the token validation
+	// We just need to check if we have the required URL fragments
+	const accessToken = url.searchParams.get('access_token');
+	const refreshToken = url.searchParams.get('refresh_token');
 	
 	return {
-		token
+		accessToken,
+		refreshToken
 	};
 };
 
 export const actions: Actions = {
-	default: async ({ request, url }) => {
+	default: async ({ request }) => {
 		const data = await request.formData();
-		const token = data.get('token') as string;
 		const password = data.get('password') as string;
 		const confirmPassword = data.get('confirmPassword') as string;
 
 		// Validation
-		if (!token) {
-			return fail(400, {
-				error: 'Invalid reset token'
-			});
-		}
-
 		if (!password || !confirmPassword) {
 			return fail(400, {
 				error: 'Password and confirmation are required'
@@ -42,13 +40,22 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Here you would typically validate the token and update the password
-			// For now, we'll simulate success
+			// Update password using Supabase
+			const { error } = await supabase.auth.updateUser({
+				password: password
+			});
+
+			if (error) {
+				return fail(400, {
+					error: error.message
+				});
+			}
 			
 			return {
 				success: true
 			};
-		} catch (error) {
+		} catch (error: any) {
+			console.error('Password update error:', error);
 			return fail(500, {
 				error: 'Failed to update password. Please try again.'
 			});

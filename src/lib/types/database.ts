@@ -1,1 +1,0 @@
-// Types generated from Supabase

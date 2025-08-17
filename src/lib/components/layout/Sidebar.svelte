@@ -1,4 +1,4 @@
-<!-- Desktop Sidebar Component -->
+<!-- main sidebar -->
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { 
@@ -10,7 +10,8 @@
 		LogOut
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
-		// Navigation items
+	
+	// nav menu items
 	const navItems = [
 		{
 			label: 'Dashboard',
@@ -34,16 +35,16 @@
 		}
 	];
 
-	// Reactive active route check
+	// track current page for highlighting
 	$: currentPath = $page.url.pathname;
 </script>
 
-<!-- Desktop Sidebar -->
+<!-- navigation sidebar -->
 <aside 
 	class="fixed top-0 left-0 z-[60] h-full w-64 bg-white border-r border-gray-200 flex flex-col"
 	data-sidebar
 >
-	<!-- Logo/Brand -->
+	<!-- company logo -->
 	<div class="flex items-center h-16 px-6 border-b border-gray-200 bg-white">
 		<div class="flex items-center space-x-3">
 			<a href="/">
@@ -56,7 +57,7 @@
 		</div>
 	</div>
 
-	<!-- Navigation -->
+	<!-- menu links -->
 	<nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
 		{#each navItems as item}
 			<a
@@ -72,7 +73,7 @@
 		{/each}
 	</nav>
 
-	<!-- Logout Button above Footer -->
+	<!-- logout button -->
 	<form action="/auth/logout" method="POST" class="px-4 mb-2">
 		<button 
 			type="submit" 

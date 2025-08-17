@@ -3,17 +3,67 @@
 	import { page } from '$app/stores';
 	import { toast } from 'svelte-sonner';
 	import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-svelte';
+	import { auth } from '$lib/stores/authStore';
+	import { onMount } from 'svelte';
 
 	export let form: { success?: boolean; error?: string } = {};
+	export const data: { accessToken?: string; refreshToken?: string } = {};
 
 	let loading = false;
 	let showPassword = false;
 	let showConfirmPassword = false;
 	let password = '';
 	let confirmPassword = '';
+	let validSession = false;
 	
-	// Get token from URL params
-	$: token = $page.url.searchParams.get('token');
+	// Check for valid session on mount
+	onMount(async () => {
+		// Check if we have access token in URL (Supabase password reset)
+		const accessToken = $page.url.searchParams.get('access_token');
+		const refreshToken = $page.url.searchParams.get('refresh_token');
+		
+		if (accessToken && refreshToken) {
+			validSession = true;
+		}
+	});
+
+	// Handle client-side password update
+	async function handlePasswordUpdate() {
+		if (!password || !confirmPassword) {
+			toast.error('Please fill in all fields');
+			return;
+		}
+
+		if (password !== confirmPassword) {
+			toast.error('Passwords do not match');
+			return;
+		}
+
+		if (password.length < 8) {
+			toast.error('Password must be at least 8 characters long');
+			return;
+		}
+
+		loading = true;
+		
+		try {
+			const result = await auth.updatePassword(password);
+			
+			if (result.success) {
+				toast.success('Password updated successfully! You can now login.');
+				// Clear form
+				password = '';
+				confirmPassword = '';
+			} else {
+				toast.error(result.error || 'Failed to update password. Please try again.');
+			}
+		} catch (error) {
+			console.error('Password update error:', error);
+			toast.error('An unexpected error occurred. Please try again.');
+		} finally {
+			loading = false;
+		}
+	};
 
 	// Handle form submission
 	function handleSubmit() {
@@ -68,7 +118,7 @@
 							</p>
 						</div>
 
-		{#if !token}
+		{#if !validSession}
 			<!-- Invalid Token -->
 				<div class="text-center">
 					<div class="mx-auto h-12 w-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
@@ -108,8 +158,8 @@
 				method="POST"
 				class="space-y-6"
 				use:enhance={handleSubmit}
+				on:submit|preventDefault={handlePasswordUpdate}
 			>
-					<input type="hidden" name="token" value={token} />
 					
 					<!-- New Password Field -->
 					<div>

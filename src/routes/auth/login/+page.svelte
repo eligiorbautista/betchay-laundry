@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { Eye, EyeOff, Lock, Mail } from 'lucide-svelte';
+	import { auth, authStore } from '$lib/stores/authStore';
 
 	export let form: { error?: string; email?: string } = {};
 
@@ -11,7 +12,33 @@
 	let email = form?.email || '';
 	let password = '';
 
-	// Handle form submission
+	// Handle client-side login using Supabase
+	async function handleLogin() {
+		if (!email || !password) {
+			toast.error('Please fill in all fields');
+			return;
+		}
+
+		loading = true;
+		
+		try {
+			const result = await auth.signIn(email, password);
+			
+			if (result.success) {
+				toast.success('Login successful!');
+				await goto('/dashboard');
+			} else {
+				toast.error(result.error || 'Login failed. Please try again.');
+			}
+		} catch (error) {
+			console.error('Login error:', error);
+			toast.error('An unexpected error occurred. Please try again.');
+		} finally {
+			loading = false;
+		}
+	}
+
+	// Handle form submission (fallback for non-JS users)
 	function handleSubmit() {
 		loading = true;
 		return async ({ update, result }: { update: () => Promise<void>; result: { type: string; data?: { message?: string } } }) => {
@@ -37,7 +64,7 @@
 	<div class="max-w-4xl w-full">
 		<div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
 			<div class="flex flex-col lg:flex-row">
-				<!-- Logo Section -->
+				<!-- logo side -->
 				<div class="lg:w-1/2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center">
 					<div class="text-center">
 						<img src="/logo/logo.png" alt="App Logo" class="h-40 lg:h-52 xl:h-60 mx-auto mb-6" />
@@ -50,7 +77,7 @@
 					</div>
 				</div>
 
-				<!-- Login Form Section -->
+				<!-- login form -->
 				<div class="lg:w-1/2 p-8 lg:p-12">
 					<div class="max-w-sm mx-auto">
 						<div class="mb-8">
@@ -65,8 +92,9 @@
 				method="POST"
 				class="space-y-6"
 				use:enhance={handleSubmit}
+				on:submit|preventDefault={handleLogin}
 			>
-				<!-- Email Field -->
+				<!-- email input -->
 				<div>
 					<label for="email" class="block text-sm font-medium text-gray-700 mb-2">
 						Email address
@@ -87,7 +115,7 @@
 					</div>
 				</div>
 
-				<!-- Password Field -->
+				<!-- password input -->
 				<div>
 					<label for="password" class="block text-sm font-medium text-gray-700 mb-2">
 						Password
@@ -119,14 +147,14 @@
 					</div>
 				</div>
 
-				<!-- Forgot Password -->
+				<!-- forgot password link -->
 				<div class="text-right">
 					<a href="/auth/forgot-password" class="text-sm text-gray-700 hover:text-gray-900 font-medium">
 						Forgot password?
 					</a>
 				</div>
 
-				<!-- Submit Button -->
+				<!-- login button -->
 				<button
 					type="submit"
 					disabled={loading}
@@ -142,7 +170,7 @@
 					{/if}
 				</button>
 
-				<!-- Footer Links -->
+				<!-- contact info -->
 				<div class="mt-8 text-center">
 					<p class="text-sm text-gray-600">
 						Have an issue?

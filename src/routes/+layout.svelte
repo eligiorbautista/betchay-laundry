@@ -2,6 +2,13 @@
 	import '../app.css';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { Toaster } from 'svelte-sonner';
+	import { onMount } from 'svelte';
+	import { auth } from '$lib/stores/authStore';
+
+	// Initialize authentication when app loads
+	onMount(() => {
+		auth.initialize();
+	});
 </script>
 
 <svelte:head>
@@ -10,7 +17,7 @@
 
 <slot/>
 
-<!-- Global Toaster for notifications -->
+<!-- toast notifications -->
 <Toaster richColors position="top-right" />
 
-<!-- Global layout for all admin pages (includes Sidebar) -->
+<!-- main layout wrapper -->

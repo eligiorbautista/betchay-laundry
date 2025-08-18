@@ -15,7 +15,7 @@
 	onMount(() => {
 		let lastAuthState: any = null;
 		
-		// Subscribe to auth store to monitor authentication state
+		// Watch for auth changes and handle redirects
 		const unsubscribe = authStore.subscribe((state) => {
 			loading = state.loading;
 			

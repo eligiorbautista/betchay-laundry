@@ -22,7 +22,7 @@
 		{ value: 'completed', label: 'Completed', count: 0, color: 'text-emerald-600' },
 		{ value: 'cancelled', label: 'Cancelled', count: 0, color: 'text-red-600' }
 	];	onMount(async () => {
-		// Initialize with server data
+		// Setup order counts and filtering
 		updateCounts();
 		applyFilters();
 	});

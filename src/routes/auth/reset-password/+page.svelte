@@ -15,15 +15,42 @@
 	let password = '';
 	let confirmPassword = '';
 	let validSession = false;
+	let hasError = false;
+	let errorMessage = '';
 	
 	// Check for valid session on mount
 	onMount(async () => {
+		// Check for errors in URL hash (e.g., #error=access_denied&error_code=otp_expired)
+		const hash = window.location.hash;
+		if (hash.includes('error=')) {
+			hasError = true;
+			const urlParams = new URLSearchParams(hash.replace('#', ''));
+			const errorCode = urlParams.get('error_code');
+			const errorDescription = urlParams.get('error_description');
+			
+			if (errorCode === 'otp_expired') {
+				errorMessage = 'This password reset link has expired. Please request a new one.';
+			} else if (errorDescription) {
+				errorMessage = decodeURIComponent(errorDescription);
+			} else {
+				errorMessage = 'Invalid password reset link. Please request a new one.';
+			}
+			
+			toast.error(errorMessage);
+			return;
+		}
+		
 		// Check if we have access token in URL (Supabase password reset)
 		const accessToken = $page.url.searchParams.get('access_token');
 		const refreshToken = $page.url.searchParams.get('refresh_token');
 		
 		if (accessToken && refreshToken) {
 			validSession = true;
+		} else if (!hasError) {
+			// No tokens and no error - invalid link
+			hasError = true;
+			errorMessage = 'Invalid password reset link. Please request a new password reset.';
+			toast.error(errorMessage);
 		}
 	});
 
@@ -50,10 +77,14 @@
 			const result = await auth.updatePassword(password);
 			
 			if (result.success) {
-				toast.success('Password updated successfully! You can now login.');
+				toast.success('Password updated successfully! Redirecting to login...');
 				// Clear form
 				password = '';
 				confirmPassword = '';
+				// Redirect to login page after successful password update
+				setTimeout(() => {
+					window.location.href = '/auth/login';
+				}, 2000);
 			} else {
 				toast.error(result.error || 'Failed to update password. Please try again.');
 			}
@@ -72,7 +103,11 @@
 			loading = false;
 			
 			if (result.type === 'success') {
-				toast.success('Password updated successfully! You can now login.');
+				toast.success('Password updated successfully! Redirecting to login...');
+				// Redirect to login page after successful password update
+				setTimeout(() => {
+					window.location.href = '/auth/login';
+				}, 2000);
 			} else if (result.type === 'failure') {
 				toast.error(result.data?.message || 'Failed to update password. Please try again.');
 			}
@@ -118,20 +153,21 @@
 							</p>
 						</div>
 
-		{#if !validSession}
-			<!-- Invalid Token -->
+		{#if hasError}
+			<!-- Invalid/Expired Token -->
 				<div class="text-center">
 					<div class="mx-auto h-12 w-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
 						<Lock class="w-6 h-6 text-red-600" />
 					</div>
-					<h3 class="text-lg font-semibold text-gray-900 mb-2">Invalid Reset Link</h3>
+					<h3 class="text-lg font-semibold text-gray-900 mb-2">Reset Link Issue</h3>
 					<p class="text-gray-600 mb-6">
-						The password reset link is invalid or has expired. Please request a new one.
+						{errorMessage}
 					</p>
 					<a 
 						href="/auth/forgot-password" 
 						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-lg hover:bg-gray-900 transition-colors"
 					>
+						<ArrowLeft class="w-4 h-4 mr-2" />
 						Request New Reset Link
 					</a>
 				</div>
@@ -152,7 +188,7 @@
 						Go to Login
 					</a>
 			</div>
-		{:else}
+		{:else if validSession}
 			<!-- Reset Form -->
 			<form 
 				method="POST"
@@ -252,6 +288,17 @@
 						Back to login
 					</a>
 				</div>
+		{:else}
+			<!-- Loading or no session state -->
+			<div class="text-center">
+				<div class="mx-auto h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+					<Lock class="w-6 h-6 text-gray-400" />
+				</div>
+				<h3 class="text-lg font-semibold text-gray-900 mb-2">Checking Reset Link...</h3>
+				<p class="text-gray-600 mb-6">
+					Please wait while we validate your password reset link.
+				</p>
+			</div>
 		{/if}
 					</div>
 				</div>

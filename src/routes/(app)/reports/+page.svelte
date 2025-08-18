@@ -43,16 +43,16 @@
 	});
 
 	onMount(async () => {
-		// Initialize any client-side functionality
+		// Setup report filters and state
 		loading = false;
 	});
 
-	// Print functionality
+	// Browser print dialog for reports
 	function printReport() {
 		window.print();
 	}
 	
-	// Date filter functions
+	// Update date range based on period selection
 	function handlePeriodChange(period: string) {
 		selectedPeriod = period;
 		const today = new Date();
@@ -94,7 +94,7 @@
 		
 		loading = true;
 		// In a real app, this would make an API call with the date parameters
-		// For now, we'll simulate filtering by updating the reports data
+		// TODO: Replace with actual API call for date filtering
 		setTimeout(() => {
 			// Update the summary period display
 			reports.summary.period = `${formatDate(startDate)} - ${formatDate(endDate)}`;
@@ -104,7 +104,7 @@
 		}, 500);
 	}
 
-	// Helper functions
+	// Format utilities for display
 	function formatCurrency(amount: number): string {
 		return new Intl.NumberFormat('en-PH', {
 			style: 'currency',

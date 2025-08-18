@@ -7,22 +7,22 @@
 		Lock,
 		Eye,
 		EyeOff,
-		CheckCircle,
-		AlertCircle,
-		Shield
+		Shield,
+		AlertCircle
 	} from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
 	import type { PageData } from './$types';
 	import type { UserProfile } from '$lib/types/settings';
+	import { authStore } from '$lib/stores/authStore';
+	import { supabase } from '$lib/config/supabaseClient';
 
 	export let data: PageData;
 
 	let activeTab = 'profile';
 	let loading = false;
-	let successMessage = '';
-	let errorMessage = '';
 
-	// Form data
+	// User profile form state
 	let userProfile: UserProfile = data.userProfile;
 
 	// Password change form
@@ -33,44 +33,63 @@
 	let showNewPassword = false;
 	let showConfirmPassword = false;
 
-	function showMessage(message: string, isSuccess = true) {
-		if (isSuccess) {
-			successMessage = message;
-			setTimeout(() => successMessage = '', 3000);
-		} else {
-			errorMessage = message;
-			setTimeout(() => errorMessage = '', 5000);
-		}
-	}
-
-	function handlePasswordChange() {
+	async function handlePasswordChange() {
 		if (newPassword !== confirmPassword) {
-			showMessage('New passwords do not match', false);
+			toast.error('New passwords do not match');
 			return;
 		}
 
 		if (newPassword.length < 8) {
-			showMessage('Password must be at least 8 characters long', false);
+			toast.error('Password must be at least 8 characters long');
 			return;
 		}
 
 		loading = true;
-		// Simulate API call
-		setTimeout(() => {
-			loading = false;
-			showMessage('Password changed successfully!');
+		try {
+			// Get current user
+			const { data: { user } } = await supabase.auth.getUser();
+			if (!user?.email) {
+				throw new Error('User not found');
+			}
+
+			// Use updateUser directly without re-authentication to avoid SIGNED_IN event
+			const { error: updateError } = await supabase.auth.updateUser({
+				password: newPassword
+			});
+
+			if (updateError) {
+				throw new Error(updateError.message);
+			}
+
+			toast.success('Password changed successfully!');
 			currentPassword = '';
 			newPassword = '';
 			confirmPassword = '';
-		}, 1000);
+		} catch (error: any) {
+			console.error('Error changing password:', error);
+			toast.error(error.message || 'Failed to change password');
+		} finally {
+			loading = false;
+		}
 	}
 
-
-
 	onMount(() => {
-		// Initialize form data
-		userProfile = { ...data.userProfile };
+		// Populate form with current user data
+		if ($authStore.user) {
+			userProfile = {
+				email: $authStore.user.email || '',
+				full_name: $authStore.user.user_metadata?.full_name || 'Admin User'
+			};
+		}
 	});
+
+	// Update profile when auth store changes
+	$: if ($authStore.user) {
+		userProfile = {
+			email: $authStore.user.email || '',
+			full_name: $authStore.user.user_metadata?.full_name || 'Admin User'
+		};
+	}
 </script>
 
 <svelte:head>
@@ -87,20 +106,7 @@
 		<p class="text-gray-600 text-sm md:text-base">Manage your profile and security settings.</p>
 	</div>
 
-	<!-- Success/Error Messages -->
-	{#if successMessage}
-		<div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3">
-			<CheckCircle class="w-5 h-5 text-emerald-600" />
-			<span class="text-emerald-800">{successMessage}</span>
-		</div>
-	{/if}
 
-	{#if errorMessage}
-		<div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
-			<AlertCircle class="w-5 h-5 text-red-600" />
-			<span class="text-red-800">{errorMessage}</span>
-		</div>
-	{/if}
 
 	<!-- Tab Navigation -->
 	<div class="mb-8">
@@ -125,7 +131,6 @@
 						Security
 					</div>
 				</button>
-
 
 			</nav>
 
@@ -331,7 +336,8 @@
 						</form>
 					</div>
 
-					<!-- Two-Factor Authentication Section -->
+					<!-- Two-Factor Authentication Section - COMMENTED OUT FOR NOW -->
+					<!-- 
 					<div class="border-t border-gray-200 pt-6 md:pt-8">
 						<h3 class="text-lg font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
 						<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
@@ -373,6 +379,7 @@
 							</div>
 						</div>
 					</div>
+					-->
 				</div>
 			</div>
 

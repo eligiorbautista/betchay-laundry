@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	// auto-logout when page loads
+	// Trigger logout immediately on page visit
 	onMount(() => {
 		const form = document.querySelector('form');
 		if (form) {

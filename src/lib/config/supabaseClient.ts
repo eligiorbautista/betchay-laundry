@@ -53,4 +53,4 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // Export types for use throughout the app
-export type Database = any; // Replace with generated types from Supabase
+export type Database = any; // TODO: Generate types from Supabase CLI

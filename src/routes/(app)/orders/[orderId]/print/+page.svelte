@@ -6,7 +6,7 @@
 	export let data: PageData;
 	const order = data.order;
 
-	// Date formatting functions
+	// Receipt date formatting
 	function formatDate(dateString: string) {
 		return new Intl.DateTimeFormat('en-US', {
 			month: 'short',
@@ -53,9 +53,9 @@
 
 	// Calculate subtotal and tax for receipt
 	$: subtotal = order.total_amount;
-	$: tax = 0; // No tax for now, but can be calculated if needed
+	$: tax = 0; // Tax calculation disabled
 	$: totalWithTax = subtotal + tax;
-	// Auto-trigger print dialog when page loads
+	// Start printing once page loads
 	onMount(() => {
 		// Small delay to ensure page is fully rendered
 		setTimeout(() => {

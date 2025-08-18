@@ -18,7 +18,7 @@ export const actions: Actions = {
 			});
 		}
 
-		// Basic email validation
+		// Validate email format
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(email)) {
 			return fail(400, {
@@ -28,14 +28,20 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Send password reset email using Supabase
-			const { error } = await supabase.auth.resetPasswordForEmail(email, {
+			// Trigger password reset flow
+			console.log('Attempting password reset for:', email);
+			console.log('Redirect URL:', `${url.origin}/auth/reset-password`);
+			
+			const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
 				redirectTo: `${url.origin}/auth/reset-password`,
 			});
 
+			console.log('Supabase response:', { data, error });
+
 			if (error) {
+				console.error('Supabase password reset error:', error);
 				return fail(400, {
-					error: error.message,
+					error: `Supabase error: ${error.message}`,
 					email
 				});
 			}
@@ -44,9 +50,9 @@ export const actions: Actions = {
 				success: true
 			};
 		} catch (error: any) {
-			console.error('Password reset error:', error);
+			console.error('Password reset exception:', error);
 			return fail(500, {
-				error: 'Failed to send reset email. Please try again.',
+				error: `Exception: ${error.message}`,
 				email
 			});
 		}

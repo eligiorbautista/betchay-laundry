@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	// Mock data for frontend development - based on actual services used in orders
+	// Service pricing configuration
 	return {
 		servicePricing: [
 			{ id: '1', service_name: 'Wash & Fold', price: 50, description: 'Basic wash and fold service', is_active: true },

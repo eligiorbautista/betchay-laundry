@@ -2,12 +2,12 @@ import { writable } from 'svelte/store';
 import type { Order } from '$lib/types/order';
 
 // Create the writable store - initialize with empty array
-// Mock data is now handled in +page.server.ts files
+// Server provides initial data
 export const ordersStore = writable<Order[]>([]);
 
-// Actions for managing orders (for client-side state management)
+// Client-side order operations
 export const orderActions = {
-    // Initialize store with data from server
+    // Load orders from backend
     initialize: (orders: Order[]): void => {
         ordersStore.set(orders);
     },

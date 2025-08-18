@@ -32,7 +32,7 @@ export const actions: Actions = {
 
 		try {
 			// Here you would typically validate the 2FA code
-			// For now, we'll simulate success
+			// TODO: Implement actual 2FA verification
 			
 			return {
 				success: true

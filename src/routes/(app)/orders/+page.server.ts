@@ -184,7 +184,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			remarks: 'Customer cancelled - change of plans'
 		},
 
-		// Additional examples to showcase variety
+		// Sample orders for demo
 		{
 			id: 'ORD-010',
 			order_number: 'ORD-010',
@@ -244,7 +244,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		}
 	];
 
-	// Simulate loading delay
+	// Brief loading simulation
 	await new Promise(resolve => setTimeout(resolve, 100));
 
 	return {

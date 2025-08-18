@@ -31,10 +31,10 @@
 
 	const orderId = $page.params.orderId;
 	const order = data.order;
-	// Loading states
+	// Status update state
 	let isUpdatingStatus = false;
 
-	// Date formatting functions
+	// Date display utilities
 	function formatDate(dateString: string) {
 		return new Intl.DateTimeFormat('en-US', {
 			month: 'short',
@@ -154,20 +154,20 @@
 		}
 	}
 
-	// Status update functions
+	// Handle order status changes
 	async function updateOrderStatus(newStatus: string) {
 		if (isUpdatingStatus) return;
 
 		isUpdatingStatus = true;
 		try {
-			// Mock API call - in real app, this would call your backend
+			// TODO: Replace with actual API call
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 
-			// For now, we'll just show success and redirect to refresh
+			// Reload page to show updated status
 			console.log(`Updating order ${orderId} status to: ${newStatus}`);
 
-			// In a real app, you'd update the order data here
-			// For now, let's reload the page to simulate the update
+			// TODO: Replace with actual API call
+			// Temporary: reload to show changes
 			window.location.reload();
 		} catch (error) {
 			console.error('Failed to update status:', error);
@@ -182,7 +182,7 @@
 
 		isUpdatingStatus = true;
 		try {
-			// Mock API call
+			// TODO: Connect to actual delete endpoint
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 
 			console.log(`Updating order ${orderId} payment status to: ${newPaymentStatus}`);

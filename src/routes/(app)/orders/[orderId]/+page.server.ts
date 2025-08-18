@@ -188,7 +188,7 @@ export const load: PageServerLoad = async ({ params }) => {
 				remarks: 'Customer cancelled - change of plans'
 			},
 
-			// Additional examples to showcase variety
+			// Sample orders for demo
 			{
 				id: 'ORD-010',
 				order_number: 'ORD-010',

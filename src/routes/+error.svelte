@@ -3,11 +3,11 @@
 	import { goto } from '$app/navigation';
 	import { Home, ArrowLeft, RefreshCw } from 'lucide-svelte';
 
-	// Get error details from the page store
+	// Extract error info from SvelteKit
 	$: status = $page.status;
 	$: message = $page.error?.message || 'Something went wrong';
 
-	// Function to get appropriate error message based on status
+	// Map HTTP status to user-friendly message
 	function getErrorMessage(status: number): string {
 		switch (status) {
 			case 404:
@@ -23,7 +23,7 @@
 		}
 	}
 
-	// Function to get appropriate description based on status
+	// Detailed error descriptions by status code
 	function getErrorDescription(status: number): string {
 		switch (status) {
 			case 404:

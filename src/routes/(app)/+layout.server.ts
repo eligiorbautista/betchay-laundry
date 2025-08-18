@@ -6,7 +6,7 @@ export const load: LayoutServerLoad = async (event) => {
 	// Check if user is authenticated using server-side cookies
 	const session = await getServerSession(event);
 
-	// For now, rely on client-side protection due to cookie timing issues
+	// Using client-side auth protection
 	// Server-side protection can be re-enabled once cookie sync is perfected
 	
 	// Return user data (or null if no session)

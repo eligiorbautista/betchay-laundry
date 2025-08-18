@@ -8,7 +8,7 @@
 
 	export let data: PageData;
 	
-	// Extract data from server
+	// Load dashboard data from backend
 	let stats = data.stats;
 	let recentOrders: Order[] = data.recentOrders;
 	let recentActivities = data.recentActivities.map(activity => ({
@@ -16,15 +16,15 @@
 		timestamp: new Date(activity.timestamp)
 	}));
 
-	// Add loading state for demonstration
+	// Dashboard loading animation
 	let isLoading = true;	onMount(async () => {
-		// Simulate loading for demonstration
+		// Brief loading animation for UX
 		setTimeout(() => {
 			isLoading = false;
 		}, 1000);
 	});
 
-	// Helper function to get icon component from string name
+	// Map icon names to Lucide components
 	function getIconComponent(iconName: string) {
 		switch (iconName) {
 			case 'FileText': return FileText;

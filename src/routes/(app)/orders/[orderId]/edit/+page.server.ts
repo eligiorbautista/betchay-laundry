@@ -6,7 +6,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	try {
 		const orderId = params.orderId;
 
-		// Mock data - this would fetch from database
+		// TODO: Fetch actual order from database
 		const mockOrders: Order[] = [{
 			id: 'ORD-001',
 			order_number: 'ORD-001',

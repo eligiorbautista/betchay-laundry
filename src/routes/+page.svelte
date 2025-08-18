@@ -4,7 +4,7 @@
 	import { authStore, isAuthenticated } from '$lib/stores/authStore';
 
 	onMount(() => {
-		// Subscribe to auth store and redirect based on auth state
+		// Route to appropriate page based on login status
 		const unsubscribe = authStore.subscribe((state) => {
 			if (!state.loading) {
 				if (isAuthenticated(state)) {

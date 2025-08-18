@@ -1,21 +1,12 @@
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	// Mock data for frontend development
+	// Simplified approach - let client-side handle auth like other pages
+	// Return basic user profile data that will be populated by client-side auth
 	return {
 		userProfile: {
-			email: 'betchaylaundryhub@gmail.com',
+			email: '',
 			full_name: 'Admin User'
-		},
-		systemPreferences: {
-			// Notifications
-			enable_notifications: true,
-			enable_email_alerts: true,
-			enable_pickup_reminders: true
-		},
-		servicePricing: [
-			{ id: '1', service_name: 'Wash & Fold', price: 150, description: 'Basic wash and fold service', is_active: true },
-			{ id: '2', service_name: 'Dry Clean', price: 200, description: 'Professional dry cleaning', is_active: true }, 
-		]
+		}
 	};
 };

@@ -4,14 +4,14 @@ import type { User, Session } from '@supabase/supabase-js';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 
-// Type for our auth state
+// Auth state shape
 interface AuthState {
 	user: User | null;
 	session: Session | null;
 	loading: boolean;
 }
 
-// Initial state
+// Default auth values
 const initialState: AuthState = {
 	user: null,
 	session: null,
@@ -21,9 +21,12 @@ const initialState: AuthState = {
 // Create the store
 export const authStore = writable<AuthState>(initialState);
 
-// Auth helper functions
+// Flag to prevent redirects during password changes
+let isChangingPassword = false;
+
+// Main auth operations
 export const auth = {
-	// Initialize auth state - call this when app starts
+	// Setup session listener and initial state
 	async initialize() {
 		if (!browser) {
 			return;
@@ -39,7 +42,7 @@ export const auth = {
 				return;
 			}
 
-			// Update store with session data
+			// Set initial session if found
 			authStore.set({
 				user: session?.user || null,
 				session: session,
@@ -54,14 +57,34 @@ export const auth = {
 					loading: false
 				});
 
-				// Handle redirects based on auth state
+				// Navigate user based on login status
 				if (event === 'SIGNED_IN' && session) {
-					setTimeout(() => goto('/dashboard'), 100);
+					// Don't redirect if we're currently changing password
+					if (isChangingPassword) {
+						return;
+					}
+					// Only redirect to dashboard if we're on any auth page or root
+					// Don't redirect from app pages (like settings during password change)
+					// Don't redirect from password reset page (user needs to set new password first)
+					const currentPath = window.location.pathname;
+					if (currentPath === '/auth/reset-password') {
+						// User is on password reset page - don't redirect, let them set new password
+						return;
+					}
+					if (currentPath.startsWith('/auth/') || currentPath === '/') {
+						setTimeout(() => goto('/dashboard'), 100);
+					}
 				} else if (event === 'SIGNED_OUT') {
 					setTimeout(() => goto('/auth/login'), 100);
 				} else if (event === 'INITIAL_SESSION' && session) {
-					// If we have a session and we're on login page, redirect to dashboard
-					if (window.location.pathname === '/auth/login' || window.location.pathname === '/') {
+					// If we have a session and we're on any auth page or root, redirect to dashboard
+					// Don't redirect from password reset page (user needs to set new password first)
+					const currentPath = window.location.pathname;
+					if (currentPath === '/auth/reset-password') {
+						// User is on password reset page - don't redirect, let them set new password
+						return;
+					}
+					if (currentPath.startsWith('/auth/') || currentPath === '/') {
 						setTimeout(() => goto('/dashboard'), 100);
 					}
 				}
@@ -73,7 +96,7 @@ export const auth = {
 		}
 	},
 
-	// Sign up with email and password
+	// Create new user account
 	async signUp(email: string, password: string) {
 		try {
 			const { data, error } = await supabase.auth.signUp({
@@ -95,7 +118,7 @@ export const auth = {
 		}
 	},
 
-	// Sign in with email and password
+	// User login with credentials
 	async signIn(email: string, password: string) {
 		try {
 			const { data, error } = await supabase.auth.signInWithPassword({
@@ -109,7 +132,7 @@ export const auth = {
 
 			// If we have a session, manually trigger redirect as backup
 			if (data.session && data.user) {
-				// Wait a bit for the auth state change to potentially fire first
+				// Backup redirect if auth listener doesn't trigger
 				setTimeout(() => {
 					if (window.location.pathname === '/auth/login') {
 						goto('/dashboard');
@@ -187,31 +210,88 @@ export const auth = {
 	// Update password (after reset)
 	async updatePassword(newPassword: string) {
 		try {
+			// Set flag to prevent redirects during password change
+			isChangingPassword = true;
+			
 			const { error } = await supabase.auth.updateUser({
 				password: newPassword
 			});
 
 			if (error) {
+				isChangingPassword = false;
 				throw error;
 			}
 
+			// Sign out the user after password update - they need to log in with new password
+			await supabase.auth.signOut();
+			isChangingPassword = false;
+
 			return { success: true };
 		} catch (error: any) {
+			isChangingPassword = false;
 			console.error('Password update error:', error);
 			return { 
 				success: false, 
 				error: error.message || 'Failed to update password' 
 			};
 		}
+	},
+
+	// Change password with redirect prevention
+	async changePassword(currentPassword: string, newPassword: string) {
+		if (!browser) {
+			return { success: false, error: 'Not in browser' };
+		}
+
+		try {
+			// Set flag to prevent redirects during password change
+			isChangingPassword = true;
+
+			// Get current user
+			const { data: { user } } = await supabase.auth.getUser();
+			if (!user?.email) {
+				throw new Error('User not found');
+			}
+
+			// Try to verify current password by attempting sign in
+			const { error: verifyError } = await supabase.auth.signInWithPassword({
+				email: user.email,
+				password: currentPassword
+			});
+
+			if (verifyError) {
+				throw new Error('Current password is incorrect');
+			}
+
+			// Update password
+			const { error: updateError } = await supabase.auth.updateUser({
+				password: newPassword
+			});
+
+			if (updateError) throw updateError;
+
+			return { success: true };
+		} catch (error: any) {
+			console.error('Error changing password:', error);
+			return {
+				success: false,
+				error: error.message || 'Failed to change password'
+			};
+		} finally {
+			// Always clear the flag after password change attempt
+			setTimeout(() => {
+				isChangingPassword = false;
+			}, 1000); // Give auth events time to complete
+		}
 	}
 };
 
-// Helper function to check if user is authenticated
+// Check if user has valid session
 export const isAuthenticated = (state: AuthState): boolean => {
 	return !state.loading && state.user !== null && state.session !== null;
 };
 
-// Helper function to get user email
+// Extract email from current user
 export const getUserEmail = (state: AuthState): string | null => {
 	return state.user?.email || null;
 };

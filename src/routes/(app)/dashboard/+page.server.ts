@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import type { Order } from '$lib/types/order';
 
 export const load: PageServerLoad = async ({ params, url }) => {
-	// Mock dashboard stats
+	// Dashboard overview data
 	const stats = {
 		totalOrders: 156,
 		pendingOrders: 12,
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		loading: false
 	};
 
-	// Mock recent orders data
+	// Latest order activity
 	const recentOrders: Order[] = [
 		// PENDING Orders
 		{
@@ -194,7 +194,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			remarks: 'Customer cancelled - change of plans'
 		},
 
-		// Additional examples to showcase variety
+		// Sample orders for demo
 		{
 			id: 'ORD-010',
 			order_number: 'ORD-010',
@@ -254,7 +254,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		}
 	];
 
-	// Mock recent activities data
+	// System activity feed
 	const recentActivities = [
 		{
 			type: 'order',
@@ -286,7 +286,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		}
 	];
 
-	// Simulate loading delay for development
+	// Brief delay for demo purposes
 	await new Promise(resolve => setTimeout(resolve, 100));
 
 	return {

@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import type { ReportsData } from '$lib/types/report';
 
 export const load: PageServerLoad = async ({ params, url }) => {
-	// Mock reports data based on the orders data structure
+	// Generate reports from order data
 	const reportsData: ReportsData = {
 		summary: {
 			totalRevenue: 45275.42,
@@ -77,7 +77,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		}
 	};
 
-	// Simulate loading delay for development
+	// Brief loading simulation
 	await new Promise(resolve => setTimeout(resolve, 150));
 
 	return {

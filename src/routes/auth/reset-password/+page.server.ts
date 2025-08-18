@@ -3,7 +3,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { supabase } from '$lib/config/supabaseClient';
 
 export const load: PageServerLoad = async ({ url }) => {
-	// Supabase automatically handles the token validation
+	// Extract tokens from URL params
 	// We just need to check if we have the required URL fragments
 	const accessToken = url.searchParams.get('access_token');
 	const refreshToken = url.searchParams.get('refresh_token');

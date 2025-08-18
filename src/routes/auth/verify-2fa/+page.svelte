@@ -26,7 +26,7 @@
 	// Handle resend OTP
 	function handleResend() {
 		resendLoading = true;
-		// You can implement the resend logic here
+		// TODO: Implement actual OTP resend
 		setTimeout(() => {
 			resendLoading = false;
 			toast.success('OTP resent successfully!');

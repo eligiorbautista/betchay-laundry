@@ -8,8 +8,8 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 	try {
 		const orderId = params.orderId;
 
-		// Mock data - this would fetch from database
-		// For now, we'll use the same mock data as the main order view
+		// TODO: Fetch order data from database
+		// Using same data structure as order detail
 		const mockOrders: Order[] = [
 			{
 				id: 'ORD-001',

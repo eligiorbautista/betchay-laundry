@@ -10,6 +10,7 @@
 
 	let currentTime = new Date();
 	let timeInterval: any;
+	let showDropdown = false;
 
 	onMount(() => {
 		timeInterval = setInterval(() => {
@@ -40,7 +41,7 @@
 		}
 	}
 
-	// Get user email and avatar initial
+	// User display info from auth state
 	$: userEmail = getUserEmail($authStore) || 'Unknown User';
 	$: avatarInitial = userEmail.charAt(0).toUpperCase();
 
@@ -111,41 +112,54 @@
 		</div>
 
 		<!-- user menu -->
-		<div class="dropdown dropdown-end">
-			<div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+		<div class="relative">
+			<button 
+				class="btn btn-ghost btn-circle"
+				on:click={() => showDropdown = !showDropdown}
+				on:blur={() => setTimeout(() => showDropdown = false, 150)}
+			>
 				<div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-900 transition-colors">
 					<span class="text-sm font-medium">
 						{avatarInitial}
 					</span>
 				</div>
-			</div>
+			</button>
 			
-			<ul class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-white rounded-lg w-72 sm:w-64 border border-gray-200">
-				<li class="menu-title">
-					<div class="flex items-center gap-2 px-2 py-2">
-						<User class="w-4 h-4 text-gray-500 flex-shrink-0" />
-						<span class="text-xs text-gray-500 truncate min-w-0 flex-1">
-							{userEmail}
-						</span>
+			{#if showDropdown}
+				<div class="absolute right-0 top-full mt-2 w-64 sm:w-72 z-50">
+					<div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+						<!-- User Info Section -->
+						<div class="px-4 py-3 border-b border-gray-100">
+							<div class="flex items-center gap-3">
+								<User class="w-4 h-4 text-gray-500 flex-shrink-0" />
+								<span class="text-xs text-gray-600 truncate">
+									{userEmail}
+								</span>
+							</div>
+						</div>
+						
+						<!-- Menu Items -->
+						<div class="py-1">
+							<a 
+								href="/settings" 
+								class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+								on:click={() => showDropdown = false}
+							>
+								<Settings class="w-4 h-4" />
+								<span class="text-sm">Settings</span>
+							</a>
+							
+							<button 
+								on:click={() => { showDropdown = false; handleLogout(); }}
+								class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors w-full text-left"
+							>
+								<LogOut class="w-4 h-4" />
+								<span class="text-sm">Logout</span>
+							</button>
+						</div>
 					</div>
-				</li>
-				<div class="divider my-1"></div>
-				<li>
-					<a href="/settings" class="flex items-center gap-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded px-2 py-2">
-						<Settings class="w-4 h-4" />
-						Settings
-					</a>
-				</li>
-				<li>
-					<button 
-						on:click={handleLogout}
-						class="flex items-center gap-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded px-2 py-2 w-full text-left"
-					>
-						<LogOut class="w-4 h-4" />
-						Logout
-					</button>
-				</li>
-			</ul>
+				</div>
+			{/if}
 		</div>
 	</div>
 </header>

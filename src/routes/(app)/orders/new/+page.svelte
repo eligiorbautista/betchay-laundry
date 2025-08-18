@@ -13,7 +13,9 @@
 		Plus
 	} from 'lucide-svelte';
 
-	export let data: PageData;	// Form data
+	export let data: PageData;
+
+	// Order form state
 	let formData = {
 		customer_name: '',
 		customer_phone: '',
@@ -28,7 +30,7 @@
 		remarks: ''
 	};
 
-	// Get service types from server data
+	// Available services from backend
 	$: serviceTypes = data.servicePricing || [];	const paymentMethods = [
 		{ value: 'cash', label: 'Cash' },
 		{ value: 'gcash', label: 'GCash' },
@@ -51,7 +53,7 @@
 		{ value: 'cancelled', label: 'Cancelled' }
 	];
 
-	// Loading state
+	// Form submission state
 	let isSubmitting = false;
 
 	// Computed total amount
@@ -130,10 +132,10 @@
 				updated_at: new Date().toISOString()
 			};
 
-			// TODO: Save to database/API
+			// NOTE: Database integration pending
 			console.log('New Order:', newOrder);
 
-			// For now, just show success and redirect
+			// Show success feedback and navigate
 			alert('Order created successfully!');
 			goto('/orders');
 		} catch (error) {

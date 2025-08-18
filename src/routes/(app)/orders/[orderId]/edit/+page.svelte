@@ -18,7 +18,7 @@
 
 	const orderId = $page.params.orderId;
 
-	// Form data - initialize with existing order data
+	// Pre-populate form with current order values
 	let formData = {
 		customer_name: data.order.customer_name,
 		customer_phone: data.order.customer_phone || '',
@@ -33,7 +33,7 @@
 		remarks: data.order.remarks || ''
 	};
 
-	// Get service types from server data
+	// Available services from backend
 	$: serviceTypes = data.servicePricing || [];
 
 	const paymentMethods = [
@@ -130,10 +130,10 @@
 				updated_at: new Date().toISOString()
 			};
 
-			// TODO: Save to database/API
+			// NOTE: Database integration pending
 			console.log('Updated Order:', updatedOrder);
 			
-			// For now, just show success and redirect
+			// Show success feedback and navigate
 			alert('Order updated successfully!');
 			goto(`/orders/${orderId}`);
 			

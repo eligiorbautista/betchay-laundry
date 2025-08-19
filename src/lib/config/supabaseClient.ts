@@ -17,6 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 		autoRefreshToken: true,
 		persistSession: true,
 		detectSessionInUrl: true,
+		flowType: 'implicit', // Use implicit flow for simplicity
 		// Use cookies instead of localStorage for better security
 		storage: {
 			getItem: (key: string) => {

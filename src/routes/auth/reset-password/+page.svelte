@@ -3,11 +3,11 @@
 	import { page } from '$app/stores';
 	import { toast } from 'svelte-sonner';
 	import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-svelte';
+	import { supabase } from '$lib/config/supabaseClient';
 	import { auth } from '$lib/stores/authStore';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	export let form: { success?: boolean; error?: string } = {};
-	export const data: { accessToken?: string; refreshToken?: string } = {};
 
 	let loading = false;
 	let showPassword = false;
@@ -17,102 +17,229 @@
 	let validSession = false;
 	let hasError = false;
 	let errorMessage = '';
+	let authStateListener: any = null;
 	
-	// Check for valid session on mount
+	// Handle password reset token processing on mount
 	onMount(async () => {
-		// Check for errors in URL hash (e.g., #error=access_denied&error_code=otp_expired)
+		console.log('Password reset page loaded:', window.location.href);
+		
 		const hash = window.location.hash;
-		if (hash.includes('error=')) {
-			hasError = true;
-			const urlParams = new URLSearchParams(hash.replace('#', ''));
-			const errorCode = urlParams.get('error_code');
-			const errorDescription = urlParams.get('error_description');
+		console.log('URL hash:', hash);
+		
+		// Set up auth state change listener to detect session changes
+		authStateListener = supabase.auth.onAuthStateChange((event, session) => {
+			console.log('Auth state change:', event, session?.user?.email);
+			
+			if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+				if (session?.user) {
+					validSession = true;
+					console.log('Session established via auth state change for:', session.user.email);
+				}
+			} else if (event === 'SIGNED_OUT') {
+				validSession = false;
+			}
+		});
+		
+		// Handle tokens in URL hash manually (for localhost issues)
+		if (hash && (hash.includes('access_token=') || hash.includes('refresh_token='))) {
+			console.log('Found auth tokens in URL, processing manually...');
+			console.log('Full hash content:', hash);
+			
+			try {
+				// Parse the hash parameters
+				const hashParams = new URLSearchParams(hash.replace('#', ''));
+				const accessToken = hashParams.get('access_token');
+				const refreshToken = hashParams.get('refresh_token');
+				const tokenType = hashParams.get('type');
+				const expiresIn = hashParams.get('expires_in');
+				
+				console.log('Parsed tokens:', { 
+					hasAccessToken: !!accessToken, 
+					hasRefreshToken: !!refreshToken, 
+					type: tokenType,
+					expiresIn: expiresIn,
+					accessTokenLength: accessToken?.length,
+					refreshTokenLength: refreshToken?.length
+				});
+				
+				// Log all hash parameters for debugging
+				console.log('All hash parameters:');
+				for (const [key, value] of hashParams.entries()) {
+					console.log(`  ${key}: ${key.includes('token') ? `${value.substring(0, 10)}...` : value}`);
+				}
+				
+				// Verify this is a password reset flow
+				if (accessToken && refreshToken && tokenType === 'recovery') {
+					console.log('Setting session manually with recovery tokens...');
+					
+					// Set the session manually
+					const { data, error } = await supabase.auth.setSession({
+						access_token: accessToken,
+						refresh_token: refreshToken
+					});
+					
+					console.log('setSession result:', { 
+						hasSession: !!data.session, 
+						user: data.session?.user?.email,
+						error: error?.message 
+					});
+					
+					if (error) {
+						console.error('Error setting session:', error);
+						hasError = true;
+						errorMessage = `Invalid or expired reset link: ${error.message}`;
+						toast.error(errorMessage);
+					} else if (data.session?.user) {
+						validSession = true;
+						console.log('✅ Session set successfully for:', data.session.user.email);
+						
+						// Clear the hash from URL to clean up
+						window.history.replaceState(null, '', window.location.pathname);
+					} else {
+						console.error('❌ Session was not established despite no error');
+						hasError = true;
+						errorMessage = 'Failed to establish session. Please request a new password reset.';
+						toast.error(errorMessage);
+					}
+				} else {
+					console.error('❌ Invalid token type or missing tokens:', { 
+						tokenType, 
+						hasAccessToken: !!accessToken, 
+						hasRefreshToken: !!refreshToken,
+						expectedType: 'recovery'
+					});
+					hasError = true;
+					errorMessage = 'Invalid reset link format. Please request a new password reset.';
+					toast.error(errorMessage);
+				}
+			} catch (error) {
+				console.error('❌ Error processing tokens:', error);
+				hasError = true;
+				errorMessage = 'Error processing reset link. Please request a new password reset.';
+				toast.error(errorMessage);
+			}
+		} else if (hash && hash.includes('error=')) {
+			// Handle explicit errors in URL
+			console.log('Error found in URL hash');
+			const errorParams = new URLSearchParams(hash.replace('#', ''));
+			const errorCode = errorParams.get('error_code');
+			const errorDescription = errorParams.get('error_description');
 			
 			if (errorCode === 'otp_expired') {
 				errorMessage = 'This password reset link has expired. Please request a new one.';
 			} else if (errorDescription) {
-				errorMessage = decodeURIComponent(errorDescription);
+				errorMessage = `Reset link error: ${errorDescription}`;
 			} else {
 				errorMessage = 'Invalid password reset link. Please request a new one.';
 			}
-			
-			toast.error(errorMessage);
-			return;
-		}
-		
-		// Check if we have access token in URL (Supabase password reset)
-		const accessToken = $page.url.searchParams.get('access_token');
-		const refreshToken = $page.url.searchParams.get('refresh_token');
-		
-		if (accessToken && refreshToken) {
-			validSession = true;
-		} else if (!hasError) {
-			// No tokens and no error - invalid link
 			hasError = true;
-			errorMessage = 'Invalid password reset link. Please request a new password reset.';
 			toast.error(errorMessage);
+		} else {
+			// No tokens and no explicit error - check for existing session
+			console.log('No tokens in URL, checking for existing session...');
+			
+			const { data: { session }, error } = await supabase.auth.getSession();
+			console.log('Existing session check:', { 
+				hasSession: !!session, 
+				user: session?.user?.email,
+				error: error?.message 
+			});
+			
+			if (session?.user) {
+				validSession = true;
+				console.log('Found existing valid session for:', session.user.email);
+			} else {
+				// No session and no tokens - invalid access
+				hasError = true;
+				errorMessage = 'Invalid or missing password reset link. Please request a new password reset.';
+				toast.error(errorMessage);
+			}
 		}
 	});
-
-	// Handle client-side password update
-	async function handlePasswordUpdate() {
-		if (!password || !confirmPassword) {
-			toast.error('Please fill in all fields');
-			return;
+	
+	// Clean up auth listener on destroy
+	onDestroy(() => {
+		if (authStateListener) {
+			authStateListener.data.subscription.unsubscribe();
 		}
-
-		if (password !== confirmPassword) {
-			toast.error('Passwords do not match');
-			return;
-		}
-
-		if (password.length < 8) {
-			toast.error('Password must be at least 8 characters long');
-			return;
-		}
-
-		loading = true;
-		
-		try {
-			const result = await auth.updatePassword(password);
-			
-			if (result.success) {
-				toast.success('Password updated successfully! Redirecting to login...');
-				// Clear form
-				password = '';
-				confirmPassword = '';
-				// Redirect to login page after successful password update
-				setTimeout(() => {
-					window.location.href = '/auth/login';
-				}, 2000);
-			} else {
-				toast.error(result.error || 'Failed to update password. Please try again.');
-			}
-		} catch (error) {
-			console.error('Password update error:', error);
-			toast.error('An unexpected error occurred. Please try again.');
-		} finally {
-			loading = false;
-		}
-	};
+	});
 
 	// Handle form submission
 	function handleSubmit() {
 		loading = true;
-		return async ({ update, result }: { update: () => Promise<void>; result: { type: string; data?: { message?: string } } }) => {
-			loading = false;
-			
-			if (result.type === 'success') {
-				toast.success('Password updated successfully! Redirecting to login...');
-				// Redirect to login page after successful password update
-				setTimeout(() => {
-					window.location.href = '/auth/login';
-				}, 2000);
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Failed to update password. Please try again.');
+		return async ({ update, result }: { update: () => Promise<void>; result: { type: string; data?: { error?: string; success?: boolean; password?: string } } }) => {
+			try {
+				if (result.type === 'success' && result.data?.success) {
+					// Server-side validation passed, now update password with client-side session
+					console.log('Server validation passed, updating password with client session...');
+					
+					// Check if we have a valid session
+					const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+					
+					if (!session || sessionError) {
+						console.error('No valid session for password update:', sessionError);
+						toast.error('Session expired. Please request a new password reset.');
+						loading = false;
+						return;
+					}
+					
+					console.log('Updating password for user:', session.user.email);
+					
+					// Update password using the client-side session
+					const { error: updateError } = await supabase.auth.updateUser({
+						password: result.data.password
+					});
+					
+					if (updateError) {
+						console.error('Password update error:', updateError);
+						toast.error(updateError.message || 'Failed to update password. Please try again.');
+						loading = false;
+						return;
+					}
+					
+					console.log('Password updated successfully');
+					toast.success('Password updated successfully! Signing out...');
+					
+					// Clear form
+					password = '';
+					confirmPassword = '';
+					
+					// Sign out properly using the auth store
+					console.log('Signing out user after password change...');
+					
+					try {
+						await auth.signOut();
+						console.log('Successfully signed out via auth store');
+						toast.success('Password updated successfully! Redirecting to login...');
+					} catch (signOutError) {
+						console.error('Error signing out via auth store:', signOutError);
+						toast.error('Password updated but failed to sign out completely. Please login again.');
+					}
+					
+					// Clear any remaining session state
+					validSession = false;
+					
+					// Clean up auth listener to prevent memory leaks
+					if (authStateListener) {
+						authStateListener.data.subscription.unsubscribe();
+						authStateListener = null;
+					}
+					
+					// Redirect to login after a short delay
+					setTimeout(() => {
+						// The auth store signOut should handle the redirect, but ensure it happens
+						window.location.href = '/auth/login';
+					}, 1500);
+				} else if (result.type === 'failure') {
+					toast.error(result.data?.error || 'Failed to validate password. Please try again.');
+				}
+			} catch (error: any) {
+				console.error('Password update exception:', error);
+				toast.error('An error occurred while updating password. Please try again.');
+			} finally {
+				loading = false;
+				await update();
 			}
-			
-			await update();
 		};
 	}
 </script>
@@ -194,7 +321,6 @@
 				method="POST"
 				class="space-y-6"
 				use:enhance={handleSubmit}
-				on:submit|preventDefault={handlePasswordUpdate}
 			>
 					
 					<!-- New Password Field -->

@@ -30,10 +30,16 @@ export const actions: Actions = {
 		try {
 			// Trigger password reset flow
 			console.log('Attempting password reset for:', email);
-			console.log('Redirect URL:', `${url.origin}/auth/reset-password`);
+			
+			// Use explicit localhost URL for development
+			const redirectUrl = url.hostname === 'localhost' 
+				? `http://localhost:${url.port || 5173}/auth/reset-password`
+				: `${url.origin}/auth/reset-password`;
+			
+			console.log('Redirect URL:', redirectUrl);
 			
 			const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-				redirectTo: `${url.origin}/auth/reset-password`,
+				redirectTo: redirectUrl,
 			});
 
 			console.log('Supabase response:', { data, error });
@@ -41,7 +47,7 @@ export const actions: Actions = {
 			if (error) {
 				console.error('Supabase password reset error:', error);
 				return fail(400, {
-					error: `Supabase error: ${error.message}`,
+					error: error.message,
 					email
 				});
 			}
@@ -52,7 +58,7 @@ export const actions: Actions = {
 		} catch (error: any) {
 			console.error('Password reset exception:', error);
 			return fail(500, {
-				error: `Exception: ${error.message}`,
+				error: error.message || 'Failed to send reset email. Please try again.',
 				email
 			});
 		}

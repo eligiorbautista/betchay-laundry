@@ -2,49 +2,25 @@
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import { Mail, ArrowLeft } from 'lucide-svelte';
-	import { auth } from '$lib/stores/authStore';
 
 	export let form: { success?: boolean; error?: string, email?: string } = {};
 
 	let loading = false;
 	let email = form?.email || '';
 
-	// Handle client-side password reset
-	async function handleResetPassword() {
-		if (!email) {
-			toast.error('Please enter your email address');
-			return;
-		}
-
-		loading = true;
-		
-		try {
-			const result = await auth.resetPassword(email);
-			
-			if (result.success) {
-				toast.success('Password reset link sent! Check your email.');
-				email = ''; // Clear the form
-			} else {
-				toast.error(result.error || 'Failed to send reset link. Please try again.');
-			}
-		} catch (error) {
-			console.error('Password reset error:', error);
-			toast.error('An unexpected error occurred. Please try again.');
-		} finally {
-			loading = false;
-		}
-	}
-
-	// Handle form submission (fallback for non-JS users)
+	// Handle form submission
 	function handleSubmit() {
 		loading = true;
-		return async ({ update, result }: { update: () => Promise<void>; result: { type: string; data?: { message?: string } } }) => {
+		return async ({ update, result }: { update: () => Promise<void>; result: { type: string; data?: { error?: string; success?: boolean } } }) => {
 			loading = false;
 			
-			if (result.type === 'success') {
+			if (result.type === 'success' && result.data?.success) {
 				toast.success('Password reset link sent! Check your email.');
+				email = ''; // Clear the form on success
 			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Failed to send reset link. Please try again.');
+				toast.error(result.data?.error || 'Failed to send reset link. Please try again.');
+			} else if (result.type === 'error') {
+				toast.error('An unexpected error occurred. Please try again.');
 			}
 			
 			await update();
@@ -91,7 +67,6 @@
 				method="POST"
 				class="space-y-6"
 				use:enhance={handleSubmit}
-				on:submit|preventDefault={handleResetPassword}
 			>
 				<!-- Email Field -->
 				<div>

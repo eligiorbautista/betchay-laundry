@@ -1,17 +1,10 @@
 import type { PageServerLoad, Actions } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
-import { supabase } from '$lib/config/supabaseClient';
+import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ url }) => {
-	// Extract tokens from URL params
-	// We just need to check if we have the required URL fragments
-	const accessToken = url.searchParams.get('access_token');
-	const refreshToken = url.searchParams.get('refresh_token');
-	
-	return {
-		accessToken,
-		refreshToken
-	};
+	// For implicit flow, tokens are in URL hash (not available server-side)
+	// Client-side will handle session establishment
+	return {};
 };
 
 export const actions: Actions = {
@@ -20,7 +13,7 @@ export const actions: Actions = {
 		const password = data.get('password') as string;
 		const confirmPassword = data.get('confirmPassword') as string;
 
-		// Validation
+		// Basic validation only - session validation will be done client-side
 		if (!password || !confirmPassword) {
 			return fail(400, {
 				error: 'Password and confirmation are required'
@@ -39,26 +32,10 @@ export const actions: Actions = {
 			});
 		}
 
-		try {
-			// Update password using Supabase
-			const { error } = await supabase.auth.updateUser({
-				password: password
-			});
-
-			if (error) {
-				return fail(400, {
-					error: error.message
-				});
-			}
-			
-			return {
-				success: true
-			};
-		} catch (error: any) {
-			console.error('Password update error:', error);
-			return fail(500, {
-				error: 'Failed to update password. Please try again.'
-			});
-		}
+		// Return the validated data - actual password update will be handled client-side
+		return {
+			success: true,
+			password: password
+		};
 	}
 };

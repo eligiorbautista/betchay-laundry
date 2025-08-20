@@ -51,6 +51,8 @@ export const auth = {
 
 			// Listen for auth changes
 			supabase.auth.onAuthStateChange((event, session) => {
+				console.log('Auth state change:', event, !!session);
+				
 				authStore.set({
 					user: session?.user || null,
 					session: session,
@@ -72,10 +74,11 @@ export const auth = {
 						return;
 					}
 					if (currentPath.startsWith('/auth/') || currentPath === '/') {
-						setTimeout(() => goto('/dashboard'), 100);
+						console.log('Redirecting to dashboard after SIGNED_IN');
+						goto('/dashboard');
 					}
 				} else if (event === 'SIGNED_OUT') {
-					setTimeout(() => goto('/auth/login'), 100);
+					goto('/auth/login');
 				} else if (event === 'INITIAL_SESSION' && session) {
 					// If we have a session and we're on any auth page or root, redirect to dashboard
 					// Don't redirect from password reset page (user needs to set new password first)
@@ -85,7 +88,8 @@ export const auth = {
 						return;
 					}
 					if (currentPath.startsWith('/auth/') || currentPath === '/') {
-						setTimeout(() => goto('/dashboard'), 100);
+						console.log('Redirecting to dashboard after INITIAL_SESSION');
+						goto('/dashboard');
 					}
 				}
 			});
@@ -130,14 +134,13 @@ export const auth = {
 				throw error;
 			}
 
-			// If we have a session, manually trigger redirect as backup
+			console.log('Login successful, session:', !!data.session, 'user:', !!data.user);
+
+			// If we have a session, immediately redirect
 			if (data.session && data.user) {
-				// Backup redirect if auth listener doesn't trigger
-				setTimeout(() => {
-					if (window.location.pathname === '/auth/login') {
-						goto('/dashboard');
-					}
-				}, 500);
+				console.log('Immediate redirect to dashboard');
+				// Immediate redirect
+				goto('/dashboard');
 			}
 
 			return { success: true, data };

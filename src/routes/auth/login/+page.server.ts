@@ -46,10 +46,8 @@ export const actions: Actions = {
 
 			if (signInData.user) {
 				// Success - session is now stored in cookies via our custom storage
-				return {
-					success: true,
-					message: 'Login successful'
-				};
+				// Redirect to dashboard
+				throw redirect(302, '/dashboard');
 			} else {
 				return fail(400, {
 					error: 'Login failed. Please try again.',

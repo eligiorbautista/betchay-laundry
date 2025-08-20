@@ -26,13 +26,7 @@
 			
 			if (result.success) {
 				toast.success('Login successful!');
-				
-				// Final fallback: if still not redirected after 1 second, force redirect
-				setTimeout(() => {
-					if (window.location.pathname === '/auth/login') {
-						goto('/dashboard');
-					}
-				}, 1000);
+				// Auth store handles redirect automatically
 			} else {
 				toast.error(result.error || 'Login failed. Please try again.');
 			}

@@ -241,6 +241,44 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			created_at: '2025-01-09T13:20:00Z',
 			updated_at: '2025-01-12T16:30:00Z',
 			remarks: 'Satisfied customer - recommended by friend'
+		},
+		{
+			id: 'ORD-013',
+			order_number: 'ORD-013',
+			customer_name: 'Antonio Reyes',
+			customer_phone: '+639345612098',
+			customer_email: 'antonio.reyes@email.com',
+			status: 'processing',
+			payment_status: 'unpaid',
+			payment_method: 'gcash',
+			service_type: 'Wash & Fold',
+			quantity: 6.2,
+			unit_price: 50.00,
+			total_amount: 310.00,
+			pickup_date: '2025-01-15T11:00:00Z',
+			delivery_date: '2025-01-17T13:00:00Z',
+			created_at: '2025-01-14T14:20:00Z',
+			updated_at: '2025-01-15T09:15:00Z',
+			remarks: 'Payment pending - will pay via GCash upon completion'
+		},
+		{
+			id: 'ORD-014',
+			order_number: 'ORD-014',
+			customer_name: 'Isabella Santos',
+			customer_phone: '+639456723109',
+			customer_email: 'isabella.santos@email.com',
+			status: 'ready',
+			payment_status: 'unpaid',
+			payment_method: 'cash',
+			service_type: 'Premium Cleaning',
+			quantity: 3.8,
+			unit_price: 80.00,
+			total_amount: 304.00,
+			pickup_date: '2025-01-14T10:00:00Z',
+			delivery_date: '2025-01-16T14:00:00Z',
+			created_at: '2025-01-13T12:45:00Z',
+			updated_at: '2025-01-16T13:30:00Z',
+			remarks: 'Payment due on pickup - cash payment preferred'
 		}
 	];
 

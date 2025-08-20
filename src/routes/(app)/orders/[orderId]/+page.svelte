@@ -65,7 +65,7 @@
 			case 'pending':
 				return 'bg-orange-100 text-orange-800 border border-orange-200';
 			case 'processing':
-				return 'bg-gray-100 text-gray-800 border border-gray-200';
+				return 'bg-blue-100 text-blue-800 border border-blue-200';
 			case 'ready':
 				return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed':

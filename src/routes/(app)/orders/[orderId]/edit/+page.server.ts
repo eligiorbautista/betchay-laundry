@@ -1,10 +1,15 @@
 import type { PageServerLoad } from './$types';
 import type { Order } from '$lib/types/order';
 import { error } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/config/supabaseServer';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async (event) => {
+	const { params } = event;
 	try {
 		const orderId = params.orderId;
+		
+		// Create Supabase client
+		const supabase = createSupabaseServerClient(event);
 
 		// TODO: Fetch actual order from database
 		const mockOrders: Order[] = [{
@@ -72,14 +77,19 @@ export const load: PageServerLoad = async ({ params }) => {
 			throw error(404, 'Order not found');
 		}
 
-		// Service pricing data (same as new order page)
-		const servicePricing = [
-			{ id: '1', service_name: "Wash + Dry + Fold", price: 50, description: 'Basic wash and fold service', is_active: true },
+		// Fetch service pricing from database
+		const { data: servicePricing, error: servicePricingError } = await supabase
+			.from('service_pricing')
+			.select('*')
+			.order('service_name');
 
-		];
+		if (servicePricingError) {
+			console.error('Error fetching service pricing:', servicePricingError);
+		}
+		console.log(JSON.stringify(servicePricing, null, 2));
 		return {
 			order,
-			servicePricing
+			servicePricing: servicePricing || []
 		};
 	} catch (err) {
 		console.error('Error loading order for edit:', err);

@@ -31,7 +31,9 @@
 	};
 
 	// Available services from backend
-	$: serviceTypes = data.servicePricing || [];	const paymentMethods = [
+	$: serviceTypes = data.servicePricing || [];
+
+	const paymentMethods = [
 		{ value: 'cash', label: 'Cash' },
 		{ value: 'gcash', label: 'GCash' },
 		{ value: 'paymaya', label: 'PayMaya' },

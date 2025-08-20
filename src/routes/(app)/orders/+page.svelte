@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Search, Plus, Filter, Eye, Edit3, Package, Clock, CheckCircle, XCircle, Trash2, Phone, Calendar, Scale, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-svelte';
+	import { Search, Plus, Filter, Eye, Edit3, Package, Clock, CheckCircle, XCircle, Trash2, Phone, Calendar, Scale, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
 	import type { Order } from '$lib/types/order';
 	import type { PageData } from './$types';
@@ -8,19 +8,40 @@
 	
 	let orders: Order[] = data.orders;
 	let filteredOrders: Order[] = [];
+	let paginatedOrders: Order[] = [];
 	let loading = false;
 	let searchQuery = '';
 	let selectedStatus = 'all';
+	let selectedPaymentStatus = 'all';
 	let sortColumn = '';
 	let sortDirection: 'asc' | 'desc' = 'desc';
+	
+	// Pagination state
+	let currentPage = 1;
+	let itemsPerPage = 10;
+	let totalPages = 1;
+	let totalItems = 0;
 
 	const statusOptions = [
 		{ value: 'all', label: 'All Orders', count: 0, color: 'text-gray-600' },
 		{ value: 'pending', label: 'Pending', count: 0, color: 'text-orange-600' },
-		{ value: 'processing', label: 'Processing', count: 0, color: 'text-gray-700' },
+		{ value: 'processing', label: 'Processing', count: 0, color: 'text-blue-700' },
 		{ value: 'ready', label: 'Ready', count: 0, color: 'text-purple-600' },
 		{ value: 'completed', label: 'Completed', count: 0, color: 'text-emerald-600' },
 		{ value: 'cancelled', label: 'Cancelled', count: 0, color: 'text-red-600' }
+	];
+
+	const paymentStatusOptions = [
+		{ value: 'all', label: 'All Payments', count: 0, color: 'text-gray-600' },
+		{ value: 'paid', label: 'Paid', count: 0, color: 'text-emerald-600' },
+		{ value: 'unpaid', label: 'Unpaid', count: 0, color: 'text-red-600' }
+	];
+
+	const itemsPerPageOptions = [
+		{ value: 5, label: '5 per page' },
+		{ value: 10, label: '10 per page' },
+		{ value: 20, label: '20 per page' },
+		{ value: 50, label: '50 per page' }
 	];	onMount(async () => {
 		// Setup order counts and filtering
 		updateCounts();
@@ -28,12 +49,18 @@
 	});
 
 	function updateCounts() {
+		// Status counts
 		statusOptions[0].count = orders.length; // All
 		statusOptions[1].count = orders.filter(o => o.status === 'pending').length;
 		statusOptions[2].count = orders.filter(o => o.status === 'processing').length;
 		statusOptions[3].count = orders.filter(o => o.status === 'ready').length;
 		statusOptions[4].count = orders.filter(o => o.status === 'completed').length;
 		statusOptions[5].count = orders.filter(o => o.status === 'cancelled').length;
+
+		// Payment status counts
+		paymentStatusOptions[0].count = orders.length; // All
+		paymentStatusOptions[1].count = orders.filter(o => o.payment_status === 'paid').length;
+		paymentStatusOptions[2].count = orders.filter(o => o.payment_status === 'unpaid').length;
 	}	function applyFilters() {
 		let filtered = [...orders];
 
@@ -52,6 +79,11 @@
 			filtered = filtered.filter(order => order.status === selectedStatus);
 		}
 
+		// Filter by payment status
+		if (selectedPaymentStatus !== 'all') {
+			filtered = filtered.filter(order => order.payment_status === selectedPaymentStatus);
+		}
+
 		// Sort orders by column if active, otherwise default to newest first
 		if (sortColumn) {
 			sortByColumn(filtered, sortColumn, sortDirection);
@@ -61,6 +93,65 @@
 		}
 		
 		filteredOrders = filtered;
+		
+		// Update pagination
+		updatePagination();
+	}
+	
+	function updatePagination() {
+		totalItems = filteredOrders.length;
+		totalPages = Math.ceil(totalItems / itemsPerPage);
+		
+		// Ensure current page is valid
+		if (currentPage > totalPages && totalPages > 0) {
+			currentPage = totalPages;
+		} else if (currentPage < 1) {
+			currentPage = 1;
+		}
+		
+		// Calculate pagination slice
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		const endIndex = startIndex + itemsPerPage;
+		paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+	}
+	
+	function goToPage(page: number) {
+		if (page >= 1 && page <= totalPages) {
+			currentPage = page;
+			updatePagination();
+		}
+	}
+	
+	function changeItemsPerPage(newItemsPerPage: number) {
+		itemsPerPage = newItemsPerPage;
+		currentPage = 1; // Reset to first page
+		updatePagination();
+	}
+	
+	function getPageNumbers() {
+		const delta = 2; // Number of pages to show on each side of current page
+		const range = [];
+		const rangeWithDots = [];
+		
+		for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+			range.push(i);
+		}
+		
+		if (currentPage - delta > 2) {
+			rangeWithDots.push(1, '...');
+		} else {
+			rangeWithDots.push(1);
+		}
+		
+		rangeWithDots.push(...range);
+		
+		if (currentPage + delta < totalPages - 1) {
+			rangeWithDots.push('...', totalPages);
+		} else if (totalPages > 1) {
+			rangeWithDots.push(totalPages);
+		}
+		
+		return rangeWithDots.filter((item, index, array) => array.indexOf(item) === index);
 	}
 	function handleColumnSort(column: string) {
 		if (sortColumn === column) {
@@ -126,7 +217,7 @@
 	function getStatusColor(status: string) {
 		switch (status) {
 			case 'pending': return 'bg-orange-50 text-orange-700 border-orange-200';
-			case 'processing': return 'bg-gray-50 text-gray-700 border-gray-200';
+			case 'processing': return 'bg-blue-50 text-blue-700 border-blue-200';
 			case 'ready': return 'bg-purple-50 text-purple-700 border-purple-200';
 			case 'completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
 			case 'cancelled': return 'bg-red-50 text-red-700 border-red-200';
@@ -137,7 +228,7 @@
 	function getStatusBadgeColor(status: string) {
 		switch (status) {
 			case 'pending': return 'bg-orange-100 text-orange-800 border border-orange-200';
-			case 'processing': return 'bg-gray-100 text-gray-800 border border-gray-200';
+			case 'processing': return 'bg-blue-100 text-blue-800 border border-blue-200';
 			case 'ready': return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'cancelled': return 'bg-red-100 text-red-800 border border-red-200';
@@ -270,7 +361,8 @@
 	function getTotalWeight(order: Order) {
 		return order.quantity || 0;
 	}	// Reactive statements
-	$: if (searchQuery !== '' || selectedStatus !== 'all' || sortColumn || sortDirection) {
+	$: if (searchQuery !== '' || selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || sortColumn || sortDirection) {
+		currentPage = 1; // Reset to first page when filters change
 		applyFilters();
 	}
 </script>
@@ -300,7 +392,7 @@
 		</div>
 	</div>	<!-- Filters and Search -->
 	<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6">
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+		<div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
 			<!-- Search -->
 			<div class="relative">
 				<Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
@@ -321,6 +413,33 @@
 				>
 					{#each statusOptions as option}
 						<option value={option.value} class={option.color}>{option.label} ({option.count})</option>
+					{/each}
+				</select>
+			</div>
+
+			<!-- Payment Status Filter -->
+			<div class="relative">
+				<CreditCard class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
+				<select
+					bind:value={selectedPaymentStatus}
+					class="w-full pl-9 md:pl-10 pr-8 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 appearance-none bg-white text-sm md:text-base"
+				>
+					{#each paymentStatusOptions as option}
+						<option value={option.value} class={option.color}>{option.label} ({option.count})</option>
+					{/each}
+				</select>
+			</div>
+
+			<!-- Items Per Page -->
+			<div class="relative">
+				<Package class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
+				<select
+					bind:value={itemsPerPage}
+					on:change={(e) => changeItemsPerPage(parseInt((e.target as HTMLSelectElement).value))}
+					class="w-full pl-9 md:pl-10 pr-8 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 appearance-none bg-white text-sm md:text-base"
+				>
+					{#each itemsPerPageOptions as option}
+						<option value={option.value}>{option.label}</option>
 					{/each}
 				</select>
 			</div>
@@ -356,23 +475,70 @@
 			</select>
 		</div>
 		
-		<!-- Sort indicator -->
-		{#if sortColumn}
-			<div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-800">
-				<div class="flex items-center gap-2">
-					<svelte:component this={getSortIcon(sortColumn)} class="w-4 h-4" />
-					<span>Sorted by {sortColumn.replace('_', ' ')} ({sortDirection === 'asc' ? 'ascending' : 'descending'})</span>
-				</div>
+		<!-- Filter indicators and clear options -->
+		<div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-800">
+			<div class="flex flex-wrap items-center gap-3">
+				{#if sortColumn}
+					<div class="flex items-center gap-2">
+						<svelte:component this={getSortIcon(sortColumn)} class="w-4 h-4" />
+						<span>Sorted by {sortColumn.replace('_', ' ')} ({sortDirection === 'asc' ? 'ascending' : 'descending'})</span>
+						<button 
+							on:click={() => { sortColumn = ''; applyFilters(); }}
+							class="text-gray-500 hover:text-red-600 transition-colors text-sm flex items-center gap-1"
+							title="Clear sorting"
+						>
+							<XCircle class="w-3 h-3" />
+						</button>
+					</div>
+				{/if}
+				
+				{#if selectedStatus !== 'all' || selectedPaymentStatus !== 'all'}
+					<div class="flex items-center gap-2">
+						<span class="text-gray-600">Active filters:</span>
+						{#if selectedStatus !== 'all'}
+							<span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+								Status: {statusOptions.find(o => o.value === selectedStatus)?.label}
+								<button 
+									on:click={() => { selectedStatus = 'all'; applyFilters(); }}
+									class="text-gray-500 hover:text-red-600 transition-colors"
+									title="Clear status filter"
+								>
+									<XCircle class="w-3 h-3" />
+								</button>
+							</span>
+						{/if}
+						{#if selectedPaymentStatus !== 'all'}
+							<span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+								Payment: {paymentStatusOptions.find(o => o.value === selectedPaymentStatus)?.label}
+								<button 
+									on:click={() => { selectedPaymentStatus = 'all'; applyFilters(); }}
+									class="text-gray-500 hover:text-red-600 transition-colors"
+									title="Clear payment filter"
+								>
+									<XCircle class="w-3 h-3" />
+								</button>
+							</span>
+						{/if}
+					</div>
+				{/if}
+			</div>
+			
+			{#if sortColumn || selectedStatus !== 'all' || selectedPaymentStatus !== 'all'}
 				<button 
-					on:click={() => { sortColumn = ''; applyFilters(); }}
+					on:click={() => { 
+						sortColumn = ''; 
+						selectedStatus = 'all'; 
+						selectedPaymentStatus = 'all'; 
+						applyFilters(); 
+					}}
 					class="text-gray-500 hover:text-red-600 transition-colors text-sm flex items-center gap-1"
-					title="Clear sorting"
+					title="Clear all filters and sorting"
 				>
 					<XCircle class="w-4 h-4" />
-					Clear sorting
+					Clear all
 				</button>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 	<!-- Orders List -->
 	<div class="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -385,11 +551,11 @@
 				<Package class="w-12 md:w-16 h-12 md:h-16 text-gray-300 mx-auto mb-4" />
 				<h3 class="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
 				<p class="text-gray-600 mb-6 text-sm md:text-base">
-					{searchQuery || selectedStatus !== 'all' 
+					{searchQuery || selectedStatus !== 'all' || selectedPaymentStatus !== 'all'
 						? 'Try adjusting your search or filters.' 
 						: 'Get started by creating your first order.'}
 				</p>
-				{#if !searchQuery && selectedStatus === 'all'}
+				{#if !searchQuery && selectedStatus === 'all' && selectedPaymentStatus === 'all'}
 					<a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm md:text-base">
 						<Plus class="w-4 md:w-5 h-4 md:h-5 mr-2" />
 						Create First Order
@@ -541,7 +707,7 @@
 				</div>
 			</div>			<!-- Orders List -->
 			<div class="space-y-4">
-				{#each filteredOrders as order}
+				{#each paginatedOrders as order}
 					<!-- Desktop Layout (xl and up) -->
 					<div class="hidden xl:block border border-gray-200 rounded-lg p-4 md:p-6 hover:border-gray-300 hover:shadow-md transition-all duration-200">
 						<div class="grid grid-cols-12 gap-4 items-center">
@@ -883,11 +1049,66 @@
 						</div>
 					</div>
 				{/each}
-			</div>			<!-- Footer with count -->
+			</div>			<!-- Footer with pagination -->
 			<div class="border-t border-gray-100 px-4 md:px-6 py-4">
-				<p class="text-sm text-gray-600">
-					Showing {filteredOrders.length} of {orders.length} orders
-				</p>
+				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+					<!-- Results count -->
+					<div class="text-sm text-gray-600 text-center sm:text-left">
+						{#if totalItems > 0}
+							Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} orders
+							{#if totalItems !== orders.length}
+								(filtered from {orders.length} total)
+							{/if}
+						{:else}
+							No orders found
+						{/if}
+					</div>
+
+					<!-- Pagination controls -->
+					{#if totalPages > 1}
+						<div class="flex items-center justify-center sm:justify-end">
+							<div class="flex items-center space-x-1 sm:space-x-2">
+								<!-- Previous button -->
+								<button
+									on:click={() => goToPage(currentPage - 1)}
+									disabled={currentPage <= 1}
+									class="flex items-center px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<ChevronLeft class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+									<span class="hidden sm:inline">Previous</span>
+								</button>
+
+								<!-- Page numbers -->
+								<div class="flex items-center space-x-1">
+									{#each getPageNumbers() as pageNum}
+										{#if pageNum === '...'}
+											<span class="px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-500">...</span>
+										{:else}
+											<button
+												on:click={() => goToPage(typeof pageNum === 'number' ? pageNum : parseInt(pageNum))}
+												class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg {currentPage === pageNum 
+													? 'bg-gray-800 text-white' 
+													: 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'}"
+											>
+												{pageNum}
+											</button>
+										{/if}
+									{/each}
+								</div>
+
+								<!-- Next button -->
+								<button
+									on:click={() => goToPage(currentPage + 1)}
+									disabled={currentPage >= totalPages}
+									class="flex items-center px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<span class="hidden sm:inline">Next</span>
+									<ChevronRight class="w-3 h-3 sm:w-4 sm:h-4 sm:ml-1" />
+								</button>
+							</div>
+						</div>
+					{/if}
+				</div>
 			</div>		{/if}
 	</div>
 </div>

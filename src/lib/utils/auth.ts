@@ -30,10 +30,18 @@ export function isAdmin(user: User | null): boolean {
  */
 export function isAdminSession(session: Session | null): boolean {
 	if (!session || !session.user) {
+		console.log('isAdminSession: No session or user');
 		return false;
 	}
 	
-	return isAdmin(session.user);
+	const result = isAdmin(session.user);
+	console.log('isAdminSession check:', {
+		userEmail: session.user.email,
+		adminEmail: ADMIN_EMAIL,
+		result: result
+	});
+	
+	return result;
 }
 
 /**

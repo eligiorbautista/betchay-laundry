@@ -136,12 +136,8 @@ export const auth = {
 
 			console.log('Login successful, session:', !!data.session, 'user:', !!data.user);
 
-			// If we have a session, immediately redirect
-			if (data.session && data.user) {
-				console.log('Immediate redirect to dashboard');
-				// Immediate redirect
-				goto('/dashboard');
-			}
+			// Don't redirect here - let the auth state change handler do it
+			// The auth store onAuthStateChange will handle the redirect
 
 			return { success: true, data };
 		} catch (error: any) {

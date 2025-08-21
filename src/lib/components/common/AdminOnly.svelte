@@ -23,7 +23,17 @@
 				const userHasAccess = state.user && isAdmin(state.user);
 				hasAccess = !!userHasAccess;
 				
+				// Debug logging for AdminOnly component
+				console.log('AdminOnly Component Check:', {
+					hasUser: !!state.user,
+					userEmail: state.user?.email || 'No user',
+					isAdmin: userHasAccess,
+					hasAccess: hasAccess,
+					loading: loading
+				});
+				
 				if (!hasAccess) {
+					console.log('AdminOnly: Access denied, showing message or redirecting to:', redirectTo);
 					if (showAccessDenied) {
 						// Show access denied message
 						showDeniedMessage = true;
@@ -31,6 +41,8 @@
 						// Redirect immediately
 						goto(redirectTo);
 					}
+				} else {
+					console.log('AdminOnly: Access granted, showing content');
 				}
 			}
 		});
@@ -54,7 +66,7 @@
 				<AlertTriangle class="w-8 h-8 text-red-600" />
 			</div>
 			
-			<h1 class="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+			<h1 class="text-2xl font-bold text-brand-900 mb-4">Access Denied</h1>
 			
 			<p class="text-gray-600 mb-2">
 				You don't have permission to access this page.
@@ -66,7 +78,7 @@
 			
 			<button
 				on:click={handleGoBack}
-				class="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-gray-800 rounded-lg hover:bg-gray-900 transition-colors shadow-sm hover:shadow-md"
+				class="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-brand-800 rounded-lg hover:bg-brand-900 transition-colors shadow-sm hover:shadow-md"
 			>
 				<ArrowLeft class="w-4 h-4" />
 				Go Back to Orders

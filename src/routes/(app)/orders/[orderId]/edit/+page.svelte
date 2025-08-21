@@ -171,8 +171,8 @@
 				<ArrowLeft class="h-5 w-5 text-gray-600" />
 			</button>			<div>
 				<div class="flex items-center gap-3 mb-2">
-					<Edit2 class="w-8 h-8 text-gray-800" />
-					<h1 class="text-2xl font-bold text-gray-900">Edit Order {data.order.order_number}</h1>
+					<Edit2 class="w-8 h-8 text-brand-800" />
+					<h1 class="text-2xl font-bold text-brand-900">Edit Order {data.order.order_number}</h1>
 				</div>
 				<p class="text-sm text-gray-500">Update order details and status</p>
 			</div>
@@ -184,8 +184,8 @@
 			<div class="space-y-6 lg:col-span-2">
 				<!-- Order Status -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<CheckCircle class="h-5 w-5 text-gray-800" />
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<CheckCircle class="h-5 w-5 text-brand-800" />
 						Order Status
 					</h2>
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -224,8 +224,8 @@
 
 				<!-- Customer Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<User class="h-5 w-5 text-gray-800" />
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<User class="h-5 w-5 text-brand-800" />
 						Customer Information
 					</h2>
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -259,8 +259,8 @@
 
 				<!-- Service Details -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<Package class="h-5 w-5 text-gray-800" />
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<Package class="h-5 w-5 text-brand-800" />
 						Service Details
 					</h2>
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -320,8 +320,8 @@
 
 				<!-- Schedule Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<Calendar class="h-5 w-5 text-gray-800" />
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<Calendar class="h-5 w-5 text-brand-800" />
 						Schedule Information
 					</h2>
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -356,8 +356,8 @@
 
 				<!-- Additional Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<FileText class="h-5 w-5 text-gray-800" />
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<FileText class="h-5 w-5 text-brand-800" />
 						Additional Information
 					</h2>
 					<div>
@@ -379,29 +379,29 @@
 			<div class="space-y-6">
 				<!-- Order Summary -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<DollarSign class="h-5 w-5 text-gray-800" />
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<DollarSign class="h-5 w-5 text-brand-800" />
 						Order Summary
 					</h2>
 					<div class="space-y-4">
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Service Type</span>
-							<p class="text-base font-medium text-gray-900">
+							<p class="text-base font-medium text-brand-900">
 								{formData.service_type || 'Not selected'}
 							</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Weight</span>
-							<p class="text-base font-medium text-gray-900">{formData.quantity} kg</p>
+							<p class="text-base font-medium text-brand-900">{formData.quantity} kg</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Unit Price</span>
-							<p class="text-base font-medium text-gray-900">₱{formData.unit_price.toFixed(2)} per kg</p>
+							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per kg</p>
 						</div>
 						<div class="border-t border-gray-200 pt-4">
 							<div class="bg-gray-50 rounded-lg p-4">
 								<div class="text-sm text-gray-600">Total Amount</div>
-								<div class="text-2xl font-bold text-gray-900">₱{totalAmount.toFixed(2)}</div>
+								<div class="text-2xl font-bold text-brand-900">₱{totalAmount.toFixed(2)}</div>
 								{#if formData.quantity > 0 && formData.unit_price > 0}
 									<div class="text-xs text-gray-500 mt-1">
 										{formData.quantity} kg × ₱{formData.unit_price}/kg
@@ -414,8 +414,8 @@
 
 				<!-- Payment Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-						<CreditCard class="h-5 w-5 text-gray-800" />
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<CreditCard class="h-5 w-5 text-brand-800" />
 						Payment Information
 					</h2>
 					<div class="space-y-4">
@@ -454,7 +454,7 @@
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							class="px-6 py-2 text-white bg-gray-800 border border-transparent rounded-lg hover:bg-gray-900 focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							class="px-6 py-2 text-white bg-brand-800 border border-transparent rounded-lg hover:bg-brand-900 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						>							{isSubmitting ? 'Updating Order...' : 'Update Order'}
 						</button>
 					</div>

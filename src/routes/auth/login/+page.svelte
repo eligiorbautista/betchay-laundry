@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { Eye, EyeOff, Lock, Mail } from 'lucide-svelte';
@@ -13,7 +12,9 @@
 	let password = '';
 
 	// Handle client-side login using Supabase
-	async function handleLogin() {
+	async function handleLogin(event: Event) {
+		event.preventDefault(); // Prevent form submission
+		
 		if (!email || !password) {
 			toast.error('Please fill in all fields');
 			return;
@@ -37,23 +38,6 @@
 			loading = false;
 		}
 	}
-
-	// Handle form submission (fallback for non-JS users)
-	function handleSubmit() {
-		loading = true;
-		return async ({ update, result }: { update: () => Promise<void>; result: { type: string; data?: { message?: string } } }) => {
-			loading = false;
-			
-			if (result.type === 'success') {
-				toast.success('Login successful!');
-				await goto('/dashboard');
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Login failed. Please try again.');
-			}
-			
-			await update();
-		};
-	}
 </script>
 
 <svelte:head>
@@ -67,8 +51,8 @@
 				<!-- logo side -->
 				<div class="lg:w-1/2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center">
 					<div class="text-center">
-						<img src="/logo/logo.png" alt="App Logo" class="h-40 lg:h-52 xl:h-60 mx-auto mb-6" />
-						<h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-3">
+						<img src="/logo/logo_banner.png" alt="App Logo" class="h-14 lg:h-16 xl:h-20 mx-auto mb-6  bg-[#0d0d0d] px-2 rounded-md shadow-sm group-hover:shadow-md transition-shadow duration-200" />
+						<h1 class="text-2xl lg:text-3xl font-bold text-brand-900 mb-3">
 							Laundry Management System
 						</h1>
 						<p class="text-gray-600 text-sm lg:text-base max-w-sm">
@@ -81,7 +65,7 @@
 				<div class="lg:w-1/2 p-8 lg:p-12">
 					<div class="max-w-sm mx-auto">
 						<div class="mb-8">
-							<h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+							<h2 class="text-2xl lg:text-3xl font-bold text-brand-900 mb-2">
 								Welcome back
 							</h2>
 							<p class="text-gray-600">
@@ -89,10 +73,8 @@
 							</p>
 						</div>
 			<form 
-				method="POST"
 				class="space-y-6"
-				use:enhance={handleSubmit}
-				on:submit|preventDefault={handleLogin}
+				on:submit={handleLogin}
 			>
 				<!-- email input -->
 				<div>
@@ -149,7 +131,7 @@
 
 				<!-- forgot password link -->
 				<div class="text-right">
-					<a href="/auth/forgot-password" class="text-sm text-gray-700 hover:text-gray-900 font-medium">
+					<a href="/auth/forgot-password" class="text-sm text-gray-700 hover:text-brand-900 font-medium">
 						Forgot password?
 					</a>
 				</div>
@@ -158,7 +140,7 @@
 				<button
 					type="submit"
 					disabled={loading}
-					class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-800 hover:bg-brand-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 				>
 					{#if loading}
 						<div class="flex items-center">
@@ -174,7 +156,7 @@
 				<div class="mt-8 text-center">
 					<p class="text-sm text-gray-600">
 						Have an issue?
-						<a href="https://eligiobautista.dev" class="text-gray-700 hover:text-gray-900 font-medium">
+						<a href="https://eligiobautista.dev" class="text-gray-700 hover:text-brand-900 font-medium">
 							Contact Developer
 						</a>
 					</p>

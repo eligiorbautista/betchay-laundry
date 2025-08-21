@@ -230,7 +230,7 @@
 			</button>			<div>
 				<div class="flex items-center gap-3 mb-2">
 					<Eye class="w-8 h-8 text-gray-600" />
-					<h1 class="text-2xl font-bold text-gray-900">Order {order.order_number}</h1>
+					<h1 class="text-2xl font-bold text-brand-900">Order {order.order_number}</h1>
 				</div>
 				<p class="text-sm text-gray-500">Created on {formatDate(order.created_at)}</p>
 			</div>
@@ -258,14 +258,14 @@
 		<div class="space-y-6 lg:col-span-2">
 			<!-- Customer Information -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 					<User class="h-5 w-5 text-gray-600" />
 					Customer Information
 				</h2>
 				<div class="space-y-4">
 					<div>
 						<span class="block text-sm font-medium text-gray-500">Name</span>
-						<p class="text-base font-medium text-gray-900">{order.customer_name}</p>
+						<p class="text-base font-medium text-brand-900">{order.customer_name}</p>
 					</div>
 
 					{#if order.customer_phone}
@@ -273,7 +273,7 @@
 							<span class="block text-sm font-medium text-gray-500">Phone</span>
 							<div class="flex items-center gap-2">
 								<Phone class="h-4 w-4 text-gray-400" />
-								<p class="text-base text-gray-900">{order.customer_phone}</p>
+								<p class="text-base text-brand-900">{order.customer_phone}</p>
 							</div>
 						</div>
 					{/if}
@@ -282,21 +282,21 @@
 
 			<!-- Service Details -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 					<Package class="h-5 w-5 text-gray-600" />
 					Service Details
 				</h2>
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div>
 						<span class="block text-sm font-medium text-gray-500">Service Type</span>
-						<p class="text-base font-medium text-gray-900">{order.service_type}</p>
+						<p class="text-base font-medium text-brand-900">{order.service_type}</p>
 					</div>
 
 					<div>
 						<span class="block text-sm font-medium text-gray-500">Weight</span>
 						<div class="flex items-center gap-2">
 							<Weight class="h-4 w-4 text-gray-400" />
-							<p class="text-base text-gray-900">{order.quantity} kg</p>
+							<p class="text-base text-brand-900">{order.quantity} kg</p>
 						</div>
 					</div>
 
@@ -304,7 +304,7 @@
 						<span class="block text-sm font-medium text-gray-500">Unit Price</span>
 						<div class="flex items-center gap-2">
 							<DollarSign class="h-4 w-4 text-gray-400" />
-							<p class="text-base text-gray-900">₱{order.unit_price.toFixed(2)} per kg</p>
+							<p class="text-base text-brand-900">₱{order.unit_price.toFixed(2)} per kg</p>
 						</div>
 					</div>
 
@@ -317,7 +317,7 @@
 
 			<!-- Schedule Information -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+				<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 					<Calendar class="h-5 w-5 text-gray-600" />
 					Schedule Information
 				</h2>
@@ -328,7 +328,7 @@
 							<div class="mt-1 flex items-center gap-2">
 								<Clock class="h-4 w-4 text-gray-400" />
 								<div>
-									<p class="text-base font-medium text-gray-900">
+									<p class="text-base font-medium text-brand-900">
 										{formatDateOnly(order.pickup_date)}
 									</p>
 									<p class="text-sm text-gray-600">{formatTime(order.pickup_date)}</p>
@@ -343,7 +343,7 @@
 							<div class="mt-1 flex items-center gap-2">
 								<Clock class="h-4 w-4 text-gray-400" />
 								<div>
-									<p class="text-base font-medium text-gray-900">
+									<p class="text-base font-medium text-brand-900">
 										{formatDateOnly(order.delivery_date)}
 									</p>
 									<p class="text-sm text-gray-600">{formatTime(order.delivery_date)}</p>
@@ -357,7 +357,7 @@
 			<!-- Remarks -->
 			{#if order.remarks}
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<FileText class="h-5 w-5 text-gray-600" />
 						Remarks
 					</h2>
@@ -370,7 +370,7 @@
 		<div class="space-y-6">
 			<!-- Current Status -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-				<h2 class="mb-4 text-lg font-semibold text-gray-900">Current Status</h2>
+				<h2 class="mb-4 text-lg font-semibold text-brand-900">Current Status</h2>
 				<div class="space-y-4">
 					<div>
 						<span class="mb-2 block text-sm font-medium text-gray-500">Order Status</span>
@@ -412,7 +412,7 @@
 
 			<!-- Quick Status Updates -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-				<h2 class="mb-4 text-lg font-semibold text-gray-900">Quick Actions</h2>
+				<h2 class="mb-4 text-lg font-semibold text-brand-900">Quick Actions</h2>
 
 				<div class="space-y-4">
 					<!-- Order Status Updates -->
@@ -489,20 +489,20 @@
 
 			<!-- Order Metadata -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-				<h2 class="mb-4 text-lg font-semibold text-gray-900">Order Information</h2>
+				<h2 class="mb-4 text-lg font-semibold text-brand-900">Order Information</h2>
 
 				<div class="space-y-3 text-sm">
 					<div class="flex justify-between">
 						<span class="text-gray-500">Order ID:</span>
-						<span class="font-medium text-gray-900">{order.id}</span>
+						<span class="font-medium text-brand-900">{order.id}</span>
 					</div>
 					<div class="flex justify-between">
 						<span class="text-gray-500">Created:</span>
-						<span class="font-medium text-gray-900">{formatDate(order.created_at)}</span>
+						<span class="font-medium text-brand-900">{formatDate(order.created_at)}</span>
 					</div>
 					<div class="flex justify-between">
 						<span class="text-gray-500">Last Updated:</span>
-						<span class="font-medium text-gray-900">{formatDate(order.updated_at)}</span>
+						<span class="font-medium text-brand-900">{formatDate(order.updated_at)}</span>
 					</div>
 				</div>
 			</div>

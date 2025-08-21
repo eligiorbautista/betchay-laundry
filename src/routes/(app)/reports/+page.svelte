@@ -193,8 +193,8 @@
 		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
 			<div class="flex-1">
 				<div class="flex items-center gap-2 md:gap-3 mb-2">
-					<BarChart3 class="w-7 h-7 md:w-8 md:h-8 text-gray-800" />
-					<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Reports & Analytics</h1>
+					<BarChart3 class="w-7 h-7 md:w-8 md:h-8 text-brand-800" />
+					<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-brand-900">Reports & Analytics</h1>
 				</div>
 				<p class="text-gray-600 text-sm md:text-base mt-1">Comprehensive business insights and performance metrics.</p>
 			</div>
@@ -204,7 +204,7 @@
 				<!-- Print Button - More Prominent -->
 				<button 
 					on:click={printReport}
-					class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gray-800 border border-gray-800 rounded-lg hover:bg-gray-900 hover:shadow-md transition-all duration-200 print:hidden shadow-sm"
+					class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-brand-800 border border-brand-800 rounded-lg hover:bg-brand-900 hover:shadow-md transition-all duration-200 print:hidden shadow-sm"
 				>
 					<Printer class="w-4 h-4" />
 					<span>Print Report</span>
@@ -224,14 +224,14 @@
 		<div class="flex flex-col sm:flex-row sm:items-center gap-4">
 			<div class="flex items-center gap-2">
 				<Filter class="w-5 h-5 text-gray-600" />
-				<h3 class="text-lg font-semibold text-gray-900">Filter Reports</h3>
+				<h3 class="text-lg font-semibold text-brand-900">Filter Reports</h3>
 			</div>
 			
 			<!-- Period Selection -->
 			<div class="flex flex-wrap gap-2">
 				<button
 					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === '7days' 
-						? 'bg-gray-800 text-white' 
+						? 'bg-brand-800 text-white' 
 						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
 					on:click={() => handlePeriodChange('7days')}
 				>
@@ -239,7 +239,7 @@
 				</button>
 				<button
 					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === '30days' 
-						? 'bg-gray-800 text-white' 
+						? 'bg-brand-800 text-white' 
 						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
 					on:click={() => handlePeriodChange('30days')}
 				>
@@ -247,7 +247,7 @@
 				</button>
 				<button
 					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === '90days' 
-						? 'bg-gray-800 text-white' 
+						? 'bg-brand-800 text-white' 
 						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
 					on:click={() => handlePeriodChange('90days')}
 				>
@@ -255,7 +255,7 @@
 				</button>
 				<button
 					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === 'custom' 
-						? 'bg-gray-800 text-white' 
+						? 'bg-brand-800 text-white' 
 						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
 					on:click={() => handlePeriodChange('custom')}
 				>
@@ -295,7 +295,7 @@
 						<button
 							on:click={applyDateFilter}
 							disabled={!startDate || !endDate}
-							class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+							class="px-4 py-2 bg-brand-800 text-white rounded-lg hover:bg-brand-900 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
 						>
 							Apply Filter
 						</button>
@@ -308,7 +308,7 @@
 		<div class="mt-4 pt-4 border-t border-gray-200">
 			<div class="flex items-center gap-2 text-sm text-gray-600">
 				<Calendar class="w-4 h-4" />
-				<span>Showing data for: <strong class="text-gray-900">{reports.summary.period}</strong></span>
+				<span>Showing data for: <strong class="text-brand-900">{reports.summary.period}</strong></span>
 			</div>
 		</div>
 	</div>
@@ -323,7 +323,7 @@
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-2xl font-bold text-gray-900">{formatCurrency(reports.summary.totalRevenue)}</p>
+						<p class="text-2xl font-bold text-brand-900">{formatCurrency(reports.summary.totalRevenue)}</p>
 					{/if}
 				</div>
 				<div class="p-3 bg-slate-50 rounded-xl">
@@ -340,7 +340,7 @@
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-3xl font-bold text-gray-900">{reports.summary.totalOrders}</p>
+						<p class="text-3xl font-bold text-brand-900">{reports.summary.totalOrders}</p>
 					{/if}
 				</div>
 				<div class="p-3 bg-indigo-50 rounded-xl">
@@ -357,7 +357,7 @@
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-2xl font-bold text-gray-900">{formatCurrency(reports.summary.averageOrderValue)}</p>
+						<p class="text-2xl font-bold text-brand-900">{formatCurrency(reports.summary.averageOrderValue)}</p>
 					{/if}
 				</div>
 				<div class="p-3 bg-purple-50 rounded-xl">
@@ -390,7 +390,7 @@
 		<div class="lg:col-span-2 order-1">
 			<div class="bg-white rounded-xl shadow-sm border border-gray-100">
 				<div class="p-4 sm:p-5 md:p-6 border-b border-gray-100">
-					<h2 class="text-base sm:text-lg md:text-xl font-semibold text-gray-900">Order Status Distribution</h2>
+					<h2 class="text-base sm:text-lg md:text-xl font-semibold text-brand-900">Order Status Distribution</h2>
 				</div>
 				<div class="p-4 sm:p-5 md:p-6">
 					<div class="space-y-4">
@@ -402,12 +402,12 @@
 											<svelte:component this={getStatusIcon(statusReport.status)} class="w-5 h-5" />
 										</div>
 										<div class="flex-1 min-w-0">
-											<p class="font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">{getStatusText(statusReport.status)}</p>
+											<p class="font-semibold text-brand-900 group-hover:text-blue-900 transition-colors">{getStatusText(statusReport.status)}</p>
 											<p class="text-sm text-gray-600">{statusReport.count} orders • {formatCurrency(statusReport.revenue)}</p>
 										</div>
 									</div>
 									<div class="text-right flex-shrink-0 ml-2">
-										<p class="text-lg font-bold text-gray-900">{formatPercentage(statusReport.percentage)}</p>
+										<p class="text-lg font-bold text-brand-900">{formatPercentage(statusReport.percentage)}</p>
 									</div>
 								</div>
 							</div>
@@ -421,7 +421,7 @@
 		<div class="order-2">
 			<div class="bg-white rounded-xl shadow-sm border border-gray-100">
 				<div class="p-4 sm:p-6 border-b border-gray-100">
-					<h2 class="text-lg sm:text-xl font-semibold text-gray-900">Payment Methods</h2>
+					<h2 class="text-lg sm:text-xl font-semibold text-brand-900">Payment Methods</h2>
 				</div>
 				<div class="p-4 sm:p-6 space-y-3">
 					{#each reports.paymentMethodAnalysis as payment}
@@ -430,11 +430,11 @@
 								<svelte:component this={getPaymentMethodIcon(payment.method)} class="w-4 h-4 text-gray-600" />
 							</div>
 							<div class="flex-1 min-w-0">
-								<p class="font-medium text-gray-900 text-sm">{getPaymentMethodText(payment.method)}</p>
+								<p class="font-medium text-brand-900 text-sm">{getPaymentMethodText(payment.method)}</p>
 								<p class="text-xs text-gray-500">{payment.count} transactions</p>
 							</div>
 							<div class="text-right flex-shrink-0">
-								<p class="font-semibold text-gray-900 text-sm">{formatCurrency(payment.totalAmount)}</p>
+								<p class="font-semibold text-brand-900 text-sm">{formatCurrency(payment.totalAmount)}</p>
 								<p class="text-xs text-gray-500">{formatPercentage(payment.percentage)}</p>
 							</div>
 						</div>
@@ -447,28 +447,28 @@
 	<!-- Service Performance -->
 	<div class="bg-white rounded-xl shadow-sm border border-gray-100 mt-6">
 		<div class="p-4 sm:p-5 md:p-6 border-b border-gray-100">
-			<h2 class="text-base sm:text-lg md:text-xl font-semibold text-gray-900">Service Performance</h2>
+			<h2 class="text-base sm:text-lg md:text-xl font-semibold text-brand-900">Service Performance</h2>
 		</div>
 		<div class="p-4 sm:p-5 md:p-6">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				{#each reports.serviceTypePerformance as service}
 					<div class="group border border-gray-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200">
 						<div class="flex items-start justify-between mb-4">
-							<h3 class="font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">{service.serviceType}</h3>
+							<h3 class="font-semibold text-brand-900 group-hover:text-blue-900 transition-colors">{service.serviceType}</h3>
 							<span class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{formatPercentage(service.percentage)}</span>
 						</div>
 						<div class="grid grid-cols-3 gap-3 text-sm">
 							<div class="text-center">
 								<p class="text-xs text-gray-500 mb-1">Orders</p>
-								<p class="text-lg font-bold text-gray-900">{service.orderCount}</p>
+								<p class="text-lg font-bold text-brand-900">{service.orderCount}</p>
 							</div>
 							<div class="text-center">
 								<p class="text-xs text-gray-500 mb-1">Revenue</p>
-								<p class="text-sm font-semibold text-gray-900">{formatCurrency(service.totalRevenue)}</p>
+								<p class="text-sm font-semibold text-brand-900">{formatCurrency(service.totalRevenue)}</p>
 							</div>
 							<div class="text-center">
 								<p class="text-xs text-gray-500 mb-1">Avg Price</p>
-								<p class="text-sm font-semibold text-gray-900">{formatCurrency(service.averagePrice)}</p>
+								<p class="text-sm font-semibold text-brand-900">{formatCurrency(service.averagePrice)}</p>
 							</div>
 						</div>
 					</div>
@@ -480,7 +480,7 @@
 	<!-- Monthly Trends -->
 	<div class="bg-white rounded-xl shadow-sm border border-gray-100 mt-6">
 		<div class="p-4 sm:p-5 md:p-6 border-b border-gray-100">
-			<h2 class="text-base sm:text-lg md:text-xl font-semibold text-gray-900">Monthly Performance Trends</h2>
+			<h2 class="text-base sm:text-lg md:text-xl font-semibold text-brand-900">Monthly Performance Trends</h2>
 		</div>
 		<div class="p-4 sm:p-5 md:p-6">
 			<div class="overflow-x-auto">
@@ -496,7 +496,7 @@
 					<tbody class="divide-y divide-gray-100">
 						{#each reports.monthlyTrends as trend}
 							<tr class="hover:bg-gray-50 transition-colors">
-								<td class="py-4 font-semibold text-gray-900">{trend.month} {trend.year}</td>
+								<td class="py-4 font-semibold text-brand-900">{trend.month} {trend.year}</td>
 								<td class="py-4 text-gray-700 text-center font-medium">{trend.orderCount}</td>
 								<td class="py-4 text-gray-700 text-right font-medium">{formatCurrency(trend.revenue)}</td>
 								<td class="py-4 text-gray-700 text-right font-medium">{formatCurrency(trend.averageOrderValue)}</td>
@@ -612,7 +612,7 @@
 		}
 		
 		/* Typography adjustments */
-		:global(.text-gray-900) {
+		:global(.text-brand-900) {
 			color: black !important;
 		}
 		

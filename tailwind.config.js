@@ -6,6 +6,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Custom brand colors starting with #0d0d0d
+        brand: {
+          50: '#f8f8f8',   // Very light gray for backgrounds
+          100: '#f0f0f0',  // Light gray for subtle backgrounds
+          200: '#e0e0e0',  // Light gray for borders
+          300: '#c0c0c0',  // Medium light gray
+          400: '#888888',  // Medium gray
+          500: '#555555',  // Medium dark gray
+          600: '#333333',  // Dark gray
+          700: '#222222',  // Darker gray
+          800: '#1a1a1a',  // Very dark gray (lighter than 900)
+          900: '#0d0d0d',  // Your custom darkest color
+        },
         primary: {
           50: '#f8fafc',
           100: '#f1f5f9',

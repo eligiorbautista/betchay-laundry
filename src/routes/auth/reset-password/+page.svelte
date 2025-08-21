@@ -255,8 +255,8 @@
 				<!-- Logo Section -->
 				<div class="lg:w-1/2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center">
 					<div class="text-center">
-						<img src="/logo/logo.png" alt="App Logo" class="h-40 lg:h-52 xl:h-60 mx-auto mb-6" />
-						<h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-3">
+						<img src="/logo/logo_banner.png" alt="App Logo" class="h-14 lg:h-16 xl:h-20 mx-auto mb-6  bg-[#0d0d0d] px-2 rounded-md shadow-sm group-hover:shadow-md transition-shadow duration-200" />
+						<h1 class="text-2xl lg:text-3xl font-bold text-brand-900 mb-3">
 							Laundry Management System
 						</h1>
 						<p class="text-gray-600 text-sm lg:text-base max-w-sm">
@@ -269,10 +269,10 @@
 				<div class="lg:w-1/2 p-8 lg:p-12">
 					<div class="max-w-sm mx-auto">
 						<div class="mb-8">
-							<div class="mx-auto h-16 w-16 bg-gray-800 rounded-xl flex items-center justify-center mb-6">
+							<div class="mx-auto h-16 w-16 bg-brand-800 rounded-xl flex items-center justify-center mb-6">
 								<Lock class="w-8 h-8 text-white" />
 							</div>
-							<h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+							<h2 class="text-2xl lg:text-3xl font-bold text-brand-900 mb-2">
 								Create new password
 							</h2>
 							<p class="text-gray-600">
@@ -286,13 +286,13 @@
 					<div class="mx-auto h-12 w-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
 						<Lock class="w-6 h-6 text-red-600" />
 					</div>
-					<h3 class="text-lg font-semibold text-gray-900 mb-2">Reset Link Issue</h3>
+					<h3 class="text-lg font-semibold text-brand-900 mb-2">Reset Link Issue</h3>
 					<p class="text-gray-600 mb-6">
 						{errorMessage}
 					</p>
 					<a 
 						href="/auth/forgot-password" 
-						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-lg hover:bg-gray-900 transition-colors"
+						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-800 rounded-lg hover:bg-brand-900 transition-colors"
 					>
 						<ArrowLeft class="w-4 h-4 mr-2" />
 						Request New Reset Link
@@ -304,13 +304,13 @@
 					<div class="mx-auto h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
 						<Lock class="w-6 h-6 text-green-600" />
 					</div>
-					<h3 class="text-lg font-semibold text-gray-900 mb-2">Password Updated!</h3>
+					<h3 class="text-lg font-semibold text-brand-900 mb-2">Password Updated!</h3>
 					<p class="text-gray-600 mb-6">
 						Your password has been successfully updated. You can now login with your new password.
 					</p>
 					<a 
 						href="/auth/login" 
-						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-lg hover:bg-gray-900 transition-colors"
+						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-800 rounded-lg hover:bg-brand-900 transition-colors"
 					>
 						Go to Login
 					</a>
@@ -391,7 +391,7 @@
 					<button
 						type="submit"
 						disabled={loading}
-						class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-800 hover:bg-brand-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 					>
 						{#if loading}
 							<div class="flex items-center">
@@ -408,7 +408,7 @@
 				<div class="mt-8 text-center">
 					<a 
 						href="/auth/login" 
-						class="inline-flex items-center text-sm text-gray-700 hover:text-gray-900 font-medium"
+						class="inline-flex items-center text-sm text-gray-700 hover:text-brand-900 font-medium"
 					>
 						<ArrowLeft class="w-4 h-4 mr-1" />
 						Back to login
@@ -420,7 +420,7 @@
 				<div class="mx-auto h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
 					<Lock class="w-6 h-6 text-gray-400" />
 				</div>
-				<h3 class="text-lg font-semibold text-gray-900 mb-2">Checking Reset Link...</h3>
+				<h3 class="text-lg font-semibold text-brand-900 mb-2">Checking Reset Link...</h3>
 				<p class="text-gray-600 mb-6">
 					Please wait while we validate your password reset link.
 				</p>

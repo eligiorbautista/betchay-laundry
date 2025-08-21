@@ -91,15 +91,15 @@
 			</button>
 			<div class="flex-1 sm:flex-none">
 				<div class="mb-2 flex items-center gap-3">
-					<Printer class="h-8 w-8 text-gray-800" />
-					<h1 class="text-xl font-bold text-gray-900 sm:text-2xl">Print Receipt</h1>
+					<Printer class="h-8 w-8 text-brand-800" />
+					<h1 class="text-xl font-bold text-brand-900 sm:text-2xl">Print Receipt</h1>
 				</div>
 				<p class="text-sm text-gray-500">Order {order.order_number}</p>
 			</div>
 		</div>
 		<button
 			on:click={() => window.print()}
-			class="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm text-white transition-colors hover:bg-gray-900 sm:w-auto sm:text-base"
+			class="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-800 px-4 py-2 text-sm text-white transition-colors hover:bg-brand-900 sm:w-auto sm:text-base"
 		>
 			<svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path
@@ -125,7 +125,7 @@
 			<img
 				src="/logo/logo_banner.png"
 				alt="Betchay Laundry Logo"
-				class="mx-auto mb-2 h-10 sm:mb-3 sm:h-12 print:h-10"
+				class="mx-auto mb-2 h-10 sm:mb-3 sm:h-12 print:h-10 bg-[#0d0d0d] px-2 rounded-sm shadow-sm group-hover:shadow-md transition-shadow duration-200"
 			/>
 		</div>
 		<div class="space-y-1 text-xs text-black sm:text-sm print:text-[10px]">

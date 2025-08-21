@@ -53,6 +53,15 @@
 
 	// Check if current user is admin
 	$: userIsAdmin = $authStore.user ? isAdmin($authStore.user) : false;
+	
+	// Debug log for admin status
+	$: if ($authStore.user) {
+		console.log('MobileNav Admin Check:', {
+			userEmail: $authStore.user.email,
+			isAdmin: userIsAdmin,
+			adminEmail: import.meta.env.PUBLIC_ADMIN_EMAIL || 'betchaylaundryhub@gmail.com'
+		});
+	}
 
 	// Check if current route is active
 	$: currentPath = $page.url.pathname;
@@ -98,20 +107,20 @@
 
 	<!-- Mobile Navigation Panel -->
 	<div 
-		class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-xl z-50 lg:hidden mobile-nav-panel flex flex-col"
+		class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-gray-50 to-white shadow-2xl z-50 lg:hidden mobile-nav-panel flex flex-col"
 		transition:fly="{{ x: -320, duration: 300, opacity: 1 }}"
 	>
 		<!-- Header -->
-		<div class="flex items-center justify-between h-20 px-6 border-b border-gray-200 bg-white">
-			<div class="flex items-center space-x-3">
+		<div class="flex items-center justify-between h-20 px-6 border-b border-gray-200 bg-white/90 backdrop-blur-sm">
+			<div class="flex items-center space-x-3 flex-1">
 				<img 
 					src="/logo/logo_banner.png" 
 					alt="Laundry Management System" 
-					class="h-12 w-auto object-contain"
+					class="ml-1 h-14 w-auto object-contain bg-brand-900 py-1.5 px-2 rounded-lg shadow-sm"
 				/>
 			</div>
 			<button
-				class="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+				class="p-2.5 rounded-xl text-brand-600 hover:text-brand-900 hover:bg-brand-100 transition-all duration-200 shadow-sm hover:shadow-md"
 				on:click={closeMobileNav}
 				aria-label="Close navigation"
 			>
@@ -120,32 +129,35 @@
 		</div>
 
 		<!-- Navigation Links -->
-		<nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+		<nav class="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
 			{#each navItems as item}
 				{#if !item.adminOnly || userIsAdmin}
 					<a
 						href={item.href}
-						class="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 {currentPath.startsWith(item.href) 
-							? 'bg-gray-900 text-white shadow-sm' 
-							: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+						class="group flex items-center space-x-4 px-5 py-4 rounded-2xl text-base font-medium transition-all duration-200 relative {currentPath.startsWith(item.href) 
+							? 'bg-brand-900 text-white shadow-lg shadow-brand-900/25 scale-[1.02]' 
+							: 'text-brand-600 hover:bg-brand-50 hover:text-brand-900 hover:shadow-lg hover:scale-[1.01]'
 						}"
 						on:click={handleNavClick}
 					>
-						<svelte:component this={item.icon} class="w-6 h-6" />
-						<span class="flex-1">{item.label}</span>
+						<svelte:component this={item.icon} class="w-6 h-6 transition-transform group-hover:scale-110" />
+						<span class="flex-1 font-medium">{item.label}</span>
 						{#if item.adminOnly}
-							<Shield class="w-4 h-4 text-amber-500" />
+							<Shield class="w-4 h-4 text-amber-500 group-hover:text-amber-400" />
+						{/if}
+						{#if currentPath.startsWith(item.href)}
+							<div class="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-white rounded-full"></div>
 						{/if}
 					</a>
 				{:else}
 					<!-- Show grayed out admin-only items for non-admin users -->
 					<div
-						class="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium opacity-50 cursor-not-allowed"
+						class="flex items-center space-x-4 px-5 py-4 rounded-2xl text-base font-medium opacity-50 cursor-not-allowed"
 						title="Admin access required"
 					>
-						<svelte:component this={item.icon} class="w-6 h-6 text-gray-400" />
-						<span class="flex-1 text-gray-400">{item.label}</span>
-						<Shield class="w-4 h-4 text-gray-400" />
+						<svelte:component this={item.icon} class="w-6 h-6 text-brand-400" />
+						<span class="flex-1 text-brand-400">{item.label}</span>
+						<Shield class="w-4 h-4 text-brand-400" />
 					</div>
 				{/if}
 			{/each}
@@ -155,18 +167,18 @@
 		<div class="p-4 border-t border-gray-200 mt-auto">
 			<button 
 				on:click={handleLogout}
-				class="w-full py-3 px-4 rounded-xl border border-gray-900 text-gray-900 bg-white font-semibold hover:bg-gray-900 hover:text-white transition-colors text-base flex items-center justify-center gap-3"
+				class="group w-full py-4 px-5 rounded-2xl border-2 border-brand-200 text-brand-700 bg-white font-medium hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-all duration-200 text-base flex items-center justify-center gap-3 shadow-sm hover:shadow-lg"
 			>
-				<LogOut class="w-5 h-5" />
+				<LogOut class="w-5 h-5 transition-transform group-hover:scale-110" />
 				Logout
 			</button>
 		</div>
 
 		<!-- Footer -->
-		<div class="p-4 bg-gray-50 border-t border-gray-200">
-			<div class="text-xs text-gray-400 text-center">
+		<div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
+			<div class="text-xs text-brand-500 text-center">
 				<p class="font-semibold">&copy; {new Date().getFullYear()} {APP_NAME}</p>
-				<p class="mt-1 text-[11px] italic text-gray-300">Laundry Management System</p>
+				<p class="mt-1 text-[10px] text-brand-400">Laundry Management System</p>
 			</div>
 		</div>
 	</div>

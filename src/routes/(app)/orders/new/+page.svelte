@@ -175,7 +175,7 @@
 			</button>			<div>
 				<div class="flex items-center gap-3 mb-2">
 					<Plus class="w-8 h-8 text-gray-600" />
-					<h1 class="text-2xl font-bold text-gray-900">Create New Order</h1>
+					<h1 class="text-2xl font-bold text-brand-900">Create New Order</h1>
 				</div>
 				<p class="text-sm text-gray-500">Add a new laundry order to the system</p>
 			</div>
@@ -186,7 +186,7 @@
 			<div class="space-y-6 lg:col-span-2">
 				<!-- Order Status -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<CheckCircle class="h-5 w-5 text-gray-600" />
 						Order Status
 					</h2>
@@ -226,7 +226,7 @@
 
 				<!-- Customer Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<User class="h-5 w-5 text-gray-600" />
 						Customer Information
 					</h2>
@@ -261,7 +261,7 @@
 
 				<!-- Service Details -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<Package class="h-5 w-5 text-gray-600" />
 						Service Details
 					</h2>
@@ -322,7 +322,7 @@
 
 				<!-- Schedule Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<Calendar class="h-5 w-5 text-gray-600" />
 						Schedule Information
 					</h2>
@@ -359,7 +359,7 @@
 
 				<!-- Additional Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<FileText class="h-5 w-5 text-gray-600" />
 						Additional Information
 					</h2>
@@ -382,29 +382,29 @@
 			<div class="space-y-6">
 				<!-- Order Summary -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<DollarSign class="h-5 w-5 text-gray-600" />
 						Order Summary
 					</h2>
 					<div class="space-y-4">
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Service Type</span>
-							<p class="text-base font-medium text-gray-900">
+							<p class="text-base font-medium text-brand-900">
 								{formData.service_type || 'Not selected'}
 							</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Weight</span>
-							<p class="text-base font-medium text-gray-900">{formData.quantity} kg</p>
+							<p class="text-base font-medium text-brand-900">{formData.quantity} kg</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Unit Price</span>
-							<p class="text-base font-medium text-gray-900">₱{formData.unit_price.toFixed(2)} per kg</p>
+							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per kg</p>
 						</div>
 						<div class="border-t border-gray-200 pt-4">
 							<div class="bg-gray-50 rounded-lg p-4">
 								<div class="text-sm text-gray-600">Total Amount</div>
-								<div class="text-2xl font-bold text-gray-900">₱{totalAmount.toFixed(2)}</div>
+								<div class="text-2xl font-bold text-brand-900">₱{totalAmount.toFixed(2)}</div>
 								{#if formData.quantity > 0 && formData.unit_price > 0}
 									<div class="text-xs text-gray-500 mt-1">
 										{formData.quantity} kg × ₱{formData.unit_price}/kg
@@ -415,7 +415,7 @@
 					</div>
 				</div>				<!-- Payment Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
 						<CreditCard class="h-5 w-5 text-gray-600" />
 						Payment Information
 					</h2>

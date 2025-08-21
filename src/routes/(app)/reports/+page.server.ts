@@ -1,7 +1,17 @@
 import type { PageServerLoad } from './$types';
 import type { ReportsData } from '$lib/types/report';
+import { redirect } from '@sveltejs/kit';
+import { getServerSession } from '$lib/config/supabaseServer';
+import { isAdminSession } from '$lib/utils/auth';
 
-export const load: PageServerLoad = async ({ params, url }) => {
+export const load: PageServerLoad = async (event) => {
+	// Check if user is authenticated and is admin
+	const session = await getServerSession(event);
+	
+	if (!session || !isAdminSession(session)) {
+		// Redirect non-admin users to orders page
+		throw redirect(302, '/orders');
+	}
 	// Generate reports from order data
 	const reportsData: ReportsData = {
 		summary: {

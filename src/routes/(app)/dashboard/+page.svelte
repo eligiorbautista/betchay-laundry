@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { FileText, Clock, CheckCircle, Plus, Users, BarChart3, TrendingUp, Scale, LayoutDashboard, Package, XCircle, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, User, Eye, Edit, ExternalLink } from 'lucide-svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
+	import AdminOnly from '$lib/components/common/AdminOnly.svelte';
 	import Icon from '@iconify/svelte';
 	import type { Order } from '$lib/types/order';
 	import type { PageData } from './$types';
@@ -157,6 +158,7 @@
 	<meta name="description" content="Laundry management dashboard overview" />
 </svelte:head>
 
+<AdminOnly>
 <div class="p-4 md:p-5 lg:p-6 w-full bg-gray-50 min-h-screen">
 	<!-- Header -->
 	<div class="mb-8">
@@ -462,3 +464,4 @@
 		</div>
 	</div>
 </div>
+</AdminOnly>

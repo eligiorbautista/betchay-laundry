@@ -9,12 +9,14 @@
 		BarChart3, 
 		Settings,
 		ChevronLeft,
-		LogOut
+		LogOut,
+		Shield
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { createEventDispatcher } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { auth } from '$lib/stores/authStore';
+	import { auth, authStore } from '$lib/stores/authStore';
+	import { isAdmin } from '$lib/utils/auth';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 
@@ -26,24 +28,31 @@
 		{
 			label: 'Dashboard',
 			href: '/dashboard',
-			icon: LayoutDashboard
+			icon: LayoutDashboard,
+			adminOnly: true
 		},
 		{
 			label: 'Orders',
 			href: '/orders',
-			icon: ClipboardList
+			icon: ClipboardList,
+			adminOnly: false
 		},
 		{
 			label: 'Reports',
 			href: '/reports',
-			icon: BarChart3
+			icon: BarChart3,
+			adminOnly: true
 		},
 		{
 			label: 'Settings',
 			href: '/settings',
-			icon: Settings
+			icon: Settings,
+			adminOnly: false
 		}
 	];
+
+	// Check if current user is admin
+	$: userIsAdmin = $authStore.user ? isAdmin($authStore.user) : false;
 
 	// Check if current route is active
 	$: currentPath = $page.url.pathname;
@@ -113,17 +122,32 @@
 		<!-- Navigation Links -->
 		<nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
 			{#each navItems as item}
-				<a
-					href={item.href}
-					class="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 {currentPath.startsWith(item.href) 
-						? 'bg-gray-900 text-white shadow-sm' 
-						: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-					}"
-					on:click={handleNavClick}
-				>
-					<svelte:component this={item.icon} class="w-6 h-6" />
-					<span>{item.label}</span>
-				</a>
+				{#if !item.adminOnly || userIsAdmin}
+					<a
+						href={item.href}
+						class="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 {currentPath.startsWith(item.href) 
+							? 'bg-gray-900 text-white shadow-sm' 
+							: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+						}"
+						on:click={handleNavClick}
+					>
+						<svelte:component this={item.icon} class="w-6 h-6" />
+						<span class="flex-1">{item.label}</span>
+						{#if item.adminOnly}
+							<Shield class="w-4 h-4 text-amber-500" />
+						{/if}
+					</a>
+				{:else}
+					<!-- Show grayed out admin-only items for non-admin users -->
+					<div
+						class="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium opacity-50 cursor-not-allowed"
+						title="Admin access required"
+					>
+						<svelte:component this={item.icon} class="w-6 h-6 text-gray-400" />
+						<span class="flex-1 text-gray-400">{item.label}</span>
+						<Shield class="w-4 h-4 text-gray-400" />
+					</div>
+				{/if}
 			{/each}
 		</nav>
 

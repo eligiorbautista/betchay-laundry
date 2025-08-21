@@ -17,6 +17,7 @@
 		Filter
 	} from 'lucide-svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
+	import AdminOnly from '$lib/components/common/AdminOnly.svelte';
 	import Icon from '@iconify/svelte';
 	import type { ReportsData } from '$lib/types/report';
 	import type { PageData } from './$types';
@@ -185,6 +186,7 @@
 	<meta name="description" content="Business analytics and reports dashboard" />
 </svelte:head>
 
+<AdminOnly>
 <div class="p-4 md:p-5 lg:p-6 w-full bg-gray-50 min-h-screen">
 	<!-- Header -->
 	<div class="mb-8">
@@ -529,6 +531,7 @@
 		</p>
 	</div>
 </div>
+</AdminOnly>
 
 <style>
 	@media print {

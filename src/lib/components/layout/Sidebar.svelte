@@ -8,7 +8,9 @@
 		BarChart3, 
 		Settings,
 		LogOut,
-		Shield
+		Lock,
+		Unlock,
+		Activity
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { auth, authStore } from '$lib/stores/authStore';
@@ -33,6 +35,12 @@
 			label: 'Reports',
 			href: '/reports',
 			icon: BarChart3,
+			adminOnly: true
+		},
+		{
+			label: 'Audit Logs',
+			href: '/audit-logs',
+			icon: Activity,
 			adminOnly: true
 		},
 		{
@@ -106,7 +114,7 @@
 					<svelte:component this={item.icon} class="w-5 h-5 transition-transform group-hover:scale-110" />
 					<span class="flex-1 font-medium">{item.label}</span>
 					{#if item.adminOnly}
-						<Shield class="w-3.5 h-3.5 text-amber-500 group-hover:text-amber-400" />
+						<Unlock class="w-3.5 h-3.5 {currentPath.startsWith(item.href) ? 'text-white' : 'text-gray-600 group-hover:text-gray-800'}" />
 					{/if}
 					{#if currentPath.startsWith(item.href)}
 						<div class="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-white rounded-full"></div>
@@ -120,7 +128,7 @@
 				>
 					<svelte:component this={item.icon} class="w-5 h-5 text-brand-400" />
 					<span class="flex-1 text-brand-400">{item.label}</span>
-					<Shield class="w-3.5 h-3.5 text-brand-400" />
+					<Lock class="w-3.5 h-3.5 text-gray-400" />
 				</div>
 			{/if}
 		{/each}

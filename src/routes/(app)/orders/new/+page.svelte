@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
 	import type { Order } from '$lib/types/order';
-	import type { PageData } from './$types';	import {
+	import type { PageData } from './$types';
+	import { authStore, getUserEmail } from '$lib/stores/authStore';	import {
 		User,
 		Package,
 		Calendar,
@@ -10,7 +12,8 @@
 		DollarSign,
 		ArrowLeft,
 		CheckCircle,
-		Plus
+		Plus,
+		AlertCircle
 	} from 'lucide-svelte';
 
 	export let data: PageData;
@@ -57,6 +60,9 @@
 
 	// Form submission state
 	let isSubmitting = false;
+	
+	// Get current user email from auth store
+	$: userEmail = getUserEmail($authStore);
 
 	// Computed total amount
 	$: totalAmount = formData.quantity * formData.unit_price; // Update unit price when service type changes
@@ -104,47 +110,19 @@
 		return errors;
 	}
 
-	// Submit form
-	async function handleSubmit() {
-		const errors = validateForm();
-		if (errors.length > 0) {
-			alert('Please fix the following errors:\n' + errors.join('\n'));
-			return;
-		}
+	import { enhance } from '$app/forms';
+	
+	// form action result from server
+	export let form: { error?: string; success?: boolean } = {};
 
-		isSubmitting = true;
+	// handle form submission response
+	$: if (form?.success) {
+		toast.success('Order created successfully!');
+		goto('/orders');
+	}
 
-		try {			// Create the order object
-			const newOrder: Partial<Order> = {
-				id: crypto.randomUUID(),
-				customer_name: formData.customer_name.trim(),
-				customer_phone: formData.customer_phone.trim() || undefined,
-				order_number: generateOrderNumber(),
-				status: formData.status,
-				service_type: formData.service_type,
-				quantity: formData.quantity,
-				unit_price: formData.unit_price,
-				total_amount: totalAmount,
-				payment_status: formData.payment_status,
-				payment_method: formData.payment_method,
-				pickup_date: formData.pickup_date,
-				delivery_date: formData.delivery_date || undefined,
-				remarks: formData.remarks.trim() || undefined,
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString()
-			};
-
-			// NOTE: Database integration pending
-			console.log('New Order:', newOrder);
-
-			// Show success feedback and navigate
-			alert('Order created successfully!');
-			goto('/orders');
-		} catch (error) {
-			console.error('Error creating order:', error);
-			alert('Failed to create order. Please try again.');		} finally {
-			isSubmitting = false;
-		}
+	$: if (form?.error) {
+		toast.error(form.error);
 	}
 
 	// Navigation
@@ -181,7 +159,18 @@
 			</div>
 		</div>
 	</div>	<!-- Form -->
-	<form on:submit|preventDefault={handleSubmit}>		<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+	<form 
+		method="POST" 
+		action="?/create" 
+		on:submit={() => {
+			isSubmitting = true;
+		}}
+	>
+		<!-- Hidden input for user email -->
+		<input type="hidden" name="user_email" value={userEmail || ''} />
+
+
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 			<!-- Left Column: Form Fields -->
 			<div class="space-y-6 lg:col-span-2">
 				<!-- Order Status -->
@@ -197,6 +186,7 @@
 							</label>
 							<select
 								id="status"
+								name="status"
 								bind:value={formData.status}
 								required
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
@@ -212,6 +202,7 @@
 							</label>
 							<select
 								id="payment_status"
+								name="payment_status"
 								bind:value={formData.payment_status}
 								required
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
@@ -230,7 +221,7 @@
 						<User class="h-5 w-5 text-gray-600" />
 						Customer Information
 					</h2>
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 						<div>
 							<label for="customer_name" class="block text-sm font-medium text-gray-500 mb-2">
 								Customer Name *
@@ -238,6 +229,7 @@
 							<input
 								type="text"
 								id="customer_name"
+								name="customer_name"
 								bind:value={formData.customer_name}
 								required
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
@@ -246,16 +238,19 @@
 						</div>
 						<div>
 							<label for="customer_phone" class="block text-sm font-medium text-gray-500 mb-2">
-								Phone Number
+								Phone Number *
 							</label>
 							<input
 								type="tel"
 								id="customer_phone"
+								name="customer_phone"
 								bind:value={formData.customer_phone}
+								required
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
 								placeholder="Enter phone number"
 							/>
 						</div>
+
 					</div>
 				</div>
 
@@ -272,6 +267,7 @@
 							</label>
 							<select
 								id="service_type"
+								name="service_type"
 								bind:value={formData.service_type}
 								on:change={handleServiceTypeChange}
 								required
@@ -292,6 +288,7 @@
 							<input
 								type="number"
 								id="quantity"
+								name="quantity"
 								bind:value={formData.quantity}
 								min="0.1"
 								step="0.1"
@@ -308,6 +305,7 @@
 							<input
 								type="number"
 								id="unit_price"
+								name="unit_price"
 								bind:value={formData.unit_price}
 								min="0"
 								step="0.01"
@@ -334,6 +332,7 @@
 							<input
 								type="datetime-local"
 								id="pickup_date"
+								name="pickup_date"
 								bind:value={formData.pickup_date}
 								min={new Date().toISOString().slice(0, 16)}
 								required
@@ -349,6 +348,7 @@
 							<input
 								type="datetime-local"
 								id="delivery_date"
+								name="delivery_date"
 								bind:value={formData.delivery_date}
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
 							/>
@@ -369,6 +369,7 @@
 						</label>
 						<textarea
 							id="remarks"
+							name="remarks"
 							bind:value={formData.remarks}
 							rows="4"
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
@@ -425,6 +426,7 @@
 						</label>
 						<select
 							id="payment_method"
+							name="payment_method"
 							bind:value={formData.payment_method}
 							required
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"

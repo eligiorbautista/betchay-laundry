@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { FileText, Clock, CheckCircle, Plus, Users, BarChart3, TrendingUp, Scale, LayoutDashboard, Package, XCircle, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, User, Eye, Edit, ExternalLink } from 'lucide-svelte';
+	import { FileText, Clock, CheckCircle, Plus, Users, BarChart3, TrendingUp, Scale, LayoutDashboard, Package, XCircle, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, User, Eye, Edit, ExternalLink, LogIn, LogOut, Key, Activity } from 'lucide-svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
 	import AdminOnly from '$lib/components/common/AdminOnly.svelte';
 	import Icon from '@iconify/svelte';
@@ -13,13 +13,15 @@
 	// Load dashboard data from backend
 	let stats = data.stats;
 	let recentOrders: Order[] = data.recentOrders;
-	let recentActivities = data.recentActivities.map(activity => ({
+	let recentActivities = data.recentActivities.map((activity: any) => ({
 		...activity,
 		timestamp: new Date(activity.timestamp)
 	}));
 
 	// Dashboard loading animation
-	let isLoading = true;	onMount(async () => {
+	let isLoading = true;
+	
+	onMount(async () => {
 		// Brief loading animation for UX
 		setTimeout(() => {
 			isLoading = false;
@@ -32,6 +34,12 @@
 			case 'FileText': return FileText;
 			case 'Users': return Users;
 			case 'CheckCircle': return CheckCircle;
+			case 'LogIn': return LogIn;
+			case 'LogOut': return LogOut;
+			case 'Key': return Key;
+			case 'Activity': return Activity;
+			case 'Edit': return Edit;
+			case 'CreditCard': return CreditCard;
 			default: return FileText;
 		}
 	}
@@ -68,6 +76,7 @@
 			default: return Clock;
 		}
 	}
+	
 	function getStatusText(status: string) {
 		switch (status) {
 			case 'pending': return 'Pending';
@@ -98,6 +107,7 @@
 			default: return AlertCircle;
 		}
 	}
+
 	function getPaymentStatusColor(paymentStatus: string) {
 		switch (paymentStatus) {
 			case 'paid': return 'bg-emerald-100 text-emerald-800';
@@ -127,7 +137,8 @@
 		}
 	}
 
-	function getPaymentMethodText(paymentMethod: string) {		switch (paymentMethod) {
+	function getPaymentMethodText(paymentMethod: string) {
+		switch (paymentMethod) {
 			case 'cash': return 'Cash';
 			case 'gcash': return 'GCash';
 			case 'bank_transfer': return 'Bank Transfer';
@@ -239,14 +250,15 @@
 					{/if}
 				</div>
 				<div class="p-3 bg-slate-50 rounded-xl">
-					<Icon icon="mdi:currency-php" class="w-6 h-6 text-slate-600" />				</div>
+					<Icon icon="mdi:currency-php" class="w-6 h-6 text-slate-600" />
+				</div>
 			</div>
 		</div>
 	</div>
 		<!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
 		<!-- Recent Orders -->
-        <div class="lg:col-span-2 order-1">
+        <div class="xl:col-span-2 order-1">
 			<div class="bg-white rounded-lg shadow-sm border border-gray-200">
 				<!-- Simple Paper-like Header -->
 				<div class="border-b border-gray-200 p-4 md:p-6 bg-gray-50">
@@ -266,6 +278,16 @@
 				{#if isLoading}
 					<div class="flex justify-center items-center min-h-32 p-8">
 						<LoadingSpinner size="xl" color="primary" message="Loading recent orders..." center={true} />
+					</div>
+				{:else if recentOrders.length === 0}
+					<div class="flex flex-col items-center justify-center min-h-32 p-8 text-center">
+						<FileText class="w-12 h-12 text-gray-400 mb-4" />
+						<h3 class="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
+						<p class="text-gray-600 mb-4">Start by creating your first order</p>
+						<a href="/orders/new" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-800 rounded-lg hover:bg-brand-900 transition-colors">
+							<Plus class="w-4 h-4" />
+							Create Order
+						</a>
 					</div>
 				{:else}
 					<!-- Simple Paper-like Order Rows -->
@@ -298,45 +320,35 @@
 										<div class="flex items-center gap-4 text-sm text-gray-600">
 											<span>{order.service_type}</span>
 											<span class="flex items-center gap-1">
-												<Scale class="w-3 h-3" />
+												<Scale class="w-4 h-4" />
 												{order.quantity} kg
 											</span>
 											<span>{formatDate(new Date(order.created_at))}</span>
 										</div>
 										
-										<!-- Row 3: Phone (if available) -->
-										{#if order.customer_phone}
-											<div class="flex items-center gap-1 text-sm text-gray-500">
-												<Smartphone class="w-3 h-3" />
-												{order.customer_phone}
-											</div>
-										{/if}
-									</div>
-
-									<!-- Right Side: Status, Payment & Actions -->
-									<div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-										<!-- Status & Payment Badges -->
-										<div class="flex flex-col gap-2">
-											<!-- Order Status -->
-											<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {getStatusBadgeColor(order.status)}">
+										<!-- Row 3: Status & Payment -->
+										<div class="flex items-center gap-3">
+											<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full {getStatusBadgeColor(order.status)}">
 												<svelte:component this={getStatusIcon(order.status)} class="w-3 h-3" />
 												{getStatusText(order.status)}
 											</span>
-											<!-- Payment Status -->
-											<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {getPaymentStatusColor(order.payment_status)}">
+											<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full {getPaymentStatusColor(order.payment_status)}">
 												<svelte:component this={getPaymentStatusIcon(order.payment_status)} class="w-3 h-3" />
 												{getPaymentStatusText(order.payment_status)}
 											</span>
+											<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full {getPaymentMethodColor(order.payment_method)}">
+												<svelte:component this={getPaymentMethodIcon(order.payment_method)} class="w-3 h-3" />
+												{getPaymentMethodText(order.payment_method)}
+											</span>
 										</div>
-										
-										<!-- Payment Amount -->
+									</div>
+									
+									<!-- Right Side: Amount & Actions -->
+									<div class="flex flex-col items-end gap-2">
 										<div class="text-right">
 											<p class="text-lg font-bold text-brand-900">{formatCurrency(order.total_amount)}</p>
-											<p class="text-xs text-gray-500">₱{order.unit_price}/kg</p>
 										</div>
-										
-										<!-- Simple Actions -->
-										<div class="flex items-center gap-2">
+										<div class="flex items-center gap-2 text-xs">
 											<a 
 												href="/orders/{order.id}" 
 												class="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -373,7 +385,7 @@
 								href="/orders" 
 								class="inline-flex items-center gap-2 text-sm font-medium text-gray-800 hover:text-brand-900 transition-colors"
 							>
-								<span>View all {recentOrders.length} orders</span>
+								<span>View all {recentOrders.length + 1} orders</span>
 								<ExternalLink class="w-4 h-4" />
 							</a>
 						</div>
@@ -385,7 +397,8 @@
 		<div class="order-2 space-y-6">
 			<!-- Quick Actions -->
 			<div>
-				<div class="bg-white rounded-xl shadow-sm border border-gray-100">					<div class="p-4 sm:p-6 border-b border-gray-100">
+				<div class="bg-white rounded-xl shadow-sm border border-gray-100">
+					<div class="p-4 sm:p-6 border-b border-gray-100">
 						<h2 class="text-lg sm:text-xl font-semibold text-brand-900">Quick Actions</h2>
 					</div>
 					<div class="p-4 sm:p-6 space-y-3">
@@ -411,25 +424,61 @@
 			<div>
 				<div class="bg-white rounded-xl shadow-sm border border-gray-100">
 					<div class="p-4 sm:p-6 border-b border-gray-100">
-						<h2 class="text-lg sm:text-xl font-semibold text-brand-900">Recent Activities</h2>
-					</div>					<div class="p-4 sm:p-6 space-y-4">
-						{#each recentActivities as activity}
-							<div class="flex items-start gap-3 sm:gap-4">
-								<div class={`w-8 h-8 sm:w-10 sm:h-10 rounded-md flex items-center justify-center text-white flex-shrink-0 ${activity.color}`}>
-									{#if activity.type === 'payment'}
-										<Icon icon="mdi:currency-php" class="w-4 h-4 sm:w-5 sm:h-5" />
-									{:else if activity.icon === 'mdi:currency-php'}
-										<Icon icon={activity.icon} class="w-4 h-4 sm:w-5 sm:h-5" />
-									{:else}
-										<svelte:component this={getIconComponent(activity.icon)} class="w-4 h-4 sm:w-5 sm:h-5" />
-									{/if}
-								</div>
-								<div class="flex-1 min-w-0">
-									<p class="text-sm text-brand-900 leading-relaxed">{activity.description}</p>
-									<p class="text-xs text-gray-400 mt-0.5">{formatDate(activity.timestamp)}</p>
-								</div>
+						<div class="flex items-center justify-between">
+							<h2 class="text-lg sm:text-xl font-semibold text-brand-900">Recent Activities</h2>
+							<a 
+								href="/audit-logs" 
+								class="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-900 transition-colors"
+							>
+								<span class="hidden sm:inline">View All</span>
+								<span class="sm:hidden">All</span>
+								<Eye class="w-4 h-4" />
+							</a>
+						</div>
+					</div>
+					<div class="p-4 sm:p-6 space-y-4">
+						{#if recentActivities.length === 0}
+							<div class="text-center py-8">
+								<Activity class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+								<p class="text-gray-600 text-sm">No recent activities</p>
 							</div>
-						{/each}
+						{:else}
+							{#each recentActivities as activity}
+								<div class="flex items-start gap-3 sm:gap-4">
+									<!-- Activity Icon -->
+									<div class={`w-8 h-8 sm:w-10 sm:h-10 rounded-md flex items-center justify-center text-white flex-shrink-0 ${activity.color}`}>
+										{#if activity.type === 'payment_status_changed'}
+											<CreditCard class="w-4 h-4 sm:w-5 sm:h-5" />
+										{:else}
+											<svelte:component this={getIconComponent(activity.icon)} class="w-4 h-4 sm:w-5 sm:h-5" />
+										{/if}
+									</div>
+									
+									<!-- Activity Content -->
+									<div class="flex-1 min-w-0 space-y-1">
+										<!-- Description -->
+										<p class="text-sm text-brand-900 leading-relaxed break-words">
+											{activity.description}
+										</p>
+										
+										<!-- Timestamp and User Email -->
+										<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs">
+											<p class="text-gray-400 whitespace-nowrap">
+												{formatDate(activity.timestamp)}
+											</p>
+											{#if activity.user_email}
+												<div class="flex items-center gap-1">
+													<span class="text-gray-500 hidden sm:inline">•</span>
+													<p class="text-gray-500 truncate">
+														{activity.user_email}
+													</p>
+												</div>
+											{/if}
+										</div>
+									</div>
+								</div>
+							{/each}
+						{/if}
 					</div>
 				</div>
 			</div>

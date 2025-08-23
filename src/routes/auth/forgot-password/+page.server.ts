@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { supabase } from '$lib/config/supabaseClient';
+import { logAuditEvent } from '$lib/utils/audit';
 
 export const load: PageServerLoad = async () => {
 	return {};
@@ -52,6 +53,17 @@ export const actions: Actions = {
 				});
 			}
 			
+			// log audit event for password reset request
+			await logAuditEvent(
+				supabase,
+				'reset_password',
+				`Password reset requested for email: ${email}`,
+				'user',
+				null, // no user ID yet since they're not logged in
+				getClientIP(request),
+				getUserAgent(request)
+			);
+			
 			return {
 				success: true
 			};
@@ -64,3 +76,23 @@ export const actions: Actions = {
 		}
 	}
 };
+
+// Helper functions for getting client info
+function getClientIP(request: Request): string | undefined {
+	const forwarded = request.headers.get('x-forwarded-for');
+	const realIP = request.headers.get('x-real-ip');
+	
+	if (forwarded) {
+		return forwarded.split(',')[0].trim();
+	}
+	
+	if (realIP) {
+		return realIP;
+	}
+	
+	return undefined;
+}
+
+function getUserAgent(request: Request): string | undefined {
+	return request.headers.get('user-agent') || undefined;
+}

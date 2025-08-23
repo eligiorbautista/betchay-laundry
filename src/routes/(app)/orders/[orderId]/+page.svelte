@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { toast } from 'svelte-sonner';
 	import type { Order } from '$lib/types/order';
-	import type { PageData } from './$types';	import {
+	import type { PageData } from './$types';
+	import { authStore, getUserEmail } from '$lib/stores/authStore';
+	import {
 		Edit2,
 		Calendar,
 		Phone,
@@ -28,11 +31,26 @@
 	} from 'lucide-svelte';
 
 	export let data: PageData;
+	export let form: { error?: string; success?: boolean } = {};
 
 	const orderId = $page.params.orderId;
 	const order = data.order;
 	// Status update state
 	let isUpdatingStatus = false;
+	
+	// Get current user email from auth store
+	$: userEmail = getUserEmail($authStore);
+
+	// handle form submission response
+	$: if (form?.success) {
+		toast.success('Order updated successfully!');
+		// reload the page to show updated data
+		window.location.reload();
+	}
+
+	$: if (form?.error) {
+		toast.error(form.error);
+	}
 
 	// Date display utilities
 	function formatDate(dateString: string) {
@@ -59,7 +77,10 @@
 			hour: '2-digit',
 			minute: '2-digit',
 			hour12: true
-		}).format(new Date(dateString));	} // Status and payment utilities
+		}).format(new Date(dateString));
+	}
+
+	// Status and payment utilities
 	function getStatusColor(status: string) {
 		switch (status) {
 			case 'pending':
@@ -160,18 +181,29 @@
 
 		isUpdatingStatus = true;
 		try {
-			// TODO: Replace with actual API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			// create form data for server action
+			const formData = new FormData();
+			formData.append('status', newStatus);
+			formData.append('user_email', userEmail || '');
 
-			// Reload page to show updated status
-			console.log(`Updating order ${orderId} status to: ${newStatus}`);
+			// submit to server action
+			const response = await fetch(`?/updateStatus`, {
+				method: 'POST',
+				body: formData
+			});
 
-			// TODO: Replace with actual API call
-			// Temporary: reload to show changes
+			if (!response.ok) {
+				throw new Error('Failed to update status');
+			}
+
+			// show success message
+			toast.success(`Order status updated to ${newStatus}`);
+			
+			// reload page to show updated data
 			window.location.reload();
 		} catch (error) {
 			console.error('Failed to update status:', error);
-			alert('Failed to update order status. Please try again.');
+			toast.error('Failed to update order status. Please try again.');
 		} finally {
 			isUpdatingStatus = false;
 		}
@@ -182,17 +214,33 @@
 
 		isUpdatingStatus = true;
 		try {
-			// TODO: Connect to actual delete endpoint
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			// create form data for server action
+			const formData = new FormData();
+			formData.append('payment_status', newPaymentStatus);
+			formData.append('user_email', userEmail || '');
 
-			console.log(`Updating order ${orderId} payment status to: ${newPaymentStatus}`);
+			// submit to server action
+			const response = await fetch(`?/updatePayment`, {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to update payment status');
+			}
+
+			// show success message
+			toast.success(`Payment status updated to ${newPaymentStatus}`);
+			
+			// reload page to show updated data
 			window.location.reload();
 		} catch (error) {
 			console.error('Failed to update payment status:', error);
-			alert('Failed to update payment status. Please try again.');
+			toast.error('Failed to update payment status. Please try again.');
 		} finally {
 			isUpdatingStatus = false;
-		}	}
+		}
+	}
 
 	function printOrder() {
 		// Navigate to the print page in a new tab/window
@@ -215,7 +263,7 @@
 </script>
 
 <svelte:head>
-	<title>Order {order.order_number} - Laundry Management System</title>
+			<title>Order {order.order_number} - Laundry Management System</title>
 </svelte:head>
 
 <div class="min-h-screen w-full bg-gray-50 p-4 lg:p-6">
@@ -230,7 +278,7 @@
 			</button>			<div>
 				<div class="flex items-center gap-3 mb-2">
 					<Eye class="w-8 h-8 text-gray-600" />
-					<h1 class="text-2xl font-bold text-brand-900">Order {order.order_number}</h1>
+												<h1 class="text-2xl font-bold text-brand-900">Order {order.order_number}</h1>
 				</div>
 				<p class="text-sm text-gray-500">Created on {formatDate(order.created_at)}</p>
 			</div>

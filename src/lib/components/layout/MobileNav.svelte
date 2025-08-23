@@ -10,7 +10,9 @@
 		Settings,
 		ChevronLeft,
 		LogOut,
-		Shield
+		Lock,
+		Unlock,
+		Activity
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { createEventDispatcher } from 'svelte';
@@ -41,6 +43,12 @@
 			label: 'Reports',
 			href: '/reports',
 			icon: BarChart3,
+			adminOnly: true
+		},
+		{
+			label: 'Audit Logs',
+			href: '/audit-logs',
+			icon: Activity,
 			adminOnly: true
 		},
 		{
@@ -143,7 +151,7 @@
 						<svelte:component this={item.icon} class="w-6 h-6 transition-transform group-hover:scale-110" />
 						<span class="flex-1 font-medium">{item.label}</span>
 						{#if item.adminOnly}
-							<Shield class="w-4 h-4 text-amber-500 group-hover:text-amber-400" />
+							<Unlock class="w-4 h-4 {currentPath.startsWith(item.href) ? 'text-white' : 'text-gray-600 group-hover:text-gray-800'}" />
 						{/if}
 						{#if currentPath.startsWith(item.href)}
 							<div class="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-white rounded-full"></div>
@@ -157,7 +165,7 @@
 					>
 						<svelte:component this={item.icon} class="w-6 h-6 text-brand-400" />
 						<span class="flex-1 text-brand-400">{item.label}</span>
-						<Shield class="w-4 h-4 text-brand-400" />
+						<Lock class="w-4 h-4 text-gray-400" />
 					</div>
 				{/if}
 			{/each}

@@ -1,9 +1,8 @@
 export interface Order {
 	id: string;
-	customer_name: string;
-	customer_phone?: string;
-	customer_email?: string;
 	order_number: string;
+	customer_name: string;
+	customer_phone: string; // required now
 	status: 'pending' | 'processing' | 'ready' | 'completed' | 'cancelled';
 	service_type: string;
 	quantity: number;

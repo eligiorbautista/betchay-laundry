@@ -1,83 +1,45 @@
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import type { Order } from '$lib/types/order';
-import { error } from '@sveltejs/kit';
-import { createSupabaseServerClient } from '$lib/config/supabaseServer';
+import { error, fail } from '@sveltejs/kit';
+import { createSupabaseServerClient, getServerSession } from '$lib/config/supabaseServer';
+import { logAuditEvent } from '$lib/utils/audit';
 
 export const load: PageServerLoad = async (event) => {
 	const { params } = event;
 	try {
 		const orderId = params.orderId;
-		
-		// Create Supabase client
 		const supabase = createSupabaseServerClient(event);
+		const { data: order, error: dbError } = await supabase
+			.from('orders')
+			.select('*')
+			.eq('id', orderId)
+			.single();
 
-		// TODO: Fetch actual order from database
-		const mockOrders: Order[] = [{
-			id: 'ORD-001',
-			order_number: 'ORD-001',
-			customer_name: 'Juan Bautista',
-			customer_phone: '+639123456789',
-			customer_email: 'juan.bautista@email.com',
-			status: 'pending',
-			payment_status: 'unpaid',
-			payment_method: 'cash',
-			service_type: 'Wash & Dry',
-			quantity: 5.5,
-			unit_price: 50.00,
-			total_amount: 275.00,
-			pickup_date: '2025-08-05T14:30:00Z',
-			delivery_date: '2025-08-07T16:00:00Z',
-			created_at: '2025-08-03T08:30:00Z',
-			updated_at: '2025-08-03T14:20:00Z',
-			remarks: 'Please handle delicate items with care'
-		},
-		{
-			id: 'ORD-002',
-			order_number: 'ORD-002',
-			customer_name: 'Liza Reyes',
-			customer_phone: '+639234567890',
-			customer_email: 'liza.reyes@email.com',
-			status: 'ready',
-			payment_status: 'paid',
-			payment_method: 'gcash',
-			service_type: 'Wash & Fold',
-			quantity: 6.4,
-			unit_price: 50.00,
-			total_amount: 320.00,
-			pickup_date: '2025-08-04T10:00:00Z',
-			delivery_date: '2025-08-06T12:00:00Z',
-			created_at: '2025-08-02T14:15:00Z',
-			updated_at: '2025-08-03T10:30:00Z',
-			remarks: undefined
-		},
-		{
-			id: 'ORD-003',
-			order_number: 'ORD-003',
-			customer_name: 'Carlos Mendoza',
-			customer_phone: '+639345678901',
-			customer_email: 'carlos.mendoza@email.com',
-			status: 'completed',
-			payment_status: 'paid',
-			payment_method: 'bank_transfer',
-			service_type: 'Dry Cleaning',
-			quantity: 3.2,
-			unit_price: 78.57,
-			total_amount: 251.42,
-			pickup_date: '2025-08-03T09:00:00Z',
-			delivery_date: '2025-08-05T11:00:00Z',
-			created_at: '2025-08-01T16:45:00Z',
-			updated_at: '2025-08-03T15:45:00Z',
-			remarks: 'Express service requested'
+		if (dbError) {
+			console.error('Error fetching order:', dbError);
+			throw error(404, 'Order not found');
 		}
-		];
-		// Find the order by ID
-		const order = mockOrders.find(o => o.id === orderId);
-
 		if (!order) {
 			throw error(404, 'Order not found');
 		}
-
-		// Fetch service pricing from database
+		const transformedOrder: Order = {
+			id: order.id,
+			order_number: order.order_number,
+			customer_name: order.customer_name,
+			customer_phone: order.customer_phone,
+			status: order.status,
+			payment_status: order.payment_status,
+			payment_method: order.payment_method,
+			service_type: order.service_type,
+			quantity: order.quantity,
+			unit_price: order.unit_price,
+			total_amount: order.total_amount,
+			pickup_date: order.pickup_date,
+			delivery_date: order.delivery_date,
+			remarks: order.remarks,
+			created_at: order.created_at,
+			updated_at: order.updated_at
+		};
 		const { data: servicePricing, error: servicePricingError } = await supabase
 			.from('service_pricing')
 			.select('*')
@@ -86,17 +48,127 @@ export const load: PageServerLoad = async (event) => {
 		if (servicePricingError) {
 			console.error('Error fetching service pricing:', servicePricingError);
 		}
-		console.log(JSON.stringify(servicePricing, null, 2));
 		return {
-			order,
+			order: transformedOrder,
 			servicePricing: servicePricing || []
 		};
 	} catch (err) {
 		console.error('Error loading order for edit:', err);
 		if (err && typeof err === 'object' && 'status' in err) {
-			// Re-throw SvelteKit errors
 			throw err;
 		}
 		throw error(500, 'Failed to load order data');
 	}
 };
+
+export const actions: Actions = {
+	update: async (event) => {
+		const formData = await event.request.formData();
+		const orderId = event.params.orderId;
+
+		// extract form fields
+		const customer_name = formData.get('customer_name') as string;
+		const customer_phone = formData.get('customer_phone') as string;
+		const service_type = formData.get('service_type') as string;
+		const quantity = parseFloat(formData.get('quantity') as string);
+		const unit_price = parseFloat(formData.get('unit_price') as string);
+		const payment_method = formData.get('payment_method') as string;
+		const payment_status = formData.get('payment_status') as string;
+		const status = formData.get('status') as string;
+		const pickup_date = formData.get('pickup_date') as string;
+		const delivery_date = formData.get('delivery_date') as string;
+		const remarks = formData.get('remarks') as string;
+		const userEmail = formData.get('user_email') as string;
+
+		// basic validation
+		if (!customer_name?.trim()) {
+			return fail(400, { error: 'Customer name is required' });
+		}
+		if (!customer_phone?.trim()) {
+			return fail(400, { error: 'Customer phone is required' });
+		}
+		if (!service_type) {
+			return fail(400, { error: 'Service type is required' });
+		}
+		if (!quantity || quantity <= 0) {
+			return fail(400, { error: 'Quantity must be greater than 0' });
+		}
+		if (!unit_price || unit_price <= 0) {
+			return fail(400, { error: 'Unit price must be greater than 0' });
+		}
+
+		try {
+			// create supabase client
+			const supabase = createSupabaseServerClient(event);
+
+			// calculate total amount
+			const total_amount = quantity * unit_price;
+
+			// update order
+			const { error: updateError } = await supabase
+				.from('orders')
+				.update({
+					customer_name: customer_name.trim(),
+					customer_phone: customer_phone.trim(),
+					status,
+					service_type,
+					quantity,
+					unit_price,
+					total_amount,
+					payment_status,
+					payment_method,
+					pickup_date: pickup_date || null,
+					delivery_date: delivery_date || null,
+					remarks: remarks?.trim() || null,
+					updated_at: new Date().toISOString()
+				})
+				.eq('id', orderId);
+
+			if (updateError) {
+				console.error('Error updating order:', updateError);
+				throw new Error(`Failed to update order: ${updateError.message}`);
+			}
+
+			// User email is now passed from the form data
+
+			// log audit event for order update
+			await logAuditEvent(
+				supabase,
+				'order_updated',
+				`Order ${orderId} updated - Customer: ${customer_name}, Service: ${service_type}`,
+				'order',
+				orderId,
+				getClientIP(event.request),
+				getUserAgent(event.request),
+				userEmail
+			);
+
+			// return success response
+			return { success: true };
+		} catch (err) {
+			console.error('Error in update order action:', err);
+			const errorMessage = err instanceof Error ? err.message : 'Failed to update order';
+			return fail(500, { error: errorMessage });
+		}
+	}
+};
+
+// helper functions for getting client info
+function getClientIP(request: Request): string | undefined {
+	const forwarded = request.headers.get('x-forwarded-for');
+	const realIP = request.headers.get('x-real-ip');
+	
+	if (forwarded) {
+		return forwarded.split(',')[0].trim();
+	}
+	
+	if (realIP) {
+		return realIP;
+	}
+	
+	return undefined;
+}
+
+function getUserAgent(request: Request): string | undefined {
+	return request.headers.get('user-agent') || undefined;
+}

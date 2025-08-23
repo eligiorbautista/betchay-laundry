@@ -3,6 +3,7 @@ import { supabase } from '$lib/config/supabaseClient';
 import type { User, Session } from '@supabase/supabase-js';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
+import { logAuditEvent } from '$lib/utils/audit';
 
 // Auth state shape
 interface AuthState {
@@ -135,6 +136,19 @@ export const auth = {
 			}
 
 			console.log('Login successful, session:', !!data.session, 'user:', !!data.user);
+
+			// log audit event for successful login
+			if (data.user) {
+				await logAuditEvent(
+					supabase,
+					'login',
+					`User ${data.user.email} logged in successfully`,
+					'user',
+					data.user.id,
+					getClientIP(),
+					getUserAgent()
+				);
+			}
 
 			// Don't redirect here - let the auth state change handler do it
 			// The auth store onAuthStateChange will handle the redirect
@@ -285,10 +299,24 @@ export const auth = {
 	}
 };
 
-// Check if user has valid session
-export const isAuthenticated = (state: AuthState): boolean => {
-	return !state.loading && state.user !== null && state.session !== null;
-};
+// Helper functions for getting client info
+function getClientIP(): string | undefined {
+	if (typeof window === 'undefined') return undefined;
+	
+	// In a real app, you might get this from a server-side context
+	// For now, we'll return undefined as this is client-side
+	return undefined;
+}
+
+function getUserAgent(): string | undefined {
+	if (typeof window === 'undefined') return undefined;
+	return window.navigator.userAgent;
+}
+
+// Helper function to check if user is authenticated
+export function isAuthenticated(state: AuthState): boolean {
+	return !!state.user && !!state.session;
+}
 
 // Extract email from current user
 export const getUserEmail = (state: AuthState): string | null => {

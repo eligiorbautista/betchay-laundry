@@ -4,9 +4,13 @@
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
 	import type { Order } from '$lib/types/order';
 	import type { PageData } from './$types';
+	import { page } from '$app/stores';
+	
 	export let data: PageData;
 	
 	let orders: Order[] = data.orders;
+	
+
 	let filteredOrders: Order[] = [];
 	let paginatedOrders: Order[] = [];
 	let loading = false;
@@ -175,9 +179,9 @@
 					aValue = a.customer_name.toLowerCase();
 					bValue = b.customer_name.toLowerCase();
 					break;
-				case 'order_number':
-					aValue = a.order_number;
-					bValue = b.order_number;
+						case 'id':
+			aValue = a.id;
+			bValue = b.id;
 					break;
 				case 'amount':
 					aValue = a.total_amount;
@@ -390,50 +394,95 @@
 				</a>
 			</div>
 		</div>
-	</div>	<!-- Simple Search and Filters -->
-	<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
-		<div class="flex flex-col md:flex-row gap-4 md:gap-6">
-			<!-- Search -->
-			<div class="flex-1">
-				<div class="relative">
-					<Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-					<input
-						type="text"
-						placeholder="Search by customer name, phone, or order number..."
-						bind:value={searchQuery}
-						class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-					/>
-				</div>
-			</div>
-			
-			<!-- Status Filter -->
-			<div class="md:w-48">
-				<select
-					bind:value={selectedStatus}
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white text-base"
-				>
-					{#each statusOptions as option}
-						<option value={option.value}>{option.label} ({option.count})</option>
-					{/each}
-				</select>
-			</div>
+	</div>
 
-			<!-- Payment Status Filter -->
-			<div class="md:w-40">
-				<select
-					bind:value={selectedPaymentStatus}
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white text-base"
-				>
-					{#each paymentStatusOptions as option}
-						<option value={option.value}>{option.label}</option>
-					{/each}
-				</select>
+	
+
+	<!-- Filters Section -->
+	<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+		<div class="p-4 sm:p-6 border-b border-gray-200">
+			<div class="flex items-center gap-2">
+				<Filter class="w-5 h-5 text-gray-600" />
+				<h2 class="text-lg font-medium text-gray-900">Filters</h2>
 			</div>
 		</div>
 		
-		<!-- Simple Filter Status -->
+		<div class="p-4 sm:p-6">
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<!-- Search Filter -->
+				<div>
+					<label for="searchQuery" class="block text-sm font-medium text-gray-700 mb-2">
+						Search
+					</label>
+					<div class="relative">
+						<Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+						<input
+							id="searchQuery"
+							type="text"
+							placeholder="Customer name, phone, or order ID..."
+							bind:value={searchQuery}
+							on:input={applyFilters}
+							class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+						/>
+					</div>
+				</div>
+				
+				<!-- Status Filter -->
+				<div>
+					<label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-2">
+						Order Status
+					</label>
+					<select
+						id="statusFilter"
+						bind:value={selectedStatus}
+						on:change={applyFilters}
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+					>
+						{#each statusOptions as option}
+							<option value={option.value}>{option.label} ({option.count})</option>
+						{/each}
+					</select>
+				</div>
+
+				<!-- Payment Status Filter -->
+				<div>
+					<label for="paymentStatusFilter" class="block text-sm font-medium text-gray-700 mb-2">
+						Payment Status
+					</label>
+					<select
+						id="paymentStatusFilter"
+						bind:value={selectedPaymentStatus}
+						on:change={applyFilters}
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+					>
+						{#each paymentStatusOptions as option}
+							<option value={option.value}>{option.label} ({option.count})</option>
+						{/each}
+					</select>
+				</div>
+			</div>
+
+						<!-- Filter Actions -->
+			{#if searchQuery || selectedStatus !== 'all' || selectedPaymentStatus !== 'all'}
+				<div class="flex items-center gap-3 mt-6">
+					<button
+						on:click={() => { 
+							searchQuery = '';
+							selectedStatus = 'all'; 
+							selectedPaymentStatus = 'all'; 
+							applyFilters();
+						}}
+						class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+					>
+						Clear All
+					</button>
+				</div>
+			{/if}
+		</div>
+		
+		<!-- Filter Status Display -->
 		{#if selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || searchQuery}
-			<div class="mt-4 pt-4 border-t border-gray-200">
+			<div class="p-4 sm:p-6 border-t border-gray-200 bg-gray-50">
 				<div class="flex flex-wrap items-center gap-3 text-sm">
 					<span class="text-gray-600">Applied filters:</span>
 					
@@ -441,7 +490,7 @@
 						<span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
 							Search: "{searchQuery}"
 							<button 
-								on:click={() => { searchQuery = ''; }}
+								on:click={() => { searchQuery = ''; applyFilters(); }}
 								class="text-blue-500 hover:text-blue-800"
 								title="Clear search"
 							>
@@ -454,7 +503,7 @@
 						<span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
 							{statusOptions.find(o => o.value === selectedStatus)?.label}
 							<button 
-								on:click={() => { selectedStatus = 'all'; }}
+								on:click={() => { selectedStatus = 'all'; applyFilters(); }}
 								class="text-gray-500 hover:text-brand-800"
 								title="Clear status filter"
 							>
@@ -467,7 +516,7 @@
 						<span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
 							{paymentStatusOptions.find(o => o.value === selectedPaymentStatus)?.label}
 							<button 
-								on:click={() => { selectedPaymentStatus = 'all'; }}
+								on:click={() => { selectedPaymentStatus = 'all'; applyFilters(); }}
 								class="text-gray-500 hover:text-brand-800"
 								title="Clear payment filter"
 							>
@@ -475,17 +524,6 @@
 							</button>
 						</span>
 					{/if}
-					
-					<button 
-						on:click={() => { 
-							searchQuery = '';
-							selectedStatus = 'all'; 
-							selectedPaymentStatus = 'all'; 
-						}}
-						class="text-red-600 hover:text-red-800 text-sm font-medium"
-					>
-						Clear All
-					</button>
 				</div>
 			</div>
 		{/if}
@@ -539,7 +577,7 @@
 						<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 							<!-- Left Side: Main Order Info -->
 							<div class="flex-1 space-y-2">
-								<!-- Row 1: Customer & Order Number -->
+								<!-- Row 1: Customer & Order ID -->
 								<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
 									<h3 class="text-lg font-semibold text-brand-900">{order.customer_name}</h3>
 									<span class="text-sm font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">{order.order_number}</span>
@@ -552,7 +590,7 @@
 										<Scale class="w-4 h-4" />
 										{order.quantity} kg
 									</span>
-									<span>{formatDateOnly(order.created_at)}</span>
+									<span>{formatDate(order.created_at)}</span>
 								</div>
 								
 								<!-- Row 3: Phone (if available) -->

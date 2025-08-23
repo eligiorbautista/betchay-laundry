@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { toast } from 'svelte-sonner';
 	import type { Order } from '$lib/types/order';
-	import type { PageData } from './$types';	import {
+	import type { PageData } from './$types';
+	import { authStore, getUserEmail } from '$lib/stores/authStore';
+	import {
 		User,
 		Package,
 		Calendar,
@@ -15,6 +18,7 @@
 	} from 'lucide-svelte';
 
 	export let data: PageData;
+	export let form: { error?: string; success?: boolean } = {};
 
 	const orderId = $page.params.orderId;
 
@@ -60,6 +64,19 @@
 
 	// Loading state
 	let isSubmitting = false;
+	
+	// Get current user email from auth store
+	$: userEmail = getUserEmail($authStore);
+
+	// handle form submission response
+	$: if (form?.success) {
+		toast.success('Order updated successfully!');
+		goto(`/orders/${orderId}`);
+	}
+
+	$: if (form?.error) {
+		toast.error(form.error);
+	}
 
 	// Computed total amount
 	$: totalAmount = formData.quantity * formData.unit_price;
@@ -103,43 +120,54 @@
 	async function handleSubmit() {
 		const errors = validateForm();
 		if (errors.length > 0) {
-			alert('Please fix the following errors:\n' + errors.join('\n'));
+			toast.error('Please fix the following errors:\n' + errors.join('\n'));
 			return;
 		}
 
 		isSubmitting = true;
 		
 		try {
-			// Create the updated order object
-			const updatedOrder: Partial<Order> = {
-				id: data.order.id,
-				customer_name: formData.customer_name.trim(),
-				customer_phone: formData.customer_phone.trim() || undefined,
-				order_number: data.order.order_number,
-				status: formData.status,
-				service_type: formData.service_type,
-				quantity: formData.quantity,
-				unit_price: formData.unit_price,
-				total_amount: totalAmount,
-				payment_status: formData.payment_status,
-				payment_method: formData.payment_method,
-				pickup_date: formData.pickup_date,
-				delivery_date: formData.delivery_date || undefined,
-				remarks: formData.remarks.trim() || undefined,
-				created_at: data.order.created_at,
-				updated_at: new Date().toISOString()
-			};
-
-			// NOTE: Database integration pending
-			console.log('Updated Order:', updatedOrder);
+			// create form data for server action
+			const formDataToSubmit = new FormData();
+			formDataToSubmit.append('customer_name', formData.customer_name.trim());
+			formDataToSubmit.append('customer_phone', formData.customer_phone.trim());
+			formDataToSubmit.append('service_type', formData.service_type);
+			formDataToSubmit.append('quantity', formData.quantity.toString());
+			formDataToSubmit.append('unit_price', formData.unit_price.toString());
+			formDataToSubmit.append('payment_method', formData.payment_method);
+			formDataToSubmit.append('payment_status', formData.payment_status);
+			formDataToSubmit.append('status', formData.status);
+			formDataToSubmit.append('pickup_date', formData.pickup_date);
+			if (formData.delivery_date) {
+				formDataToSubmit.append('delivery_date', formData.delivery_date);
+			}
+			if (formData.remarks) {
+				formDataToSubmit.append('remarks', formData.remarks.trim());
+			}
 			
-			// Show success feedback and navigate
-			alert('Order updated successfully!');
+			// Add user email for audit logging
+			formDataToSubmit.append('user_email', userEmail || '');
+
+			// submit to server action
+			const response = await fetch(`?/update`, {
+				method: 'POST',
+				body: formDataToSubmit
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to update order');
+			}
+
+			// show success message
+			toast.success('Order updated successfully!');
+			
+			// navigate back to order view
 			goto(`/orders/${orderId}`);
 			
 		} catch (error) {
 			console.error('Error updating order:', error);
-			alert('Failed to update order. Please try again.');		} finally {
+			toast.error('Failed to update order. Please try again.');
+		} finally {
 			isSubmitting = false;
 		}
 	}

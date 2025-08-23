@@ -1,14 +1,16 @@
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import type { ReportsData } from '$lib/types/report';
 import { redirect } from '@sveltejs/kit';
-import { getServerSession } from '$lib/config/supabaseServer';
-import { isAdminSession } from '$lib/utils/auth';
+import { getServerSession, createSupabaseServerClient } from '$lib/config/supabaseServer';
+import { isAdmin } from '$lib/utils/auth';
+import { generateReportsData } from '$lib/utils/database';
+import { json } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
-	// TEMPORARY FIX: Disable server-side protection due to cookie sync issues
-	// The AdminOnly component will handle client-side protection
+	// temporary fix: disable server-side protection due to cookie sync issues
+	// the adminonly component will handle client-side protection
 	
-	// Debug: Check server session (for debugging purposes)
+	// debug: check server session (for debugging purposes)
 	const session = await getServerSession(event);
 	console.log('Reports Server Session Debug:', {
 		hasSession: !!session,
@@ -16,86 +18,97 @@ export const load: PageServerLoad = async (event) => {
 		note: 'Using client-side protection only due to cookie sync issues'
 	});
 	
-	// Allow access - client-side AdminOnly component will handle protection
-	// Generate reports from order data
-	const reportsData: ReportsData = {
-		summary: {
-			totalRevenue: 45275.42,
-			totalOrders: 156,
-			averageOrderValue: 290.35,
-			period: "Last 30 Days",
-			periodStart: "2024-07-01",
-			periodEnd: "2024-07-31"
-		},
+	// allow access - client-side adminonly component will handle protection
+	
+	try {
+		// get supabase client
+		const supabase = createSupabaseServerClient(event);
 		
-		orderStatusDistribution: [
-			{ status: 'completed', count: 89, percentage: 57.1, revenue: 28450.25 },
-			{ status: 'pending', count: 32, percentage: 20.5, revenue: 9875.00 },
-			{ status: 'processing', count: 21, percentage: 13.5, revenue: 5125.17 },
-			{ status: 'ready', count: 14, percentage: 9.0, revenue: 1825.00 },
-			{ status: 'cancelled', count: 0, percentage: 0, revenue: 0 }
-		],
+		// get date range from url params (optional)
+		const url = new URL(event.request.url);
+		let startDate = url.searchParams.get('startDate');
+		let endDate = url.searchParams.get('endDate');
 		
-		paymentMethodAnalysis: [
-			{ method: 'cash', count: 67, percentage: 43.0, totalAmount: 18945.50 },
-			{ method: 'gcash', count: 45, percentage: 28.8, totalAmount: 13275.25 },
-			{ method: 'bank_transfer', count: 28, percentage: 17.9, totalAmount: 8945.67 },
-			{ method: 'paymaya', count: 12, percentage: 7.7, totalAmount: 3109.00 },
-			{ method: 'credit_card', count: 4, percentage: 2.6, totalAmount: 1000.00 }
-		],
-		
-		serviceTypePerformance: [
-			{ 
-				serviceType: 'Wash & Dry', 
-				orderCount: 78, 
-				totalRevenue: 22450.00, 
-				averagePrice: 287.82,
-				percentage: 49.6
-			},
-			{ 
-				serviceType: 'Wash & Fold', 
-				orderCount: 45, 
-				totalRevenue: 14275.25, 
-				averagePrice: 317.23,
-				percentage: 31.5
-			},
-			{ 
-				serviceType: 'Dry Cleaning', 
-				orderCount: 23, 
-				totalRevenue: 6825.17, 
-				averagePrice: 296.75,
-				percentage: 15.1
-			},
-			{ 
-				serviceType: 'Ironing Only', 
-				orderCount: 10, 
-				totalRevenue: 1725.00, 
-				averagePrice: 172.50,
-				percentage: 3.8
-			}
-		],
-		
-		monthlyTrends: [
-			{ month: 'January', year: 2024, revenue: 38250.75, orderCount: 125, averageOrderValue: 306.01 },
-			{ month: 'February', year: 2024, revenue: 41275.50, orderCount: 142, averageOrderValue: 290.67 },
-			{ month: 'March', year: 2024, revenue: 39825.25, orderCount: 138, averageOrderValue: 288.59 },
-			{ month: 'April', year: 2024, revenue: 43150.00, orderCount: 149, averageOrderValue: 289.60 },
-			{ month: 'May', year: 2024, revenue: 45275.42, orderCount: 156, averageOrderValue: 290.35 },
-			{ month: 'June', year: 2024, revenue: 42850.75, orderCount: 147, averageOrderValue: 291.50 }
-		],
-		
-
-		
-		dateRange: {
-			start: '2024-07-01',
-			end: '2024-07-31'
+		// for initial load, show all data if no specific dates provided
+		// this allows users to see their actual data range first
+		let useAllData = false;
+		if (!startDate || !endDate) {
+			useAllData = true;
 		}
-	};
+		
+		console.log('Reports page load with params:', { startDate, endDate });
+		
+		// generate reports from real database data
+		const reportsData = await generateReportsData(
+			supabase, 
+			useAllData ? undefined : (startDate || undefined), 
+			useAllData ? undefined : (endDate || undefined)
+		);
+		
+		console.log('Loaded reports data:', {
+			totalOrders: reportsData.summary.totalOrders,
+			totalRevenue: reportsData.summary.totalRevenue,
+			monthlyTrendsCount: reportsData.monthlyTrends.length,
+			period: reportsData.summary.period
+		});
 
-	// Brief loading simulation
-	await new Promise(resolve => setTimeout(resolve, 150));
+		return {
+			reports: reportsData
+		};
+	} catch (error) {
+		console.error('Error loading reports:', error);
+		
+		// return fallback data if database query fails
+		const fallbackData: ReportsData = {
+			summary: {
+				totalRevenue: 0,
+				totalOrders: 0,
+				completedOrdersCount: 0,
+				averageOrderValue: 0,
+				period: "Last 30 Days",
+				periodStart: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+				periodEnd: new Date().toISOString().split('T')[0]
+			},
+			orderStatusDistribution: [],
+			paymentMethodAnalysis: [],
+			serviceTypePerformance: [],
+			monthlyTrends: [],
+			availableYears: [],
+			dateRange: {
+				start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+				end: new Date().toISOString().split('T')[0]
+			}
+		};
 
-	return {
-		reports: reportsData
-	};
+		return {
+			reports: fallbackData
+		};
+	}
+};
+
+// server action for date filtering
+export const actions: Actions = {
+	filterByDate: async (event) => {
+		try {
+			const formData = await event.request.formData();
+			const startDate = formData.get('startDate') as string;
+			const endDate = formData.get('endDate') as string;
+			
+			console.log('Filtering reports with dates:', { startDate, endDate });
+			
+			const supabase = createSupabaseServerClient(event);
+			const reportsData = await generateReportsData(supabase, startDate, endDate);
+			
+			console.log('Generated reports data:', {
+				totalOrders: reportsData.summary.totalOrders,
+				totalRevenue: reportsData.summary.totalRevenue,
+				monthlyTrendsCount: reportsData.monthlyTrends.length
+			});
+			
+			return { success: true, reports: reportsData };
+		} catch (error) {
+			console.error('Error in filterByDate action:', error);
+			return { success: false, error: 'Failed to filter reports' };
+		}
+	}
 };

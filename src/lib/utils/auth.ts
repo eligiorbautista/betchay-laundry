@@ -23,40 +23,4 @@ export function isAdmin(user: User | null): boolean {
 	return userEmail === adminEmail;
 }
 
-/**
- * Check if the current session belongs to an admin user
- * @param session - The current session object from Supabase
- * @returns boolean - true if session belongs to admin, false otherwise
- */
-export function isAdminSession(session: Session | null): boolean {
-	if (!session || !session.user) {
-		console.log('isAdminSession: No session or user');
-		return false;
-	}
-	
-	const result = isAdmin(session.user);
-	console.log('isAdminSession check:', {
-		userEmail: session.user.email,
-		adminEmail: ADMIN_EMAIL,
-		result: result
-	});
-	
-	return result;
-}
 
-/**
- * Get user role based on email
- * @param user - The current user object from Supabase
- * @returns string - 'admin' if admin email, 'user' otherwise
- */
-export function getUserRole(user: User | null): 'admin' | 'user' {
-	return isAdmin(user) ? 'admin' : 'user';
-}
-
-/**
- * Get the current admin email being used (for debugging)
- * @returns string - The admin email from environment or fallback
- */
-export function getAdminEmail(): string {
-	return ADMIN_EMAIL;
-}

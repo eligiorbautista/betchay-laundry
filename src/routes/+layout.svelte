@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/stores/authStore';
 
-	// Initialize authentication when app loads
+	// initialize authentication when app loads
 	onMount(() => {
 		auth.initialize();
 	});

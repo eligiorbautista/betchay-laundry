@@ -21,6 +21,7 @@
 	import Icon from '@iconify/svelte';
 	import type { ReportsData } from '$lib/types/report';
 	import type { PageData } from './$types';
+	import { enhance } from '$app/forms';
 
 	export let data: PageData;
 	
@@ -33,20 +34,75 @@
 	let endDate = '';
 	let showCustomDateFilter = false;
 	
-	// Initialize default dates (last 30 days)
+	// Year filter for monthly trends
+	let selectedYear = new Date().getFullYear();
+	let yearManuallySelected = false;
+	
+	// Initialize dates from URL params or defaults
 	onMount(() => {
-		const today = new Date();
-		const thirtyDaysAgo = new Date(today);
-		thirtyDaysAgo.setDate(today.getDate() - 30);
+		const urlParams = new URLSearchParams(window.location.search);
+		const urlStartDate = urlParams.get('startDate');
+		const urlEndDate = urlParams.get('endDate');
 		
-		endDate = today.toISOString().split('T')[0];
-		startDate = thirtyDaysAgo.toISOString().split('T')[0];
-	});
-
-	onMount(async () => {
-		// Setup report filters and state
+		if (urlStartDate && urlEndDate) {
+			startDate = urlStartDate;
+			endDate = urlEndDate;
+			
+			// Determine which period button should be selected
+			const start = new Date(urlStartDate);
+			const end = new Date(urlEndDate);
+			const today = new Date();
+			
+			// Calculate difference more accurately
+			const timeDiff = end.getTime() - start.getTime();
+			const daysDiff = Math.round(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+			
+			// Check if this matches one of our preset periods
+			const todayStr = today.toISOString().split('T')[0];
+			const sevenDaysAgoStr = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+			const thirtyDaysAgoStr = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+			const ninetyDaysAgoStr = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+			
+			if (urlStartDate === sevenDaysAgoStr && urlEndDate === todayStr) {
+				selectedPeriod = '7days';
+			} else if (urlStartDate === thirtyDaysAgoStr && urlEndDate === todayStr) {
+				selectedPeriod = '30days';
+			} else if (urlStartDate === ninetyDaysAgoStr && urlEndDate === todayStr) {
+				selectedPeriod = '90days';
+			} else {
+				selectedPeriod = 'custom';
+				showCustomDateFilter = true;
+			}
+		} else {
+			// No URL params - this means we're showing all data initially
+			// Set form values to current 30-day range for the custom filter
+			const today = new Date();
+			const thirtyDaysAgo = new Date(today);
+			thirtyDaysAgo.setDate(today.getDate() - 30);
+			
+			endDate = today.toISOString().split('T')[0];
+			startDate = thirtyDaysAgo.toISOString().split('T')[0];
+			selectedPeriod = 'all'; // Show "All Data" as selected
+		}
+		
 		loading = false;
 	});
+
+	// Update selectedYear to current year or most recent available year when reports data loads
+	$: if (reports.availableYears && reports.availableYears.length > 0 && !yearManuallySelected) {
+		const currentYear = new Date().getFullYear();
+		const availableYears = reports.availableYears;
+		
+		// If current year is available, use it; otherwise use the most recent year
+		if (availableYears.includes(currentYear)) {
+			selectedYear = currentYear;
+		} else {
+			selectedYear = availableYears[0]; // Most recent year (already sorted descending)
+		}
+	}
+
+	// Reactive statement to filter monthly trends by year
+	$: filteredMonthlyTrends = reports.monthlyTrends.filter(trend => trend.year === selectedYear);
 
 	// Browser print dialog for reports
 	function printReport() {
@@ -54,11 +110,15 @@
 	}
 	
 	// Update date range based on period selection
-	function handlePeriodChange(period: string) {
+	async function handlePeriodChange(period: string) {
 		selectedPeriod = period;
 		const today = new Date();
 		
 		switch (period) {
+			case 'all':
+				// Navigate to page without date parameters to show all data
+				window.location.href = window.location.pathname;
+				return;
 			case '7days':
 				const sevenDaysAgo = new Date(today);
 				sevenDaysAgo.setDate(today.getDate() - 7);
@@ -82,27 +142,36 @@
 				break;
 			case 'custom':
 				showCustomDateFilter = true;
-				break;
+				return; // Don't apply filter for custom until user clicks apply
 		}
 		
 		if (period !== 'custom') {
-			applyDateFilter();
+			await applyDateFilter();
 		}
 	}
 	
-	function applyDateFilter() {
+	async function applyDateFilter() {
 		if (!startDate || !endDate) return;
 		
 		loading = true;
-		// In a real app, this would make an API call with the date parameters
-		// TODO: Replace with actual API call for date filtering
-		setTimeout(() => {
-			// Update the summary period display
-			reports.summary.period = `${formatDate(startDate)} - ${formatDate(endDate)}`;
-			reports.summary.periodStart = startDate;
-			reports.summary.periodEnd = endDate;
+		
+		try {
+			// Navigate to the page with new date parameters
+			const url = new URL(window.location.href);
+			url.searchParams.set('startDate', startDate);
+			url.searchParams.set('endDate', endDate);
+			
+			// Use goto to refresh with new params
+			window.location.href = url.toString();
+		} catch (error) {
+			console.error('Error applying date filter:', error);
 			loading = false;
-		}, 500);
+		}
+	}
+	
+	// Handle year filter change for monthly trends
+	function handleYearChange() {
+		yearManuallySelected = true;
 	}
 
 	// Format utilities for display
@@ -230,6 +299,14 @@
 			<!-- Period Selection -->
 			<div class="flex flex-wrap gap-2">
 				<button
+					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === 'all' 
+						? 'bg-brand-800 text-white' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+					on:click={() => handlePeriodChange('all')}
+				>
+					All Data
+				</button>
+				<button
 					class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {selectedPeriod === '7days' 
 						? 'bg-brand-800 text-white' 
 						: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
@@ -268,58 +345,112 @@
 		<!-- Custom Date Range Inputs -->
 		{#if showCustomDateFilter}
 			<div class="mt-4 pt-4 border-t border-gray-200">
-				<div class="flex flex-col sm:flex-row gap-4 items-end">
-					<div class="flex-1">
-						<label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">
-							Start Date
-						</label>
-						<input
-							id="start-date"
-							type="date"
-							bind:value={startDate}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
-						/>
+				<form 
+					method="POST" 
+					action="?/filterByDate"
+					use:enhance={() => {
+						loading = true;
+						return async ({ result }) => {
+							loading = false;
+							if (result.type === 'success' && result.data) {
+								const data = result.data as { reports: ReportsData };
+								reports = data.reports;
+							}
+						};
+					}}
+				>
+					<div class="flex flex-col sm:flex-row gap-4 items-end">
+						<div class="flex-1">
+							<label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">
+								Start Date
+							</label>
+							<input
+								id="start-date"
+								name="startDate"
+								type="date"
+								bind:value={startDate}
+								required
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
+							/>
+						</div>
+						<div class="flex-1">
+							<label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">
+								End Date
+							</label>
+							<input
+								id="end-date"
+								name="endDate"
+								type="date"
+								bind:value={endDate}
+								required
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
+							/>
+						</div>
+						<div>
+							<button
+								type="submit"
+								disabled={!startDate || !endDate}
+								class="px-4 py-2 bg-brand-800 text-white rounded-lg hover:bg-brand-900 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+							>
+								Apply Filter
+							</button>
+							<button
+								type="button"
+								on:click={applyDateFilter}
+								disabled={!startDate || !endDate}
+								class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+							>
+								Refresh
+							</button>
+						</div>
 					</div>
-					<div class="flex-1">
-						<label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">
-							End Date
-						</label>
-						<input
-							id="end-date"
-							type="date"
-							bind:value={endDate}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
-						/>
-					</div>
-					<div>
-						<button
-							on:click={applyDateFilter}
-							disabled={!startDate || !endDate}
-							class="px-4 py-2 bg-brand-800 text-white rounded-lg hover:bg-brand-900 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-						>
-							Apply Filter
-						</button>
-					</div>
-				</div>
+				</form>
 			</div>
 		{/if}
 
 		<!-- Current Filter Display -->
 		<div class="mt-4 pt-4 border-t border-gray-200">
-			<div class="flex items-center gap-2 text-sm text-gray-600">
-				<Calendar class="w-4 h-4" />
-				<span>Showing data for: <strong class="text-brand-900">{reports.summary.period}</strong></span>
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-2 text-sm text-gray-600">
+					<Calendar class="w-4 h-4" />
+					<span>Showing data for: <strong class="text-brand-900">{reports.summary.period}</strong></span>
+				</div>
+				<button
+					on:click={() => applyDateFilter()}
+					disabled={loading}
+					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+				>
+					<TrendingUp class="w-4 h-4" />
+					Refresh
+				</button>
 			</div>
 		</div>
 	</div>
 
-	<!-- Summary Cards -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+	<!-- No Data State -->
+	{#if reports.summary.totalOrders === 0 && !loading}
+		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 md:p-12 mb-6 md:mb-8">
+			<div class="text-center">
+				<BarChart3 class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+				<h3 class="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+				<p class="text-gray-600 mb-4">No orders found for the selected period. Try adjusting your date range or check back later.</p>
+				<button
+					on:click={() => handlePeriodChange('30days')}
+					class="inline-flex items-center gap-2 px-4 py-2 bg-brand-800 text-white rounded-lg hover:bg-brand-900 transition-colors"
+				>
+					<Calendar class="w-4 h-4" />
+					View Last 30 Days
+				</button>
+			</div>
+		</div>
+	{:else}
+		<!-- Summary Cards -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
 		<!-- Total Revenue -->
 		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
+					<p class="text-sm font-medium text-gray-600 mb-1">Total Revenue (Completed Orders)</p>
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
@@ -353,7 +484,7 @@
 		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-600 mb-1">Avg Order Value</p>
+					<p class="text-sm font-medium text-gray-600 mb-1">Avg Order Value (Completed)</p>
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
@@ -374,7 +505,7 @@
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-3xl font-bold text-emerald-600">{reports.orderStatusDistribution.find(status => status.status === 'completed')?.count || 0}</p>
+						<p class="text-3xl font-bold text-emerald-600">{reports.summary.completedOrdersCount}</p>
 					{/if}
 				</div>
 				<div class="p-3 bg-emerald-50 rounded-xl">
@@ -480,7 +611,26 @@
 	<!-- Monthly Trends -->
 	<div class="bg-white rounded-xl shadow-sm border border-gray-100 mt-6">
 		<div class="p-4 sm:p-5 md:p-6 border-b border-gray-100">
-			<h2 class="text-base sm:text-lg md:text-xl font-semibold text-brand-900">Monthly Performance Trends</h2>
+			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+				<h2 class="text-base sm:text-lg md:text-xl font-semibold text-brand-900">Monthly Performance Trends</h2>
+				
+				<!-- Year Filter -->
+				{#if reports.availableYears && reports.availableYears.length > 0}
+					<div class="flex items-center gap-3">
+						<label for="yearFilter" class="text-sm font-medium text-gray-700">Filter by Year:</label>
+						<select 
+							id="yearFilter"
+							bind:value={selectedYear}
+							on:change={handleYearChange}
+							class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+						>
+							{#each reports.availableYears as year}
+								<option value={year}>{year}</option>
+							{/each}
+						</select>
+					</div>
+				{/if}
+			</div>
 		</div>
 		<div class="p-4 sm:p-5 md:p-6">
 			<div class="overflow-x-auto">
@@ -494,19 +644,28 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-100">
-						{#each reports.monthlyTrends as trend}
-							<tr class="hover:bg-gray-50 transition-colors">
-								<td class="py-4 font-semibold text-brand-900">{trend.month} {trend.year}</td>
-								<td class="py-4 text-gray-700 text-center font-medium">{trend.orderCount}</td>
-								<td class="py-4 text-gray-700 text-right font-medium">{formatCurrency(trend.revenue)}</td>
-								<td class="py-4 text-gray-700 text-right font-medium">{formatCurrency(trend.averageOrderValue)}</td>
+						{#if filteredMonthlyTrends.length > 0}
+							{#each filteredMonthlyTrends as trend}
+								<tr class="hover:bg-gray-50 transition-colors">
+									<td class="py-4 font-semibold text-brand-900">{trend.month} {trend.year}</td>
+									<td class="py-4 text-gray-700 text-center font-medium">{trend.orderCount}</td>
+									<td class="py-4 text-gray-700 text-right font-medium">{formatCurrency(trend.revenue)}</td>
+									<td class="py-4 text-gray-700 text-right font-medium">{formatCurrency(trend.averageOrderValue)}</td>
+								</tr>
+							{/each}
+						{:else}
+							<tr>
+								<td colspan="4" class="py-8 text-center text-gray-500">
+									No monthly trends data available for the selected year.
+								</td>
 							</tr>
-						{/each}
+						{/if}
 					</tbody>
 				</table>
 			</div>
 		</div>
 	</div>
+	{/if}
 
 	<!-- Print Header - Only visible when printing -->
 	<div class="hidden print:block print:text-center print:mb-6">

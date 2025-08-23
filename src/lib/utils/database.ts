@@ -216,4 +216,238 @@ export async function fetchOrderById(supabase: SupabaseClient, orderId: string) 
 	return order;
 }
 
+/**
+ * Generate comprehensive reports data from database
+ */
+export async function generateReportsData(supabase: SupabaseClient, startDate?: string, endDate?: string) {
+	try {
+		// fetch all orders for the period
+		let query = supabase.from('orders').select('*');
+		if (startDate && endDate) {
+			// convert date strings to proper datetime format for supabase
+			const startDateTime = `${startDate} 00:00:00`;
+			const endDateTime = `${endDate} 23:59:59`;
+			
+			console.log('Filtering orders with date range:', { startDateTime, endDateTime });
+			
+			query = query
+				.gte('created_at', startDateTime)
+				.lte('created_at', endDateTime);
+		} else {
+			console.log('No date filter applied, fetching all orders');
+		}
+		
+		const { data: orders, error: ordersError } = await query;
+		
+		if (ordersError) {
+			console.error('Error fetching orders for reports:', ordersError);
+			throw new Error('Failed to fetch orders for reports');
+		}
+
+		const ordersData = orders || [];
+		console.log('Fetched orders for reports:', {
+			totalOrders: ordersData.length,
+			dateRange: startDate && endDate ? `${startDate} to ${endDate}` : 'All dates',
+			sampleDates: ordersData.slice(0, 3).map(order => order.created_at)
+		});
+
+		// calculate summary statistics
+		const completedOrders = ordersData.filter(order => order.status === 'completed');
+		const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+		const totalOrders = ordersData.length;
+		const completedOrdersCount = completedOrders.length;
+		const averageOrderValue = completedOrdersCount > 0 ? totalRevenue / completedOrdersCount : 0;
+
+		// calculate order status distribution
+		const statusCounts: Record<string, { count: number; revenue: number }> = {};
+		ordersData.forEach(order => {
+			const status = order.status || 'unknown';
+			if (!statusCounts[status]) {
+				statusCounts[status] = { count: 0, revenue: 0 };
+			}
+			statusCounts[status].count++;
+			statusCounts[status].revenue += order.total_amount || 0;
+		});
+
+		const orderStatusDistribution = Object.entries(statusCounts).map(([status, data]) => ({
+			status,
+			count: data.count,
+			percentage: totalOrders > 0 ? (data.count / totalOrders) * 100 : 0,
+			revenue: data.revenue
+		}));
+
+		// calculate payment method analysis
+		const paymentCounts: Record<string, { count: number; totalAmount: number }> = {};
+		ordersData.forEach(order => {
+			const method = order.payment_method || 'unknown';
+			if (!paymentCounts[method]) {
+				paymentCounts[method] = { count: 0, totalAmount: 0 };
+			}
+			paymentCounts[method].count++;
+			paymentCounts[method].totalAmount += order.total_amount || 0;
+		});
+
+		const paymentMethodAnalysis = Object.entries(paymentCounts).map(([method, data]) => ({
+			method,
+			count: data.count,
+			percentage: totalOrders > 0 ? (data.count / totalOrders) * 100 : 0,
+			totalAmount: data.totalAmount
+		}));
+
+		// calculate service type performance
+		const serviceCounts: Record<string, { count: number; revenue: number; prices: number[] }> = {};
+		ordersData.forEach(order => {
+			const serviceType = order.service_type || 'unknown';
+			if (!serviceCounts[serviceType]) {
+				serviceCounts[serviceType] = { count: 0, revenue: 0, prices: [] };
+			}
+			serviceCounts[serviceType].count++;
+			serviceCounts[serviceType].revenue += order.total_amount || 0;
+			serviceCounts[serviceType].prices.push(order.unit_price || 0);
+		});
+
+		const serviceTypePerformance = Object.entries(serviceCounts).map(([serviceType, data]) => ({
+			serviceType,
+			orderCount: data.count,
+			totalRevenue: data.revenue,
+			averagePrice: data.prices.length > 0 ? data.prices.reduce((sum, price) => sum + price, 0) / data.prices.length : 0,
+			percentage: totalOrders > 0 ? (data.count / totalOrders) * 100 : 0
+		}));
+
+		// calculate monthly trends based on actual data range
+		const monthlyTrends: Array<{
+			month: string;
+			year: number;
+			revenue: number;
+			orderCount: number;
+			averageOrderValue: number;
+		}> = [];
+		
+		// get available years for filtering
+		const availableYears = new Set<number>();
+		
+		if (ordersData.length > 0) {
+			// get the actual date range from the data
+			const orderDates = ordersData.map(order => new Date(order.created_at)).sort((a, b) => a.getTime() - b.getTime());
+			const earliestDate = orderDates[0];
+			const latestDate = orderDates[orderDates.length - 1];
+			
+			// create monthly buckets from earliest to latest month
+			const monthsMap = new Map<string, {month: string, year: number, orders: any[]}>();
+			
+			// initialize all months in the range
+			const currentMonth = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1);
+			const endMonth = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
+			
+			while (currentMonth <= endMonth) {
+				const monthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
+				monthsMap.set(monthKey, {
+					month: currentMonth.toLocaleDateString('en-US', { month: 'long' }),
+					year: currentMonth.getFullYear(),
+					orders: []
+				});
+				currentMonth.setMonth(currentMonth.getMonth() + 1);
+			}
+			
+			// distribute orders into monthly buckets
+			ordersData.forEach(order => {
+				const orderDate = new Date(order.created_at);
+				const monthKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
+				const monthData = monthsMap.get(monthKey);
+				if (monthData) {
+					monthData.orders.push(order);
+				}
+				// add year to available years set
+				availableYears.add(orderDate.getFullYear());
+			});
+			
+			// convert to final format and calculate statistics
+			Array.from(monthsMap.values()).forEach(monthData => {
+				const monthRevenue = monthData.orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+				const monthOrderCount = monthData.orders.length;
+				const monthAverageOrderValue = monthOrderCount > 0 ? monthRevenue / monthOrderCount : 0;
+
+				monthlyTrends.push({
+					month: monthData.month,
+					year: monthData.year,
+					revenue: monthRevenue,
+					orderCount: monthOrderCount,
+					averageOrderValue: monthAverageOrderValue
+				});
+			});
+		}
+
+		// set period information
+		const today = new Date();
+		let periodStart, periodEnd, period;
+		
+		if (startDate && endDate) {
+			periodStart = startDate;
+			periodEnd = endDate;
+			const start = new Date(startDate);
+			const end = new Date(endDate);
+			const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+			
+			if (daysDiff === 7) {
+				period = "Last 7 Days";
+			} else if (daysDiff === 30) {
+				period = "Last 30 Days";
+			} else if (daysDiff === 90) {
+				period = "Last 90 Days";
+			} else {
+				period = `${daysDiff} Days (${formatDate(start)} - ${formatDate(end)})`;
+			}
+		} else {
+			// for demo purposes, if no dates specified, get the actual date range from the data
+			if (ordersData.length > 0) {
+				const orderDates = ordersData.map(order => new Date(order.created_at)).sort((a, b) => a.getTime() - b.getTime());
+				const earliestDate = orderDates[0];
+				const latestDate = orderDates[orderDates.length - 1];
+				
+				periodStart = earliestDate.toISOString().split('T')[0];
+				periodEnd = latestDate.toISOString().split('T')[0];
+				
+				const daysDiff = Math.ceil((latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+				period = `All Data (${daysDiff} days)`;
+			} else {
+				// fallback to last 30 days if no data
+				const thirtyDaysAgo = new Date(today);
+				thirtyDaysAgo.setDate(today.getDate() - 30);
+				periodStart = thirtyDaysAgo.toISOString().split('T')[0];
+				periodEnd = today.toISOString().split('T')[0];
+				period = "Last 30 Days";
+			}
+		}
+		
+		function formatDate(date: Date): string {
+			return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+		}
+
+		return {
+			summary: {
+				totalRevenue,
+				totalOrders,
+				completedOrdersCount,
+				averageOrderValue,
+				period,
+				periodStart,
+				periodEnd
+			},
+			orderStatusDistribution,
+			paymentMethodAnalysis,
+			serviceTypePerformance,
+			monthlyTrends,
+			availableYears: Array.from(availableYears).sort((a, b) => b - a), // sort years descending
+			dateRange: {
+				start: periodStart,
+				end: periodEnd
+			}
+		};
+
+	} catch (error) {
+		console.error('Error generating reports data:', error);
+		throw new Error('Failed to generate reports data');
+	}
+}
+
 

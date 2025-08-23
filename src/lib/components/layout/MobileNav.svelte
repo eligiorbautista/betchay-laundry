@@ -62,20 +62,12 @@
 	// Check if current user is admin
 	$: userIsAdmin = $authStore.user ? isAdmin($authStore.user) : false;
 	
-	// Debug log for admin status
-	$: if ($authStore.user) {
-		console.log('MobileNav Admin Check:', {
-			userEmail: $authStore.user.email,
-			isAdmin: userIsAdmin,
-			adminEmail: import.meta.env.PUBLIC_ADMIN_EMAIL || 'betchaylaundryhub@gmail.com'
-		});
-	}
+
 
 	// Check if current route is active
 	$: currentPath = $page.url.pathname;
 
 	function closeMobileNav() {
-		console.log('MobileNav: Closing mobile navigation');
 		dispatch('close');
 	}
 
@@ -101,8 +93,7 @@
 
 <!-- Mobile Navigation Overlay -->
 {#if isOpen}
-	<!-- Debug log -->
-	{console.log('MobileNav: Rendering mobile navigation, isOpen =', isOpen)}
+
 	<!-- Backdrop -->
 	<div 
 		class="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden"

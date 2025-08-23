@@ -6,7 +6,7 @@ export const load: PageServerLoad = async (event) => {
 	// Check if user is already authenticated via server-side cookies
 	const session = await getServerSession(event);
 	if (session) {
-		throw redirect(302, '/dashboard');
+		throw redirect(302, '/orders');
 	}
 
 	return {};
@@ -46,8 +46,8 @@ export const actions: Actions = {
 
 			if (signInData.user) {
 				// Success - session is now stored in cookies via our custom storage
-				// Redirect to dashboard
-				throw redirect(302, '/dashboard');
+				// Redirect to orders
+				throw redirect(302, '/orders');
 			} else {
 				return fail(400, {
 					error: 'Login failed. Please try again.',

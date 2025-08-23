@@ -1,6 +1,7 @@
 export interface ReportSummary {
 	totalRevenue: number;
 	totalOrders: number;
+	completedOrdersCount: number;
 	averageOrderValue: number;
 	period: string;
 	periodStart: string;
@@ -45,6 +46,7 @@ export interface ReportsData {
 	paymentMethodAnalysis: PaymentMethodReport[];
 	serviceTypePerformance: ServiceTypeReport[];
 	monthlyTrends: MonthlyTrend[];
+	availableYears: number[];
 	dateRange: {
 		start: string;
 		end: string;

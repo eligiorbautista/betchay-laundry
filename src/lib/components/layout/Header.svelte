@@ -22,7 +22,6 @@
 		};
 	});
 	function toggleSidebar() {
-		console.log('Hamburger menu clicked - dispatching toggleSidebar event');
 		dispatch('toggleSidebar');
 	}
 
@@ -82,10 +81,10 @@
 	});
 </script>
 
-<header class="navbar bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-[50] h-16 px-4 md:px-6">
-	<div class="navbar-start">		<!-- hamburger menu -->
+<header class="flex items-center justify-between bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-[50] h-16 px-4 md:px-6">
+	<div class="flex items-center">		<!-- hamburger menu -->
 		<button
-			class="btn btn-ghost btn-square text-gray-600 hover:text-brand-900 hover:bg-gray-100 lg:hidden min-h-[44px] min-w-[44px]"
+			class="p-2 text-gray-600 hover:text-brand-900 hover:bg-gray-100 rounded-lg lg:hidden min-h-[44px] min-w-[44px] transition-colors"
 			on:click={toggleSidebar}
 			aria-label="Toggle sidebar"
 			data-menu-button
@@ -99,12 +98,12 @@
 		</div>
 	</div>
 
-	<div class="navbar-center lg:hidden">
+	<div class="flex items-center lg:hidden">
 		<!-- page title for mobile -->
 		<h1 class="text-lg font-semibold text-brand-900">{pageTitle}</h1>
 	</div>
 
-	<div class="navbar-end gap-1 md:gap-2">
+	<div class="flex items-center gap-1 md:gap-2">
 		<!-- current date/time (desktop only) -->
 		<div class="hidden lg:flex flex-col items-end mr-4 text-right">
 			<div class="text-sm font-medium text-brand-900">{formattedDate}</div>
@@ -114,7 +113,7 @@
 		<!-- user menu -->
 		<div class="relative">
 			<button 
-				class="btn btn-ghost btn-circle"
+				class="p-2 rounded-full hover:bg-gray-100 transition-colors"
 				on:click={() => showDropdown = !showDropdown}
 				on:blur={() => setTimeout(() => showDropdown = false, 150)}
 			>

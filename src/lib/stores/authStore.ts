@@ -5,36 +5,36 @@ import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 import { logAuditEvent } from '$lib/utils/audit';
 
-// Auth state shape
+// auth state shape
 interface AuthState {
 	user: User | null;
 	session: Session | null;
 	loading: boolean;
 }
 
-// Default auth values
+// default auth values
 const initialState: AuthState = {
 	user: null,
 	session: null,
 	loading: true
 };
 
-// Create the store
+// create the store
 export const authStore = writable<AuthState>(initialState);
 
-// Flag to prevent redirects during password changes
+// flag to prevent redirects during password changes
 let isChangingPassword = false;
 
-// Main auth operations
+// main auth operations
 export const auth = {
-	// Setup session listener and initial state
+	// setup session listener and initial state
 	async initialize() {
 		if (!browser) {
 			return;
 		}
 
 		try {
-			// Get current session from our cookie-based client
+			// get current session from our cookie-based client
 			const { data: { session }, error } = await supabase.auth.getSession();
 			
 			if (error) {
@@ -43,14 +43,14 @@ export const auth = {
 				return;
 			}
 
-			// Set initial session if found
+			// set initial session if found
 			authStore.set({
 				user: session?.user || null,
 				session: session,
 				loading: false
 			});
 
-			// Listen for auth changes
+			// listen for auth changes
 			supabase.auth.onAuthStateChange((event, session) => {
 				console.log('Auth state change:', event, !!session);
 				
@@ -60,37 +60,37 @@ export const auth = {
 					loading: false
 				});
 
-				// Navigate user based on login status
+				// navigate user based on login status
 				if (event === 'SIGNED_IN' && session) {
-					// Don't redirect if we're currently changing password
+					// don't redirect if we're currently changing password
 					if (isChangingPassword) {
 						return;
 					}
-					// Only redirect to dashboard if we're on any auth page or root
-					// Don't redirect from app pages (like settings during password change)
-					// Don't redirect from password reset page (user needs to set new password first)
+					// only redirect to orders if we're on any auth page or root
+					// don't redirect from app pages (like settings during password change)
+					// don't redirect from password reset page (user needs to set new password first)
 					const currentPath = window.location.pathname;
 					if (currentPath === '/auth/reset-password') {
-						// User is on password reset page - don't redirect, let them set new password
+						// user is on password reset page - don't redirect, let them set new password
 						return;
 					}
 					if (currentPath.startsWith('/auth/') || currentPath === '/') {
-						console.log('Redirecting to dashboard after SIGNED_IN');
-						goto('/dashboard');
+						console.log('Redirecting to orders after SIGNED_IN');
+						goto('/orders');
 					}
 				} else if (event === 'SIGNED_OUT') {
 					goto('/auth/login');
 				} else if (event === 'INITIAL_SESSION' && session) {
-					// If we have a session and we're on any auth page or root, redirect to dashboard
-					// Don't redirect from password reset page (user needs to set new password first)
+					// if we have a session and we're on any auth page or root, redirect to orders
+					// don't redirect from password reset page (user needs to set new password first)
 					const currentPath = window.location.pathname;
 					if (currentPath === '/auth/reset-password') {
-						// User is on password reset page - don't redirect, let them set new password
+						// user is on password reset page - don't redirect, let them set new password
 						return;
 					}
 					if (currentPath.startsWith('/auth/') || currentPath === '/') {
-						console.log('Redirecting to dashboard after INITIAL_SESSION');
-						goto('/dashboard');
+						console.log('Redirecting to orders after INITIAL_SESSION');
+						goto('/orders');
 					}
 				}
 			});
@@ -101,7 +101,7 @@ export const auth = {
 		}
 	},
 
-	// Create new user account
+	// create new user account
 	async signUp(email: string, password: string) {
 		try {
 			const { data, error } = await supabase.auth.signUp({
@@ -123,7 +123,7 @@ export const auth = {
 		}
 	},
 
-	// User login with credentials
+	// user login with credentials
 	async signIn(email: string, password: string) {
 		try {
 			const { data, error } = await supabase.auth.signInWithPassword({
@@ -150,8 +150,8 @@ export const auth = {
 				);
 			}
 
-			// Don't redirect here - let the auth state change handler do it
-			// The auth store onAuthStateChange will handle the redirect
+			// don't redirect here - let the auth state change handler do it
+			// the auth store onauthstatechange will handle the redirect
 
 			return { success: true, data };
 		} catch (error: any) {
@@ -163,10 +163,10 @@ export const auth = {
 		}
 	},
 
-	// Sign out
+	// sign out
 	async signOut() {
 		try {
-			// Clear auth store immediately
+			// clear auth store immediately
 			authStore.set({ user: null, session: null, loading: false });
 			
 			const { error } = await supabase.auth.signOut();

@@ -23,17 +23,7 @@
 				const userHasAccess = state.user && isAdmin(state.user);
 				hasAccess = !!userHasAccess;
 				
-				// Debug logging for AdminOnly component
-				console.log('AdminOnly Component Check:', {
-					hasUser: !!state.user,
-					userEmail: state.user?.email || 'No user',
-					isAdmin: userHasAccess,
-					hasAccess: hasAccess,
-					loading: loading
-				});
-				
 				if (!hasAccess) {
-					console.log('AdminOnly: Access denied, showing message or redirecting to:', redirectTo);
 					if (showAccessDenied) {
 						// Show access denied message
 						showDeniedMessage = true;
@@ -41,8 +31,6 @@
 						// Redirect immediately
 						goto(redirectTo);
 					}
-				} else {
-					console.log('AdminOnly: Access granted, showing content');
 				}
 			}
 		});

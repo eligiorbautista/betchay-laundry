@@ -54,14 +54,7 @@
 	// Check if current user is admin
 	$: userIsAdmin = $authStore.user ? isAdmin($authStore.user) : false;
 	
-	// Debug log for admin status
-	$: if ($authStore.user) {
-		console.log('Sidebar Admin Check:', {
-			userEmail: $authStore.user.email,
-			isAdmin: userIsAdmin,
-			adminEmail: import.meta.env.PUBLIC_ADMIN_EMAIL || 'betchaylaundryhub@gmail.com'
-		});
-	}
+
 
 	// track current page for highlighting
 	$: currentPath = $page.url.pathname;

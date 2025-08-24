@@ -17,6 +17,8 @@
 	let searchQuery = '';
 	let selectedStatus = 'all';
 	let selectedPaymentStatus = 'all';
+	let startDate = '';
+	let endDate = '';
 	let sortColumn = '';
 	let sortDirection: 'asc' | 'desc' = 'desc';
 	
@@ -86,6 +88,27 @@
 		// Filter by payment status
 		if (selectedPaymentStatus !== 'all') {
 			filtered = filtered.filter(order => order.payment_status === selectedPaymentStatus);
+		}
+
+		// Filter by date range
+		if (startDate || endDate) {
+			filtered = filtered.filter(order => {
+				const orderDate = new Date(order.created_at);
+				const orderDateOnly = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
+				
+				if (startDate && endDate) {
+					const start = new Date(startDate);
+					const end = new Date(endDate);
+					return orderDateOnly >= start && orderDateOnly <= end;
+				} else if (startDate) {
+					const start = new Date(startDate);
+					return orderDateOnly >= start;
+				} else if (endDate) {
+					const end = new Date(endDate);
+					return orderDateOnly <= end;
+				}
+				return true;
+			});
 		}
 
 		// Sort orders by column if active, otherwise default to newest first
@@ -365,7 +388,7 @@
 	function getTotalWeight(order: Order) {
 		return order.quantity || 0;
 	}	// Reactive statements
-	$: if (searchQuery !== '' || selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || sortColumn || sortDirection) {
+	$: if (searchQuery !== '' || selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || startDate || endDate || sortColumn || sortDirection) {
 		currentPage = 1; // Reset to first page when filters change
 		applyFilters();
 	}
@@ -408,7 +431,7 @@
 		</div>
 		
 		<div class="p-4 sm:p-6">
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<!-- Search Filter -->
 				<div>
 					<label for="searchQuery" class="block text-sm font-medium text-gray-700 mb-2">
@@ -460,16 +483,45 @@
 						{/each}
 					</select>
 				</div>
+
+				<!-- Date Range Filter -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Date Range
+					</label>
+					<div class="grid grid-cols-2 gap-2">
+						<div>
+							<input
+								type="date"
+								bind:value={startDate}
+								on:change={applyFilters}
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+								placeholder="Start date"
+							/>
+						</div>
+						<div>
+							<input
+								type="date"
+								bind:value={endDate}
+								on:change={applyFilters}
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+								placeholder="End date"
+							/>
+						</div>
+					</div>
+				</div>
 			</div>
 
 						<!-- Filter Actions -->
-			{#if searchQuery || selectedStatus !== 'all' || selectedPaymentStatus !== 'all'}
+			{#if searchQuery || selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || startDate || endDate}
 				<div class="flex items-center gap-3 mt-6">
 					<button
 						on:click={() => { 
 							searchQuery = '';
 							selectedStatus = 'all'; 
 							selectedPaymentStatus = 'all'; 
+							startDate = '';
+							endDate = '';
 							applyFilters();
 						}}
 						class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -481,7 +533,7 @@
 		</div>
 		
 		<!-- Filter Status Display -->
-		{#if selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || searchQuery}
+		{#if selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || searchQuery || startDate || endDate}
 			<div class="p-4 sm:p-6 border-t border-gray-200 bg-gray-50">
 				<div class="flex flex-wrap items-center gap-3 text-sm">
 					<span class="text-gray-600">Applied filters:</span>
@@ -524,6 +576,20 @@
 							</button>
 						</span>
 					{/if}
+
+					{#if startDate || endDate}
+						<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full">
+							<Calendar class="w-4 h-4" />
+							{startDate && endDate ? `${formatDateOnly(startDate)} to ${formatDateOnly(endDate)}` : startDate ? `From ${formatDateOnly(startDate)}` : `Until ${formatDateOnly(endDate)}`}
+							<button 
+								on:click={() => { startDate = ''; endDate = ''; applyFilters(); }}
+								class="text-green-500 hover:text-green-800"
+								title="Clear date filter"
+							>
+								<XCircle class="w-4 h-4" />
+							</button>
+						</span>
+					{/if}
 				</div>
 			</div>
 		{/if}
@@ -539,11 +605,11 @@
 				<Package class="w-12 md:w-16 h-12 md:h-16 text-gray-300 mx-auto mb-4" />
 				<h3 class="text-lg font-medium text-brand-900 mb-2">No orders found</h3>
 				<p class="text-gray-600 mb-6 text-sm md:text-base">
-					{searchQuery || selectedStatus !== 'all' || selectedPaymentStatus !== 'all'
+					{searchQuery || selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || startDate || endDate
 						? 'Try adjusting your search or filters.' 
 						: 'Get started by creating your first order.'}
 				</p>
-				{#if !searchQuery && selectedStatus === 'all' && selectedPaymentStatus === 'all'}
+				{#if !searchQuery && selectedStatus === 'all' && selectedPaymentStatus === 'all' && !startDate && !endDate}
 					<a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-brand-800 text-white rounded-lg hover:bg-brand-900 transition-colors text-sm md:text-base">
 						<Plus class="w-4 md:w-5 h-4 md:h-5 mr-2" />
 						Create First Order

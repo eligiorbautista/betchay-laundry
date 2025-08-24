@@ -110,12 +110,12 @@
 		transition:fly="{{ x: -320, duration: 300, opacity: 1 }}"
 	>
 		<!-- Header -->
-		<div class="flex items-center justify-between h-20 px-6 border-b border-gray-200 bg-white/90 backdrop-blur-sm">
+		<div class="flex items-center justify-between h-20 px-6 border-b border-gray-200">
 			<div class="flex items-center space-x-3 flex-1">
 				<img 
 					src="/logo/logo_banner.png" 
 					alt="Laundry Management System" 
-					class="ml-1 h-14 w-auto object-contain bg-brand-900 py-1.5 px-2 rounded-lg shadow-sm"
+					class="ml-4 h-18 w-auto object-contain py-1.5 px-2 rounded-lg shadow-sm"
 				/>
 			</div>
 			<button

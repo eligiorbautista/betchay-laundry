@@ -81,13 +81,13 @@
 	data-sidebar
 >
 	<!-- company logo -->
-	<div class="flex items-center h-16 px-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+	<div class="flex items-center h-22 px-4 ">
 		<div class="flex items-center space-x-3 w-full">
 			<a href="/" class="flex items-center w-full group">
 				<img 
 					src="/logo/logo_banner.png" 
 					alt="Laundry Management System" 
-					class="ml-1 h-12 w-auto object-contain bg-brand-900 px-2 rounded-sm shadow-sm group-hover:shadow-md transition-shadow duration-200"
+					class="mt-2 h-18 w-auto object-contain px-2"
 				/>
 			</a>
 		</div>

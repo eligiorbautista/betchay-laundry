@@ -255,7 +255,7 @@
 				<!-- Logo Section -->
 				<div class="lg:w-1/2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center">
 					<div class="text-center">
-						<img src="/logo/logo_banner.png" alt="App Logo" class="h-14 lg:h-16 xl:h-20 mx-auto mb-6  bg-[#0d0d0d] px-2 rounded-md shadow-sm group-hover:shadow-md transition-shadow duration-200" />
+						<img src="/logo/logo_banner.png" alt="App Logo" class="h-20 lg:h-24 xl:h-28 mx-auto mb-6 px-2" />
 						<h1 class="text-2xl lg:text-3xl font-bold text-brand-900 mb-3">
 							Laundry Management System
 						</h1>

@@ -40,8 +40,7 @@
 		{ value: 'cash', label: 'Cash' },
 		{ value: 'gcash', label: 'GCash' },
 		{ value: 'paymaya', label: 'PayMaya' },
-		{ value: 'bank_transfer', label: 'Bank Transfer' },
-		{ value: 'credit_card', label: 'Credit Card' }
+		{ value: 'bank_transfer', label: 'Bank Transfer' }
 	];
 
 	const paymentStatuses = [

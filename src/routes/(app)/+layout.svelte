@@ -66,7 +66,7 @@
 		</div>
 		
 		<!-- Desktop Sidebar (hidden on mobile and print) -->
-		<div class="hidden lg:block print:hidden">
+		<div class="hidden md:block print:hidden">
 			<Sidebar />
 		</div>
 
@@ -79,7 +79,7 @@
 		</div>
 
 		<!-- Main Content -->
-		<div class="lg:pl-64 transition-all duration-300 print:pl-0">
+		<div class="md:pl-40 lg:pl-40 xl:pl-64 transition-all duration-300 print:pl-0">
 			<main class="pt-20 min-h-screen print:pt-0 print:min-h-0">
 				<slot />
 			</main>

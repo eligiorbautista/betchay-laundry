@@ -7,7 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  */
 export async function logAuditEvent(
 	supabase: SupabaseClient,
-	actionType: 'login' | 'logout' | 'reset_password' | 'order_created' | 'order_updated' | 'order_status_changed' | 'payment_status_changed',
+	actionType: 'login' | 'logout' | 'reset_password' | 'password_changed' | 'order_created' | 'order_updated' | 'order_status_changed' | 'payment_status_changed',
 	description: string,
 	entityType?: 'order' | 'user' | 'system',
 	entityId?: string,

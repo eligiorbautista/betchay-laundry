@@ -541,8 +541,8 @@
 
 				<div class="space-y-3 text-sm">
 					<div class="flex justify-between">
-						<span class="text-gray-500">Order ID:</span>
-						<span class="font-medium text-brand-900">{order.id}</span>
+						<span class="text-gray-500">Order #:</span>
+						<span class="font-medium text-brand-900">{order.order_number}</span>
 					</div>
 					<div class="flex justify-between">
 						<span class="text-gray-500">Created:</span>

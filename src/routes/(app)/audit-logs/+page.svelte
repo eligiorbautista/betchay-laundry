@@ -119,6 +119,7 @@
 			case 'payment_status_changed':
 				return CreditCard;
 			case 'reset_password':
+			case 'password_changed':
 				return Key;
 			default:
 				return Activity;
@@ -143,6 +144,7 @@
 			case 'payment_status_changed':
 				return 'bg-green-100 text-green-800';
 			case 'reset_password':
+			case 'password_changed':
 				return 'bg-orange-100 text-orange-800';
 			default:
 				return 'bg-gray-100 text-gray-800';
@@ -168,6 +170,8 @@
 				return 'Payment Changed';
 			case 'reset_password':
 				return 'Password Reset';
+			case 'password_changed':
+				return 'Password Changed';
 			default:
 				return actionType.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 		}

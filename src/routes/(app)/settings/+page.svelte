@@ -16,6 +16,7 @@
 	import type { UserProfile } from '$lib/types/settings';
 	import { authStore } from '$lib/stores/authStore';
 	import { supabase } from '$lib/config/supabaseClient';
+	import { logAuditEvent } from '$lib/utils/audit';
 
 	export let data: PageData;
 
@@ -52,7 +53,17 @@
 				throw new Error('User not found');
 			}
 
-			// Use updateUser directly without re-authentication to avoid SIGNED_IN event
+			// First, verify the current password by attempting to sign in
+			const { error: signInError } = await supabase.auth.signInWithPassword({
+				email: user.email,
+				password: currentPassword
+			});
+
+			if (signInError) {
+				throw new Error('Current password is incorrect');
+			}
+
+			// If current password is correct, update to new password
 			const { error: updateError } = await supabase.auth.updateUser({
 				password: newPassword
 			});
@@ -60,6 +71,18 @@
 			if (updateError) {
 				throw new Error(updateError.message);
 			}
+
+			// Log the password change event
+			await logAuditEvent(
+				supabase,
+				'password_changed',
+				'User changed their password',
+				'user',
+				user.id,
+				undefined,
+				undefined,
+				user.email
+			);
 
 			toast.success('Password changed successfully!');
 			currentPassword = '';

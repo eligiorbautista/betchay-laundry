@@ -486,12 +486,13 @@
 
 				<!-- Date Range Filter -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">
+					<label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">
 						Date Range
 					</label>
 					<div class="grid grid-cols-2 gap-2">
 						<div>
 							<input
+								id="startDate"
 								type="date"
 								bind:value={startDate}
 								on:change={applyFilters}
@@ -501,6 +502,7 @@
 						</div>
 						<div>
 							<input
+								id="endDate"
 								type="date"
 								bind:value={endDate}
 								on:change={applyFilters}

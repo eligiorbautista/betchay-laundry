@@ -125,7 +125,7 @@
 			<img
 				src="/logo/logo_banner.png"
 				alt="Betchay Laundry Logo"
-				class="mx-auto mb-2 h-10 sm:mb-3 sm:h-12 print:h-10 bg-[#0d0d0d] px-2 rounded-sm shadow-sm group-hover:shadow-md transition-shadow duration-200"
+				class="mx-auto mb-2 h-10 sm:mb-3 sm:h-12 print:h-10 px-2 rounded-sm shadow-sm group-hover:shadow-md transition-shadow duration-200"
 			/>
 		</div>
 		<div class="space-y-1 text-xs text-black sm:text-sm print:text-[10px]">

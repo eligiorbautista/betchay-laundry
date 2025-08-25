@@ -36,17 +36,18 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 			setItem: (key: string, value: string) => {
 				if (typeof document !== 'undefined') {
 					// Client-side: set secure cookie
-					// Don't use Secure flag in development (localhost)
 					const isProduction = process.env.NODE_ENV === 'production';
 					const secureFlag = isProduction ? '; Secure' : '';
-					const cookieString = `${key}=${encodeURIComponent(value)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
+					const httpOnlyFlag = isProduction ? '; HttpOnly' : '';
+					const sameSiteFlag = '; SameSite=Strict';
+					const cookieString = `${key}=${encodeURIComponent(value)}; path=/; max-age=${7 * 24 * 60 * 60}${sameSiteFlag}${secureFlag}${httpOnlyFlag}`;
 					document.cookie = cookieString;
 				}
 			},
 			removeItem: (key: string) => {
 				if (typeof document !== 'undefined') {
 					// Client-side: remove cookie
-					document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+					document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict`;
 				}
 			}
 		}

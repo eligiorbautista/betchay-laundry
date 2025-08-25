@@ -5,6 +5,45 @@ import { logAuditEvent, getClientIP, getUserAgent } from './audit';
 // database utility functions for common operations
 
 /**
+ * Validate and sanitize input data
+ */
+function validateOrderData(orderData: any) {
+	if (!orderData.customer_name?.trim()) {
+		throw new Error('Customer name is required');
+	}
+	
+	if (!orderData.customer_phone?.trim()) {
+		throw new Error('Customer phone is required');
+	}
+	
+	// Validate phone number format (basic validation)
+	const phoneRegex = /^[\+]?[0-9\s\-\(\)]{7,15}$/;
+	if (!phoneRegex.test(orderData.customer_phone.trim())) {
+		throw new Error('Invalid phone number format');
+	}
+	
+	// Validate quantity
+	if (!orderData.quantity || orderData.quantity <= 0) {
+		throw new Error('Quantity must be greater than 0');
+	}
+	
+	// Validate unit price
+	if (!orderData.unit_price || orderData.unit_price < 0) {
+		throw new Error('Unit price must be non-negative');
+	}
+	
+	// Validate customer name length
+	if (orderData.customer_name.trim().length > 100) {
+		throw new Error('Customer name too long (max 100 characters)');
+	}
+	
+	// Validate remarks length
+	if (orderData.remarks && orderData.remarks.trim().length > 500) {
+		throw new Error('Remarks too long (max 500 characters)');
+	}
+}
+
+/**
  * fetch all orders from database with optional filters
  */
 export async function fetchOrders(supabase: SupabaseClient, options?: {
@@ -12,6 +51,8 @@ export async function fetchOrders(supabase: SupabaseClient, options?: {
 	payment_status?: string;
 	limit?: number;
 	orderBy?: string;
+	page?: number;
+	pageSize?: number;
 }) {
 	const query = supabase
 		.from('orders')
@@ -30,8 +71,12 @@ export async function fetchOrders(supabase: SupabaseClient, options?: {
 	const orderBy = options?.orderBy || 'created_at';
 	query.order(orderBy, { ascending: false });
 
-	// apply limit if provided
-	if (options?.limit) {
+	// apply pagination if provided
+	if (options?.page && options?.pageSize) {
+		const from = (options.page - 1) * options.pageSize;
+		const to = from + options.pageSize - 1;
+		query.range(from, to);
+	} else if (options?.limit) {
 		query.limit(options.limit);
 	}
 
@@ -61,6 +106,9 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 	delivery_date?: string;
 	remarks?: string;
 }, request?: Request, userEmail?: string) {
+	// Validate input data
+	validateOrderData(orderData);
+
 	// get current user for created_by field
 	const { data: { user } } = await supabase.auth.getUser();
 
@@ -122,6 +170,12 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
  * update order status
  */
 export async function updateOrderStatus(supabase: SupabaseClient, orderId: string, newStatus: string, request?: Request, userEmail?: string) {
+	// Validate status
+	const validStatuses = ['pending', 'processing', 'ready', 'completed', 'cancelled'];
+	if (!validStatuses.includes(newStatus)) {
+		throw new Error('Invalid order status');
+	}
+
 	// get order details for audit log
 	const { data: order } = await supabase
 		.from('orders')
@@ -162,6 +216,12 @@ export async function updateOrderStatus(supabase: SupabaseClient, orderId: strin
  * update payment status
  */
 export async function updatePaymentStatus(supabase: SupabaseClient, orderId: string, newPaymentStatus: string, request?: Request, userEmail?: string) {
+	// Validate payment status
+	const validPaymentStatuses = ['paid', 'unpaid', 'partial'];
+	if (!validPaymentStatuses.includes(newPaymentStatus)) {
+		throw new Error('Invalid payment status');
+	}
+
 	// get order details for audit log
 	const { data: order } = await supabase
 		.from('orders')
@@ -202,6 +262,12 @@ export async function updatePaymentStatus(supabase: SupabaseClient, orderId: str
  * fetch order by id with all related data
  */
 export async function fetchOrderById(supabase: SupabaseClient, orderId: string) {
+	// Validate UUID format
+	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+	if (!uuidRegex.test(orderId)) {
+		throw new Error('Invalid order ID format');
+	}
+
 	const { data: order, error } = await supabase
 		.from('orders')
 		.select('*')
@@ -224,17 +290,19 @@ export async function generateReportsData(supabase: SupabaseClient, startDate?: 
 		// fetch all orders for the period
 		let query = supabase.from('orders').select('*');
 		if (startDate && endDate) {
+			// Validate date format
+			const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+			if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+				throw new Error('Invalid date format. Use YYYY-MM-DD');
+			}
+			
 			// convert date strings to proper datetime format for supabase
 			const startDateTime = `${startDate} 00:00:00`;
 			const endDateTime = `${endDate} 23:59:59`;
 			
-			console.log('Filtering orders with date range:', { startDateTime, endDateTime });
-			
 			query = query
 				.gte('created_at', startDateTime)
 				.lte('created_at', endDateTime);
-		} else {
-			console.log('No date filter applied, fetching all orders');
 		}
 		
 		const { data: orders, error: ordersError } = await query;
@@ -245,11 +313,6 @@ export async function generateReportsData(supabase: SupabaseClient, startDate?: 
 		}
 
 		const ordersData = orders || [];
-		console.log('Fetched orders for reports:', {
-			totalOrders: ordersData.length,
-			dateRange: startDate && endDate ? `${startDate} to ${endDate}` : 'All dates',
-			sampleDates: ordersData.slice(0, 3).map(order => order.created_at)
-		});
 
 		// calculate summary statistics
 		const completedOrders = ordersData.filter(order => order.status === 'completed');

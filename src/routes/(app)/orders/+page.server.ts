@@ -8,11 +8,45 @@ export const load: PageServerLoad = async (event) => {
 	// create supabase client for server-side operations
 	const supabase = createSupabaseServerClient(event);
 
+	// Get pagination parameters from URL
+	const url = new URL(event.request.url);
+	const page = parseInt(url.searchParams.get('page') || '1');
+	const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
+	const search = url.searchParams.get('search') || '';
+	const status = url.searchParams.get('status') || 'all';
+	const paymentStatus = url.searchParams.get('paymentStatus') || 'all';
+	const startDate = url.searchParams.get('startDate') || '';
+	const endDate = url.searchParams.get('endDate') || '';
+
 	try {
-		// fetch all orders from database using utility function
+		// fetch orders with pagination from database using utility function
 		const orders = await fetchOrders(supabase, {
-			orderBy: 'created_at'
+			orderBy: 'created_at',
+			page,
+			pageSize
 		});
+
+		// Get total count for pagination
+		let countQuery = supabase
+			.from('orders')
+			.select('*', { count: 'exact', head: true });
+
+		// Apply same filters to count query
+		if (status !== 'all') {
+			countQuery = countQuery.eq('status', status);
+		}
+		if (paymentStatus !== 'all') {
+			countQuery = countQuery.eq('payment_status', paymentStatus);
+		}
+		if (startDate && endDate) {
+			const startDateTime = `${startDate} 00:00:00`;
+			const endDateTime = `${endDate} 23:59:59`;
+			countQuery = countQuery
+				.gte('created_at', startDateTime)
+				.lte('created_at', endDateTime);
+		}
+
+		const { count } = await countQuery;
 
 		// transform database data to match our Order interface
 		const transformedOrders: Order[] = orders.map(order => ({
@@ -35,7 +69,20 @@ export const load: PageServerLoad = async (event) => {
 		}));
 
 		return {
-			orders: transformedOrders
+			orders: transformedOrders,
+			pagination: {
+				page,
+				pageSize,
+				total: count || 0,
+				totalPages: Math.ceil((count || 0) / pageSize)
+			},
+			filters: {
+				search,
+				status,
+				paymentStatus,
+				startDate,
+				endDate
+			}
 		};
 
 	} catch (err) {

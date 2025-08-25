@@ -24,9 +24,9 @@ export function createSupabaseServerClient(event: RequestEvent) {
 					event.cookies.set(key, value, {
 						path: '/',
 						maxAge: 7 * 24 * 60 * 60, // 7 days
-						sameSite: 'lax',
+						sameSite: 'strict',
 						secure: process.env.NODE_ENV === 'production',
-						httpOnly: false // Set to true for extra security, but Supabase needs to access it
+						httpOnly: true // Set to true for better security
 					});
 				},
 				removeItem: (key: string) => {

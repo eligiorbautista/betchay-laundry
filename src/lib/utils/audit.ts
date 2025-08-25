@@ -24,17 +24,6 @@ export async function logAuditEvent(
 		const currentUser = user || session?.user;
 		const finalUserEmail = userEmail || currentUser?.email;
 
-		// Debug logging to see what we're getting
-		console.log('Audit Log Debug:', {
-			actionType,
-			description,
-			userId: currentUser?.id,
-			providedUserEmail: userEmail,
-			finalUserEmail,
-			entityType,
-			entityId
-		});
-
 		// call the database function to log the event
 		const { error } = await supabase.rpc('log_audit_event', {
 			p_user_id: currentUser?.id || null,
@@ -50,8 +39,6 @@ export async function logAuditEvent(
 		if (error) {
 			console.error('Error logging audit event:', error);
 			// don't throw error to avoid breaking the main functionality
-		} else {
-			console.log('Audit event logged successfully');
 		}
 	} catch (error) {
 		console.error('Error in logAuditEvent:', error);

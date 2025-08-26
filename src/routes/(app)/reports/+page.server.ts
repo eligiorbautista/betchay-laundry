@@ -45,12 +45,6 @@ export const load: PageServerLoad = async (event) => {
 			useAllData ? undefined : (endDate || undefined)
 		);
 		
-		console.log('Loaded reports data:', {
-			totalOrders: reportsData.summary.totalOrders,
-			totalRevenue: reportsData.summary.totalRevenue,
-			monthlyTrendsCount: reportsData.monthlyTrends.length,
-			period: reportsData.summary.period
-		});
 
 		return {
 			reports: reportsData

@@ -5,26 +5,90 @@
 	import type { Order } from '$lib/types/order';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 	
 	export let data: PageData;
 	
 	let orders: Order[] = data.orders;
-	
-
 	let filteredOrders: Order[] = [];
 	let paginatedOrders: Order[] = [];
 	let loading = false;
-	let searchQuery = '';
-	let selectedStatus = 'all';
-	let selectedPaymentStatus = 'all';
-	let startDate = '';
-	let endDate = '';
-	let sortColumn = '';
-	let sortDirection: 'asc' | 'desc' = 'desc';
+	
+	// Filter state management with localStorage
+	const STORAGE_KEY = 'orders-filters';
+	
+	// Load saved filters from localStorage or use defaults
+	function loadFilters() {
+		if (browser) {
+			const saved = localStorage.getItem(STORAGE_KEY);
+			if (saved) {
+				try {
+					const filters = JSON.parse(saved);
+					return {
+						searchQuery: filters.searchQuery || '',
+						selectedStatus: filters.selectedStatus || 'all',
+						selectedPaymentStatus: filters.selectedPaymentStatus || 'all',
+						startDate: filters.startDate || '',
+						endDate: filters.endDate || '',
+						sortColumn: filters.sortColumn || '',
+						sortDirection: filters.sortDirection || 'desc',
+						currentPage: filters.currentPage || 1,
+						itemsPerPage: filters.itemsPerPage || 10
+					};
+				} catch (e) {
+					console.warn('Failed to parse saved filters:', e);
+				}
+			}
+		}
+		return {
+			searchQuery: '',
+			selectedStatus: 'all',
+			selectedPaymentStatus: 'all',
+			startDate: '',
+			endDate: '',
+			sortColumn: '',
+			sortDirection: 'desc',
+			currentPage: 1,
+			itemsPerPage: 10
+		};
+	}
+	
+	function saveFilters() {
+		if (browser) {
+			const filters = {
+				searchQuery,
+				selectedStatus,
+				selectedPaymentStatus,
+				startDate,
+				endDate,
+				sortColumn,
+				sortDirection,
+				currentPage,
+				itemsPerPage
+			};
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+		}
+	}
+	
+	function clearFilters() {
+		if (browser) {
+			localStorage.removeItem(STORAGE_KEY);
+		}
+	}
+	
+	// Initialize filter state
+	const initialFilters = loadFilters();
+	let searchQuery = initialFilters.searchQuery;
+	let selectedStatus = initialFilters.selectedStatus;
+	let selectedPaymentStatus = initialFilters.selectedPaymentStatus;
+	let startDate = initialFilters.startDate;
+	let endDate = initialFilters.endDate;
+	let sortColumn = initialFilters.sortColumn;
+	let sortDirection: 'asc' | 'desc' = initialFilters.sortDirection;
+	let currentPage = initialFilters.currentPage;
+	let itemsPerPage = initialFilters.itemsPerPage;
 	
 	// Pagination state
-	let currentPage = 1;
-	let itemsPerPage = 10;
 	let totalPages = 1;
 	let totalItems = 0;
 
@@ -48,11 +112,22 @@
 		{ value: 10, label: '10 per page' },
 		{ value: 20, label: '20 per page' },
 		{ value: 50, label: '50 per page' }
-	];	onMount(async () => {
+	];
+
+	onMount(async () => {
 		// Setup order counts and filtering
 		updateCounts();
+		// Set initial active date filter based on loaded date values
+		activeDateFilter = determineActiveDateFilter();
 		applyFilters();
 	});
+
+	// Reactive statement to update active date filter when date values change
+	$: {
+		if (startDate !== undefined || endDate !== undefined) {
+			activeDateFilter = determineActiveDateFilter();
+		}
+	}
 
 	function updateCounts() {
 		// Status counts
@@ -67,7 +142,9 @@
 		paymentStatusOptions[0].count = orders.length; // All
 		paymentStatusOptions[1].count = orders.filter(o => o.payment_status === 'paid').length;
 		paymentStatusOptions[2].count = orders.filter(o => o.payment_status === 'unpaid').length;
-	}	function applyFilters() {
+	}
+
+	function applyFilters() {
 		let filtered = [...orders];
 
 		// Filter by search query
@@ -76,7 +153,15 @@
 			filtered = filtered.filter(order =>
 				order.customer_name.toLowerCase().includes(searchLower) ||
 				order.customer_phone?.includes(searchLower) ||
-				order.order_number.toLowerCase().includes(searchLower)
+				order.order_number.toLowerCase().includes(searchLower) ||
+				order.service_type.toLowerCase().includes(searchLower) ||
+				order.payment_method?.toLowerCase().includes(searchLower) ||
+				order.status.toLowerCase().includes(searchLower) ||
+				order.payment_status.toLowerCase().includes(searchLower) ||
+				order.remarks?.toLowerCase().includes(searchLower) ||
+				order.total_amount.toString().includes(searchLower) ||
+				order.unit_price.toString().includes(searchLower) ||
+				order.quantity.toString().includes(searchLower)
 			);
 		}
 
@@ -93,19 +178,17 @@
 		// Filter by date range
 		if (startDate || endDate) {
 			filtered = filtered.filter(order => {
+				// Parse the order date and convert to local date string for comparison
 				const orderDate = new Date(order.created_at);
-				const orderDateOnly = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
+				const orderDateString = orderDate.toLocaleDateString('en-CA'); // YYYY-MM-DD format
 				
 				if (startDate && endDate) {
-					const start = new Date(startDate);
-					const end = new Date(endDate);
-					return orderDateOnly >= start && orderDateOnly <= end;
+					// Compare date strings directly to avoid timezone issues
+					return orderDateString >= startDate && orderDateString <= endDate;
 				} else if (startDate) {
-					const start = new Date(startDate);
-					return orderDateOnly >= start;
+					return orderDateString >= startDate;
 				} else if (endDate) {
-					const end = new Date(endDate);
-					return orderDateOnly <= end;
+					return orderDateString <= endDate;
 				}
 				return true;
 			});
@@ -123,6 +206,9 @@
 		
 		// Update pagination
 		updatePagination();
+		
+		// Save filters to localStorage
+		saveFilters();
 	}
 	
 	function updatePagination() {
@@ -146,6 +232,7 @@
 		if (page >= 1 && page <= totalPages) {
 			currentPage = page;
 			updatePagination();
+			saveFilters(); // Save pagination state
 		}
 	}
 	
@@ -153,6 +240,7 @@
 		itemsPerPage = newItemsPerPage;
 		currentPage = 1; // Reset to first page
 		updatePagination();
+		saveFilters(); // Save pagination state
 	}
 	
 	function getPageNumbers() {
@@ -180,6 +268,7 @@
 		
 		return rangeWithDots.filter((item, index, array) => array.indexOf(item) === index);
 	}
+
 	function handleColumnSort(column: string) {
 		if (sortColumn === column) {
 			// Toggle direction if same column
@@ -190,6 +279,76 @@
 			sortDirection = 'asc';
 		}
 		applyFilters();
+	}
+	
+	function clearAllFilters() {
+		searchQuery = '';
+		selectedStatus = 'all';
+		selectedPaymentStatus = 'all';
+		startDate = '';
+		endDate = '';
+		sortColumn = '';
+		sortDirection = 'desc';
+		currentPage = 1;
+		activeDateFilter = null;
+		clearFilters(); // Clear localStorage
+		applyFilters();
+	}
+
+	// Active date filter tracking
+	let activeDateFilter: 'today' | 'last7days' | 'all' | null = null;
+
+	// Function to determine which filter is currently active based on date values
+	function determineActiveDateFilter() {
+		if (!startDate && !endDate) {
+			return null; // No active filter when no dates are set
+		}
+		
+		const today = new Date().toLocaleDateString('en-CA');
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+		const sevenDaysAgoString = sevenDaysAgo.toLocaleDateString('en-CA');
+		
+		if (startDate === today && endDate === today) {
+			return 'today';
+		} else if (startDate === sevenDaysAgoString && endDate === today) {
+			return 'last7days';
+		} else {
+			return 'all'; // Custom date range or other
+		}
+	}
+
+	// Quick date filter functions
+	function setTodayFilter() {
+		const today = new Date().toLocaleDateString('en-CA');
+		startDate = today;
+		endDate = today;
+		activeDateFilter = 'today';
+		applyFilters();
+	}
+
+	function setLast7DaysFilter() {
+		const today = new Date();
+		const sevenDaysAgo = new Date(today);
+		sevenDaysAgo.setDate(today.getDate() - 7);
+		startDate = sevenDaysAgo.toLocaleDateString('en-CA');
+		endDate = today.toLocaleDateString('en-CA');
+		activeDateFilter = 'last7days';
+		applyFilters();
+	}
+
+	function setAllDatesFilter() {
+		startDate = '';
+		endDate = '';
+		activeDateFilter = 'all';
+		applyFilters();
+	}
+
+	function getQuickButtonClasses(filterType: 'today' | 'last7days' | 'all') {
+		const isActive = activeDateFilter === filterType;
+		return isActive 
+			? "flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-white bg-brand-800 rounded-md hover:bg-brand-900 transition-colors whitespace-nowrap"
+			: "flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors whitespace-nowrap";
 	}
 
 	function sortByColumn(orders: Order[], column: string, direction: 'asc' | 'desc') {
@@ -202,9 +361,9 @@
 					aValue = a.customer_name.toLowerCase();
 					bValue = b.customer_name.toLowerCase();
 					break;
-						case 'id':
-			aValue = a.id;
-			bValue = b.id;
+				case 'id':
+					aValue = a.id;
+					bValue = b.id;
 					break;
 				case 'amount':
 					aValue = a.total_amount;
@@ -262,6 +421,7 @@
 			default: return 'bg-gray-100 text-brand-800 border border-gray-200';
 		}
 	}
+
 	function getStatusIcon(status: string) {
 		switch (status) {
 			case 'pending': return Clock;
@@ -271,7 +431,9 @@
 			case 'cancelled': return XCircle;
 			default: return Clock;
 		}
-	}	function getStatusText(status: string) {
+	}
+
+	function getStatusText(status: string) {
 		switch (status) {
 			case 'pending': return 'Pending';
 			case 'processing': return 'Processing';
@@ -359,6 +521,7 @@
 			currency: 'PHP'
 		}).format(amount);
 	}
+
 	function formatDate(dateString: string) {
 		return new Intl.DateTimeFormat('en-US', {
 			month: 'short',
@@ -385,12 +548,9 @@
 			hour12: true
 		}).format(new Date(dateString));
 	}
+
 	function getTotalWeight(order: Order) {
 		return order.quantity || 0;
-	}	// Reactive statements
-	$: if (searchQuery !== '' || selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || startDate || endDate || sortColumn || sortDirection) {
-		currentPage = 1; // Reset to first page when filters change
-		applyFilters();
 	}
 </script>
 
@@ -419,8 +579,6 @@
 		</div>
 	</div>
 
-	
-
 	<!-- Filters Section -->
 	<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
 		<div class="p-4 sm:p-6 border-b border-gray-200">
@@ -442,7 +600,7 @@
 						<input
 							id="searchQuery"
 							type="text"
-							placeholder="Customer name, phone, or order ID..."
+							placeholder="Search"
 							bind:value={searchQuery}
 							on:input={applyFilters}
 							class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
@@ -495,7 +653,10 @@
 								id="startDate"
 								type="date"
 								bind:value={startDate}
-								on:change={applyFilters}
+								on:change={() => {
+									activeDateFilter = determineActiveDateFilter();
+									applyFilters();
+								}}
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
 								placeholder="Start date"
 							/>
@@ -505,27 +666,44 @@
 								id="endDate"
 								type="date"
 								bind:value={endDate}
-								on:change={applyFilters}
+								on:change={() => {
+									activeDateFilter = determineActiveDateFilter();
+									applyFilters();
+								}}
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
 								placeholder="End date"
 							/>
 						</div>
 					</div>
+					<!-- Quick Date Filter Buttons -->
+					<div class="flex flex-wrap gap-2 mt-2">
+						<button
+							on:click={setTodayFilter}
+							class={getQuickButtonClasses('today')}
+						>
+							Today
+						</button>
+						<button
+							on:click={setLast7DaysFilter}
+							class={getQuickButtonClasses('last7days')}
+						>
+							Last 7 Days
+						</button>
+						<button
+							on:click={setAllDatesFilter}
+							class={getQuickButtonClasses('all')}
+						>
+							All Dates
+						</button>
+					</div>
 				</div>
 			</div>
 
-						<!-- Filter Actions -->
+			<!-- Filter Actions -->
 			{#if searchQuery || selectedStatus !== 'all' || selectedPaymentStatus !== 'all' || startDate || endDate}
 				<div class="flex items-center gap-3 mt-6">
 					<button
-						on:click={() => { 
-							searchQuery = '';
-							selectedStatus = 'all'; 
-							selectedPaymentStatus = 'all'; 
-							startDate = '';
-							endDate = '';
-							applyFilters();
-						}}
+						on:click={clearAllFilters}
 						class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
 					>
 						Clear All
@@ -584,7 +762,12 @@
 							<Calendar class="w-4 h-4" />
 							{startDate && endDate ? `${formatDateOnly(startDate)} to ${formatDateOnly(endDate)}` : startDate ? `From ${formatDateOnly(startDate)}` : `Until ${formatDateOnly(endDate)}`}
 							<button 
-								on:click={() => { startDate = ''; endDate = ''; applyFilters(); }}
+								on:click={() => { 
+									startDate = ''; 
+									endDate = ''; 
+									activeDateFilter = null; 
+									applyFilters(); 
+								}}
 								class="text-green-500 hover:text-green-800"
 								title="Clear date filter"
 							>
@@ -596,6 +779,7 @@
 			</div>
 		{/if}
 	</div>
+
 	<!-- Orders List - Simple Paper-like Design -->
 	<div class="bg-white rounded-lg shadow-sm border border-gray-200">
 		{#if loading}
@@ -617,7 +801,8 @@
 						Create First Order
 					</a>
 				{/if}
-			</div>		{:else}
+			</div>
+		{:else}
 			<!-- Simple Paper-like Header -->
 			<div class="border-b border-gray-200 p-4 md:p-6 bg-gray-50">
 				<h2 class="text-lg font-semibold text-brand-900 mb-2">Order List</h2>
@@ -625,7 +810,9 @@
 					Showing {paginatedOrders.length} of {totalItems} orders
 					{#if totalItems !== orders.length}(filtered from {orders.length} total){/if}
 				</p>
-			</div>			<!-- Simple Paper-like Order Rows -->
+			</div>
+
+			<!-- Simple Paper-like Order Rows -->
 			<div class="divide-y divide-gray-200">
 				{#each paginatedOrders as order}
 					<!-- Unified Simple Row Design -->
@@ -668,7 +855,9 @@
 										{order.customer_phone}
 									</div>
 								{/if}
-							</div>							<!-- Right Side: Status, Payment & Actions -->
+							</div>
+
+							<!-- Right Side: Status, Payment & Actions -->
 							<div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
 								<!-- Status & Payment Badges -->
 								<div class="flex flex-col gap-2">
@@ -719,7 +908,9 @@
 						{/if}
 					</div>
 				{/each}
-			</div>			<!-- Simple Footer -->
+			</div>
+
+			<!-- Simple Footer -->
 			<div class="border-t border-gray-200 bg-gray-50 px-4 md:px-6 py-4 rounded-b-lg">
 				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 					<!-- Results count -->
@@ -757,6 +948,7 @@
 						</div>
 					{/if}
 				</div>
-			</div>		{/if}
+			</div>
+		{/if}
 	</div>
 </div>

@@ -171,8 +171,14 @@ export const auth = {
 			
 			const { error } = await supabase.auth.signOut();
 			
+			// Handle the case where there's no active session
 			if (error) {
-				throw error;
+				// If the error is about missing session, that's actually fine for logout
+				if (error.message.includes('Auth session missing')) {
+					console.log('No active session found during logout - this is normal');
+				} else {
+					throw error;
+				}
 			}
 
 			// Clear all cookies manually as backup
@@ -192,6 +198,11 @@ export const auth = {
 			return { success: true };
 		} catch (error: any) {
 			console.error('Logout error:', error);
+			// Even if there's an error, we should still redirect to login
+			// and clear the auth store
+			authStore.set({ user: null, session: null, loading: false });
+			setTimeout(() => goto('/auth/login'), 100);
+			
 			return { 
 				success: false, 
 				error: error.message || 'Failed to sign out' 

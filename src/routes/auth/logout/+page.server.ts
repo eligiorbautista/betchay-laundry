@@ -8,26 +8,39 @@ export const actions: Actions = {
 		// Create server-side client with cookie handling
 		const supabase = createSupabaseServerClient(event);
 		
-		// Get current user before signing out
-		const { data: { user } } = await supabase.auth.getUser();
-		
-		// Sign out from Supabase (this will clear the cookies)
-		await supabase.auth.signOut();
-		
-		// log audit event for logout
-		if (user) {
-			await logAuditEvent(
-				supabase,
-				'logout',
-				`User ${user.email} logged out`,
-				'user',
-				user.id,
-				getClientIP(event.request),
-				getUserAgent(event.request)
-			);
+		try {
+			// Get current user before signing out
+			const { data: { user } } = await supabase.auth.getUser();
+			
+			// Try to sign out from Supabase (this will clear the cookies)
+			const { error } = await supabase.auth.signOut();
+			
+			// Log audit event for logout if user was found
+			if (user) {
+				await logAuditEvent(
+					supabase,
+					'logout',
+					`User ${user.email} logged out`,
+					'user',
+					user.id,
+					getClientIP(event.request),
+					getUserAgent(event.request)
+				);
+			}
+			
+			// Even if signOut failed (e.g., no session), we still want to redirect
+			// The error might be due to missing session, which is fine for logout
+			if (error && !error.message.includes('Auth session missing')) {
+				console.error('Logout error:', error);
+			}
+			
+		} catch (error) {
+			// Handle any unexpected errors during logout
+			console.error('Unexpected logout error:', error);
+			// Continue with logout process even if there's an error
 		}
 		
-		// Redirect to login
+		// Always redirect to login, regardless of any errors
 		throw redirect(302, '/auth/login');
 	}
 };

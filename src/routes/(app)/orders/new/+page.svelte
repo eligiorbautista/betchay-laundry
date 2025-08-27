@@ -26,8 +26,8 @@
 		quantity: 0.5, // Weight in kg, start with 0.5kg minimum
 		unit_price: 0,
 		payment_method: 'cash' as const,
-		payment_status: 'unpaid' as const,
-		status: 'pending' as const,
+		payment_status: 'unpaid' as string,
+		status: 'pending' as string,
 		pickup_date: '',
 		delivery_date: '',
 		remarks: ''
@@ -62,6 +62,18 @@
 	
 	// Get current user email from auth store
 	$: userEmail = getUserEmail($authStore);
+
+	// Handle form submission with validation
+	function handleSubmit(event: Event) {
+		const errors = validateForm();
+		if (errors.length > 0) {
+			event.preventDefault();
+			toast.error('Please fix the following errors:\n' + errors.join('\n'));
+			return false;
+		}
+		isSubmitting = true;
+		return true;
+	}
 
 	// Computed total amount
 	$: totalAmount = formData.quantity * formData.unit_price; // Update unit price when service type changes
@@ -104,6 +116,11 @@
 
 		if (!formData.pickup_date) {
 			errors.push('Expected pickup date is required');
+		}
+
+		// Payment validation: Prevent marking as completed if payment is unpaid
+		if (formData.status === 'completed' && formData.payment_status === 'unpaid') {
+			errors.push('Cannot mark order as completed when payment status is unpaid. Please update payment status first.');
 		}
 
 		return errors;
@@ -161,9 +178,7 @@
 	<form 
 		method="POST" 
 		action="?/create" 
-		on:submit={() => {
-			isSubmitting = true;
-		}}
+		on:submit={handleSubmit}
 	>
 		<!-- Hidden input for user email -->
 		<input type="hidden" name="user_email" value={userEmail || ''} />
@@ -212,6 +227,19 @@
 							</select>
 						</div>
 					</div>
+
+					<!-- Payment Warning -->
+					{#if formData.status === 'completed' && formData.payment_status === 'unpaid'}
+						<div class="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3">
+							<div class="flex items-start gap-2">
+								<AlertCircle class="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+								<div class="text-sm">
+									<p class="font-medium text-orange-800">Payment Required</p>
+									<p class="text-orange-700">This order cannot be marked as completed until payment is received. Please update the payment status first.</p>
+								</div>
+							</div>
+						</div>
+					{/if}
 				</div>
 
 				<!-- Customer Information -->

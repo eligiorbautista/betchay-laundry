@@ -14,7 +14,8 @@
 		DollarSign,
 		ArrowLeft,
 		CheckCircle,
-		Edit2
+		Edit2,
+		AlertCircle
 	} from 'lucide-svelte';
 
 	export let data: PageData;
@@ -110,6 +111,11 @@
 		
 		if (!formData.pickup_date) {
 			errors.push('Expected pickup date is required');
+		}
+
+		// Payment validation: Prevent marking as completed if payment is unpaid
+		if (formData.status === 'completed' && formData.payment_status === 'unpaid') {
+			errors.push('Cannot mark order as completed when payment status is unpaid. Please update payment status first.');
 		}
 		
 		return errors;
@@ -247,6 +253,19 @@
 							</select>
 						</div>
 					</div>
+
+					<!-- Payment Warning -->
+					{#if formData.status === 'completed' && formData.payment_status === 'unpaid'}
+						<div class="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3">
+							<div class="flex items-start gap-2">
+								<AlertCircle class="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+								<div class="text-sm">
+									<p class="font-medium text-orange-800">Payment Required</p>
+									<p class="text-orange-700">This order cannot be marked as completed until payment is received. Please update the payment status first.</p>
+								</div>
+							</div>
+						</div>
+					{/if}
 				</div>
 
 				<!-- Customer Information -->

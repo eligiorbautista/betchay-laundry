@@ -97,6 +97,11 @@ export const actions: Actions = {
 			return fail(400, { error: 'Unit price must be greater than 0' });
 		}
 
+		// Payment validation: Prevent marking as completed if payment is unpaid
+		if (status === 'completed' && payment_status === 'unpaid') {
+			return fail(400, { error: 'Cannot mark order as completed when payment status is unpaid. Please update payment status first.' });
+		}
+
 		try {
 			// create supabase client
 			const supabase = createSupabaseServerClient(event);

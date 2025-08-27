@@ -193,7 +193,8 @@
 			});
 
 			if (!response.ok) {
-				throw new Error('Failed to update status');
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Failed to update status');
 			}
 
 			// show success message
@@ -203,7 +204,8 @@
 			window.location.reload();
 		} catch (error) {
 			console.error('Failed to update status:', error);
-			toast.error('Failed to update order status. Please try again.');
+			const errorMessage = error instanceof Error ? error.message : 'Failed to update order status. Please try again.';
+			toast.error(errorMessage);
 		} finally {
 			isUpdatingStatus = false;
 		}
@@ -226,7 +228,8 @@
 			});
 
 			if (!response.ok) {
-				throw new Error('Failed to update payment status');
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Failed to update payment status');
 			}
 
 			// show success message
@@ -236,7 +239,8 @@
 			window.location.reload();
 		} catch (error) {
 			console.error('Failed to update payment status:', error);
-			toast.error('Failed to update payment status. Please try again.');
+			const errorMessage = error instanceof Error ? error.message : 'Failed to update payment status. Please try again.';
+			toast.error(errorMessage);
 		} finally {
 			isUpdatingStatus = false;
 		}
@@ -485,8 +489,9 @@
 
 							<button
 								on:click={() => updateOrderStatus('completed')}
-								disabled={isUpdatingStatus || order.status === 'completed'}
-								class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+								disabled={isUpdatingStatus || order.status === 'completed' || order.payment_status === 'unpaid'}
+								class="rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus:ring-2 disabled:opacity-50 {order.payment_status === 'unpaid' && order.status !== 'completed' ? 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 focus:ring-orange-500' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus:ring-emerald-500'}"
+								title={order.payment_status === 'unpaid' ? 'Payment must be completed before marking order as completed' : ''}
 							>
 								Mark Completed
 							</button>
@@ -530,6 +535,19 @@
 								class="h-5 w-5 animate-spin rounded-full border-2 border-gray-600 border-t-transparent"
 							></div>
 							<span class="ml-2 text-sm text-gray-600">Updating...</span>
+						</div>
+					{/if}
+
+					<!-- Payment Warning -->
+					{#if order.payment_status === 'unpaid'}
+						<div class="rounded-lg border border-orange-200 bg-orange-50 p-3">
+							<div class="flex items-start gap-2">
+								<AlertCircle class="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+								<div class="text-sm">
+									<p class="font-medium text-orange-800">Payment Required</p>
+									<p class="text-orange-700">This order cannot be marked as completed until payment is received. Please update the payment status first.</p>
+								</div>
+							</div>
 						</div>
 					{/if}
 				</div>

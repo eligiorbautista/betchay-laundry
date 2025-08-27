@@ -176,12 +176,17 @@ export async function updateOrderStatus(supabase: SupabaseClient, orderId: strin
 		throw new Error('Invalid order status');
 	}
 
-	// get order details for audit log
+	// get order details for audit log and payment status check
 	const { data: order } = await supabase
 		.from('orders')
-		.select('order_number, customer_name')
+		.select('order_number, customer_name, payment_status')
 		.eq('id', orderId)
 		.single();
+
+	// Prevent marking as completed if payment is unpaid
+	if (newStatus === 'completed' && order?.payment_status === 'unpaid') {
+		throw new Error('Cannot mark order as completed when payment status is unpaid. Please update payment status first.');
+	}
 
 	// update order status
 	const { error: updateError } = await supabase

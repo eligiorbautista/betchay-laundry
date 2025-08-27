@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { Search, Plus, Filter, Eye, Edit3, Package, Clock, CheckCircle, XCircle, Trash2, Phone, Calendar, Scale, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
 	import type { Order } from '$lib/types/order';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
+	import { invalidate, afterNavigate } from '$app/navigation';
 	
 	export let data: PageData;
 	
@@ -114,18 +115,54 @@
 		{ value: 50, label: '50 per page' }
 	];
 
+	// Function to refetch orders data
+	async function refetchOrders() {
+		loading = true;
+		try {
+			// Invalidate the current page data to trigger a fresh load
+			await invalidate('/orders');
+			// Force a small delay to ensure the data is updated
+			await new Promise(resolve => setTimeout(resolve, 100));
+			// Update the orders array with fresh data
+			orders = [...data.orders]; // Create a new array to trigger reactivity
+			updateCounts();
+			activeDateFilter = determineActiveDateFilter();
+			applyFilters();
+		} catch (error) {
+			console.error('Error refetching orders:', error);
+		} finally {
+			loading = false;
+		}
+	}
+
 	onMount(async () => {
-		// Setup order counts and filtering
-		updateCounts();
-		// Set initial active date filter based on loaded date values
-		activeDateFilter = determineActiveDateFilter();
-		applyFilters();
+		// Refetch orders on mount to ensure we have the latest data
+		await refetchOrders();
+	});
+
+	// Navigation lifecycle handler - refetch data when we navigate to the orders page
+	afterNavigate(() => {
+		// If we're on the orders page, refetch data
+		if ($page.url.pathname === '/orders') {
+			setTimeout(() => {
+				refetchOrders();
+			}, 100);
+		}
 	});
 
 	// Reactive statement to update active date filter when date values change
 	$: {
 		if (startDate !== undefined || endDate !== undefined) {
 			activeDateFilter = determineActiveDateFilter();
+		}
+	}
+
+	// Reactive statement to update orders when page data changes (after invalidation)
+	$: {
+		if (data.orders && data.orders.length >= 0) {
+			orders = [...data.orders]; // Create a new array to ensure reactivity
+			updateCounts();
+			applyFilters();
 		}
 	}
 
@@ -564,6 +601,21 @@
 				<p class="text-gray-600 text-sm md:text-base">Manage all your laundry orders in one place.</p>
 			</div>
 			<div class="flex items-center gap-3">
+				<button
+					on:click={refetchOrders}
+					disabled={loading}
+					class="inline-flex items-center px-4 py-2 text-brand-800 bg-white border border-brand-800 rounded-lg hover:bg-brand-50 transition-colors font-medium text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+					title="Refresh orders"
+				>
+					{#if loading}
+						<LoadingSpinner size="sm" color="primary" />
+					{:else}
+						<svg class="w-4 md:w-5 h-4 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+						</svg>
+					{/if}
+					Refresh
+				</button>
 				<a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-brand-800 text-white rounded-lg hover:bg-brand-900 transition-colors font-medium text-sm md:text-base">
 					<Plus class="w-4 md:w-5 h-4 md:h-5 mr-2" />
 					New Order

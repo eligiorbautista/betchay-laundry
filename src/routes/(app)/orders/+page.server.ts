@@ -8,10 +8,8 @@ export const load: PageServerLoad = async (event) => {
 	// create supabase client for server-side operations
 	const supabase = createSupabaseServerClient(event);
 
-	// Get pagination parameters from URL
+	// Get filter parameters from URL (pagination will be handled client-side)
 	const url = new URL(event.request.url);
-	const page = parseInt(url.searchParams.get('page') || '1');
-	const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
 	const search = url.searchParams.get('search') || '';
 	const status = url.searchParams.get('status') || 'all';
 	const paymentStatus = url.searchParams.get('paymentStatus') || 'all';
@@ -19,34 +17,15 @@ export const load: PageServerLoad = async (event) => {
 	const endDate = url.searchParams.get('endDate') || '';
 
 	try {
-		// fetch orders with pagination from database using utility function
+		// fetch ALL orders from database (pagination will be handled client-side)
 		const orders = await fetchOrders(supabase, {
-			orderBy: 'created_at',
-			page,
-			pageSize
+			orderBy: 'created_at'
 		});
 
-		// Get total count for pagination
-		let countQuery = supabase
+		// Get total count (all orders since we're fetching all)
+		const { count } = await supabase
 			.from('orders')
 			.select('*', { count: 'exact', head: true });
-
-		// Apply same filters to count query
-		if (status !== 'all') {
-			countQuery = countQuery.eq('status', status);
-		}
-		if (paymentStatus !== 'all') {
-			countQuery = countQuery.eq('payment_status', paymentStatus);
-		}
-		if (startDate && endDate) {
-			const startDateTime = `${startDate} 00:00:00`;
-			const endDateTime = `${endDate} 23:59:59`;
-			countQuery = countQuery
-				.gte('created_at', startDateTime)
-				.lte('created_at', endDateTime);
-		}
-
-		const { count } = await countQuery;
 
 		// transform database data to match our Order interface
 		const transformedOrders: Order[] = orders.map(order => ({
@@ -71,10 +50,7 @@ export const load: PageServerLoad = async (event) => {
 		return {
 			orders: transformedOrders,
 			pagination: {
-				page,
-				pageSize,
-				total: count || 0,
-				totalPages: Math.ceil((count || 0) / pageSize)
+				total: count || 0
 			},
 			filters: {
 				search,

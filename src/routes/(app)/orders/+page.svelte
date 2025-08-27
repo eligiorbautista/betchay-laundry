@@ -290,26 +290,24 @@
 		sortColumn = '';
 		sortDirection = 'desc';
 		currentPage = 1;
-		activeDateFilter = null;
+		activeDateFilter = 'all';
 		clearFilters(); // Clear localStorage
 		applyFilters();
 	}
 
 	// Active date filter tracking
-	let activeDateFilter: 'today' | 'last7days' | 'all' | null = null;
+	let activeDateFilter: 'today' | 'last7days' | 'all' = 'all';
 
 	// Function to determine which filter is currently active based on date values
 	function determineActiveDateFilter() {
-		if (!startDate && !endDate) {
-			return null; // No active filter when no dates are set
-		}
-		
 		const today = new Date().toLocaleDateString('en-CA');
 		const sevenDaysAgo = new Date();
 		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 		const sevenDaysAgoString = sevenDaysAgo.toLocaleDateString('en-CA');
 		
-		if (startDate === today && endDate === today) {
+		if (!startDate && !endDate) {
+			return 'all'; // All Dates is selected when no dates are set
+		} else if (startDate === today && endDate === today) {
 			return 'today';
 		} else if (startDate === sevenDaysAgoString && endDate === today) {
 			return 'last7days';
@@ -344,12 +342,7 @@
 		applyFilters();
 	}
 
-	function getQuickButtonClasses(filterType: 'today' | 'last7days' | 'all') {
-		const isActive = activeDateFilter === filterType;
-		return isActive 
-			? "flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-white bg-brand-800 rounded-md hover:bg-brand-900 transition-colors whitespace-nowrap"
-			: "flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors whitespace-nowrap";
-	}
+
 
 	function sortByColumn(orders: Order[], column: string, direction: 'asc' | 'desc') {
 		orders.sort((a, b) => {
@@ -579,6 +572,45 @@
 		</div>
 	</div>
 
+	<!-- Quick Date Actions -->
+	<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
+		<div class="p-4 sm:p-6">
+			<div class="flex items-center gap-3 mb-4">
+				<Calendar class="w-5 h-5 text-brand-800" />
+				<h3 class="text-lg font-medium text-gray-900">Quick Date Filters</h3>
+			</div>
+			<div class="flex flex-wrap gap-3">
+				<button
+					on:click={setTodayFilter}
+					class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 {activeDateFilter === 'today' 
+						? 'bg-brand-800 text-white shadow-md' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}"
+				>
+					<Calendar class="w-4 h-4" />
+					Today
+				</button>
+				<button
+					on:click={setLast7DaysFilter}
+					class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 {activeDateFilter === 'last7days' 
+						? 'bg-brand-800 text-white shadow-md' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}"
+				>
+					<Calendar class="w-4 h-4" />
+					Last 7 Days
+				</button>
+				<button
+					on:click={setAllDatesFilter}
+					class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 {activeDateFilter === 'all' 
+						? 'bg-brand-800 text-white shadow-md' 
+						: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}"
+				>
+					<Calendar class="w-4 h-4" />
+					All Dates
+				</button>
+			</div>
+		</div>
+	</div>
+
 	<!-- Filters Section -->
 	<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
 		<div class="p-4 sm:p-6 border-b border-gray-200">
@@ -675,27 +707,6 @@
 							/>
 						</div>
 					</div>
-					<!-- Quick Date Filter Buttons -->
-					<div class="flex flex-wrap gap-2 mt-2">
-						<button
-							on:click={setTodayFilter}
-							class={getQuickButtonClasses('today')}
-						>
-							Today
-						</button>
-						<button
-							on:click={setLast7DaysFilter}
-							class={getQuickButtonClasses('last7days')}
-						>
-							Last 7 Days
-						</button>
-						<button
-							on:click={setAllDatesFilter}
-							class={getQuickButtonClasses('all')}
-						>
-							All Dates
-						</button>
-					</div>
 				</div>
 			</div>
 
@@ -765,7 +776,7 @@
 								on:click={() => { 
 									startDate = ''; 
 									endDate = ''; 
-									activeDateFilter = null; 
+									activeDateFilter = 'all'; 
 									applyFilters(); 
 								}}
 								class="text-green-500 hover:text-green-800"

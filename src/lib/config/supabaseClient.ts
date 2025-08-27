@@ -38,16 +38,16 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 					// Client-side: set secure cookie
 					const isProduction = process.env.NODE_ENV === 'production';
 					const secureFlag = isProduction ? '; Secure' : '';
-					const httpOnlyFlag = isProduction ? '; HttpOnly' : '';
-					const sameSiteFlag = '; SameSite=Strict';
-					const cookieString = `${key}=${encodeURIComponent(value)}; path=/; max-age=${7 * 24 * 60 * 60}${sameSiteFlag}${secureFlag}${httpOnlyFlag}`;
+					// Must be readable by JS on client to sync with Supabase client storage
+					const sameSiteFlag = '; SameSite=Lax';
+					const cookieString = `${key}=${encodeURIComponent(value)}; path=/; max-age=${7 * 24 * 60 * 60}${sameSiteFlag}${secureFlag}`;
 					document.cookie = cookieString;
 				}
 			},
 			removeItem: (key: string) => {
 				if (typeof document !== 'undefined') {
 					// Client-side: remove cookie
-					document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict`;
+					document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
 				}
 			}
 		}

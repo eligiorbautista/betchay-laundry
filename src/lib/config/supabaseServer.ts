@@ -11,8 +11,8 @@ const supabaseKey = PUBLIC_SUPABASE_ANON_KEY;
 export function createSupabaseServerClient(event: RequestEvent) {
 	return createClient(supabaseUrl, supabaseKey, {
 		auth: {
-			autoRefreshToken: false,
-			persistSession: false,
+			autoRefreshToken: true,
+			persistSession: true,
 			detectSessionInUrl: false,
 			// Server-side cookie handling
 			storage: {
@@ -24,9 +24,10 @@ export function createSupabaseServerClient(event: RequestEvent) {
 					event.cookies.set(key, value, {
 						path: '/',
 						maxAge: 7 * 24 * 60 * 60, // 7 days
-						sameSite: 'strict',
+						sameSite: 'lax',
 						secure: process.env.NODE_ENV === 'production',
-						httpOnly: true // Set to true for better security
+						// Do not use httpOnly so the client-side storage can read the cookie
+						httpOnly: false
 					});
 				},
 				removeItem: (key: string) => {

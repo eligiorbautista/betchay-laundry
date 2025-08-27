@@ -81,8 +81,11 @@
 	});
 </script>
 
-<header class="flex items-center justify-between bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-[50] h-16 px-4 md:px-6">
-	<div class="flex items-center">		<!-- hamburger menu -->
+<!-- Updated header with responsive positioning to match sidebar -->
+<header class="flex items-center justify-between bg-white shadow-sm border-b border-gray-200 fixed top-0 z-[50] h-16 px-4 md:px-6 transition-all duration-300
+	left-0 right-0 md:left-40 md:right-0 lg:left-40 lg:right-0 xl:left-64 xl:right-0">
+	<div class="flex items-center">
+		<!-- hamburger menu -->
 		<button
 			class="p-2 text-gray-600 hover:text-brand-900 hover:bg-gray-100 rounded-lg lg:hidden min-h-[44px] min-w-[44px] transition-colors"
 			on:click={toggleSidebar}

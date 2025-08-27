@@ -39,7 +39,13 @@ export const load: PageServerLoad = async (event) => {
 			service_type: order.service_type,
 			quantity: order.quantity,
 			unit_price: order.unit_price,
+			subtotal_amount: order.subtotal_amount,
+			add_ons_amount: order.add_ons_amount,
 			total_amount: order.total_amount,
+			// New add-ons columns
+			add_ons: order.add_ons,
+			add_ons_quantity: order.add_ons_quantity,
+			add_ons_list: order.add_ons_list,
 			pickup_date: order.pickup_date,
 			delivery_date: order.delivery_date,
 			remarks: order.remarks,

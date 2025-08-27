@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Order } from '$lib/types/order';
+import type { Order, AddOn, OrderAddOn, OrderWithAddOns } from '$lib/types/order';
 import { logAuditEvent, getClientIP, getUserAgent } from './audit';
 
 // database utility functions for common operations
@@ -91,6 +91,69 @@ export async function fetchOrders(supabase: SupabaseClient, options?: {
 }
 
 /**
+ * fetch all add-ons from database
+ */
+export async function fetchAddOns(supabase: SupabaseClient) {
+	const { data, error } = await supabase
+		.from('add_ons')
+		.select('*')
+		.eq('is_active', true)
+		.order('name');
+
+	if (error) {
+		console.error('Error fetching add-ons:', error);
+		throw new Error('Failed to fetch add-ons');
+	}
+
+	return data || [];
+}
+
+/**
+ * fetch order with add-ons
+ */
+export async function fetchOrderWithAddOns(supabase: SupabaseClient, orderId: string): Promise<OrderWithAddOns | null> {
+	const { data: order, error: orderError } = await supabase
+		.from('orders')
+		.select('*')
+		.eq('id', orderId)
+		.single();
+
+	if (orderError) {
+		console.error('Error fetching order:', orderError);
+		return null;
+	}
+
+	// Convert add_ons JSON to order_add_ons format for compatibility
+	let order_add_ons = [];
+	if (order.add_ons && Array.isArray(order.add_ons)) {
+		order_add_ons = order.add_ons.map((addOn: any) => ({
+			id: addOn.id,
+			order_id: orderId,
+			add_on_id: addOn.id,
+			quantity: addOn.quantity,
+			unit_price: addOn.unit_price,
+			total_price: addOn.total_price,
+			created_at: order.created_at,
+			add_on: {
+				id: addOn.id,
+				name: addOn.name,
+				description: null,
+				price: addOn.unit_price,
+				unit: 'order',
+				is_active: true,
+				created_at: order.created_at,
+				updated_at: order.updated_at
+			}
+		}));
+	}
+
+	return {
+		...order,
+		order_add_ons
+	};
+}
+
+/**
  * create a new order in the database
  */
 export async function createOrder(supabase: SupabaseClient, orderData: {
@@ -105,6 +168,11 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 	pickup_date?: string;
 	delivery_date?: string;
 	remarks?: string;
+	add_ons?: Array<{
+		add_on_id: string;
+		quantity: number;
+		unit_price: number;
+	}>;
 }, request?: Request, userEmail?: string) {
 	// Validate input data
 	validateOrderData(orderData);
@@ -112,8 +180,19 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 	// get current user for created_by field
 	const { data: { user } } = await supabase.auth.getUser();
 
+	// calculate subtotal amount
+	const subtotal_amount = orderData.quantity * orderData.unit_price;
+	
+	// calculate add-ons amount
+	let add_ons_amount = 0;
+	if (orderData.add_ons && orderData.add_ons.length > 0) {
+		add_ons_amount = orderData.add_ons.reduce((sum, addOn) => {
+			return sum + (addOn.quantity * addOn.unit_price);
+		}, 0);
+	}
+	
 	// calculate total amount
-	const total_amount = orderData.quantity * orderData.unit_price;
+	const total_amount = subtotal_amount + add_ons_amount;
 
 	// generate order number
 	const { data: orderNumber, error: orderNumberError } = await supabase
@@ -122,6 +201,41 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 	if (orderNumberError) {
 		console.error('Error generating order number:', orderNumberError);
 		throw new Error(`Failed to generate order number: ${orderNumberError.message}`);
+	}
+
+	// Prepare add-ons data for the new columns
+	let add_ons_json = null;
+	let add_ons_quantity = null;
+	let add_ons_list = null;
+
+	if (orderData.add_ons && orderData.add_ons.length > 0) {
+		// Get add-on names from the database
+		const addOnIds = orderData.add_ons.map(a => a.add_on_id);
+		const { data: addOnsData } = await supabase
+			.from('add_ons')
+			.select('id, name')
+			.in('id', addOnIds);
+
+		// Create JSON array for add_ons column
+		add_ons_json = orderData.add_ons.map(addOn => {
+			const addOnInfo = addOnsData?.find(a => a.id === addOn.add_on_id);
+			return {
+				id: addOn.add_on_id,
+				name: addOnInfo?.name || 'Unknown Add-on',
+				quantity: addOn.quantity,
+				unit_price: addOn.unit_price,
+				total_price: addOn.quantity * addOn.unit_price
+			};
+		});
+
+		// Calculate total quantity
+		add_ons_quantity = orderData.add_ons.reduce((sum, addOn) => sum + addOn.quantity, 0);
+
+		// Create human-readable list
+		add_ons_list = orderData.add_ons.map(addOn => {
+			const addOnInfo = addOnsData?.find(a => a.id === addOn.add_on_id);
+			return `${addOnInfo?.name || 'Unknown Add-on'} (x${addOn.quantity})`;
+		}).join(', ');
 	}
 
 	// insert new order
@@ -135,12 +249,18 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 			service_type: orderData.service_type,
 			quantity: orderData.quantity,
 			unit_price: orderData.unit_price,
+			subtotal_amount,
+			add_ons_amount,
 			total_amount,
 			payment_status: orderData.payment_status,
 			payment_method: orderData.payment_method,
 			pickup_date: orderData.pickup_date || null,
 			delivery_date: orderData.delivery_date || null,
 			remarks: orderData.remarks?.trim() || null,
+			// New add-ons columns
+			add_ons: add_ons_json,
+			add_ons_quantity: add_ons_quantity,
+			add_ons_list: add_ons_list,
 			created_by: user?.id || null
 		})
 		.select()
@@ -150,6 +270,8 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 		console.error('Error creating order:', insertError);
 		throw new Error(`Failed to create order: ${insertError.message}`);
 	}
+
+	// Add-ons are now stored directly in the orders table columns
 
 	// log audit event for order creation
 	await logAuditEvent(

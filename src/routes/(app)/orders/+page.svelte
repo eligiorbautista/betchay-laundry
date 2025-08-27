@@ -962,7 +962,15 @@
 									<span>{formatDate(order.created_at)}</span>
 								</div>
 								
-								<!-- Row 3: Phone (if available) -->
+								<!-- Row 3: Add-ons (if any) -->
+								{#if order.add_ons_list && order.add_ons_list.length > 0}
+									<div class="flex items-center gap-1 text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+										<Plus class="w-4 h-4" />
+										{order.add_ons_list}
+									</div>
+								{/if}
+								
+								<!-- Row 4: Phone (if available) -->
 								{#if order.customer_phone}
 									<div class="flex items-center gap-1 text-sm text-gray-500">
 										<Phone class="w-4 h-4" />

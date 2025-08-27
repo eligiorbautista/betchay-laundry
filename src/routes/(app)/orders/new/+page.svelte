@@ -13,7 +13,8 @@
 		ArrowLeft,
 		CheckCircle,
 		Plus,
-		AlertCircle
+		AlertCircle,
+		XCircle
 	} from 'lucide-svelte';
 
 	export let data: PageData;
@@ -33,8 +34,17 @@
 		remarks: ''
 	};
 
-	// Available services from backend
+	// Add-ons state
+	let selectedAddOns: Array<{
+		add_on_id: string;
+		quantity: number;
+		unit_price: number;
+		name: string;
+	}> = [];
+
+	// Available services and add-ons from backend
 	$: serviceTypes = data.servicePricing || [];
+	$: availableAddOns = data.addOns || [];
 
 	const paymentMethods = [
 		{ value: 'cash', label: 'Cash' },
@@ -75,8 +85,10 @@
 		return true;
 	}
 
-	// Computed total amount
-	$: totalAmount = formData.quantity * formData.unit_price; // Update unit price when service type changes
+	// Computed amounts
+	$: subtotalAmount = formData.quantity * formData.unit_price;
+	$: addOnsAmount = selectedAddOns.reduce((sum, addOn) => sum + (addOn.quantity * addOn.unit_price), 0);
+	$: totalAmount = subtotalAmount + addOnsAmount;
 	function handleServiceTypeChange() {
 		const selectedService = serviceTypes.find((s) => s.service_name === formData.service_type);
 		if (selectedService) {
@@ -94,6 +106,41 @@
 			.toString()
 			.padStart(3, '0');
 		return `ORD${year}${month}${day}${random}`;
+	}
+
+	// Add-on functions
+	function addAddOn(addOn: any) {
+		const existingIndex = selectedAddOns.findIndex(item => item.add_on_id === addOn.id);
+		if (existingIndex >= 0) {
+			// Update quantity if already exists
+			selectedAddOns[existingIndex].quantity += 1;
+			selectedAddOns = [...selectedAddOns];
+		} else {
+			// Add new add-on
+			selectedAddOns = [...selectedAddOns, {
+				add_on_id: addOn.id,
+				quantity: 1,
+				unit_price: addOn.price,
+				name: addOn.name
+			}];
+		}
+	}
+
+	function removeAddOn(addOnId: string) {
+		selectedAddOns = selectedAddOns.filter(item => item.add_on_id !== addOnId);
+	}
+
+	function updateAddOnQuantity(addOnId: string, quantity: number) {
+		if (quantity <= 0) {
+			removeAddOn(addOnId);
+			return;
+		}
+		
+		const index = selectedAddOns.findIndex(item => item.add_on_id === addOnId);
+		if (index >= 0) {
+			selectedAddOns[index].quantity = quantity;
+			selectedAddOns = [...selectedAddOns];
+		}
 	}
 
 	// Form validation
@@ -345,6 +392,69 @@
 					</div>
 				</div>
 
+				<!-- Add-ons Section -->
+				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<Plus class="h-5 w-5 text-gray-600" />
+						Add-ons & Extras
+					</h2>
+					
+					<!-- Simple Add-ons Selection -->
+					<div class="space-y-3">
+						{#each availableAddOns as addOn}
+							<div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+								<div class="flex items-center gap-3">
+									<input
+										type="checkbox"
+										id={`addon-${addOn.id}`}
+										checked={selectedAddOns.some(item => item.add_on_id === addOn.id)}
+										on:change={(e) => {
+											const target = e.target as HTMLInputElement;
+											if (target.checked) {
+												addAddOn(addOn);
+											} else {
+												removeAddOn(addOn.id);
+											}
+										}}
+										class="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+									/>
+									<label for={`addon-${addOn.id}`} class="font-medium text-gray-900 cursor-pointer">
+										{addOn.name} - ₱{addOn.price}
+									</label>
+								</div>
+								
+								{#if selectedAddOns.some(item => item.add_on_id === addOn.id)}
+									<div class="flex items-center gap-2">
+										<label for={`qty-${addOn.id}`} class="text-sm text-gray-600">Qty:</label>
+										<input
+											id={`qty-${addOn.id}`}
+											type="number"
+											min="1"
+											value={selectedAddOns.find(item => item.add_on_id === addOn.id)?.quantity || 1}
+											on:change={(e) => {
+												const target = e.target as HTMLInputElement;
+												const quantity = parseInt(target.value) || 1;
+												updateAddOnQuantity(addOn.id, quantity);
+											}}
+											class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+										/>
+										<span class="text-sm font-semibold text-gray-900">
+											₱{((selectedAddOns.find(item => item.add_on_id === addOn.id)?.quantity || 1) * addOn.price).toFixed(2)}
+										</span>
+									</div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+
+					<!-- Hidden inputs for form submission -->
+					{#each selectedAddOns as addOn}
+						<input type="hidden" name="add_on_id" value={addOn.add_on_id} />
+						<input type="hidden" name="add_on_quantity" value={addOn.quantity} />
+						<input type="hidden" name="add_on_price" value={addOn.unit_price} />
+					{/each}
+				</div>
+
 				<!-- Schedule Information -->
 				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
 					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
@@ -429,15 +539,33 @@
 							<span class="block text-sm font-medium text-gray-500">Unit Price</span>
 							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per kg</p>
 						</div>
+						<!-- Cost Breakdown -->
 						<div class="border-t border-gray-200 pt-4">
-							<div class="bg-gray-50 rounded-lg p-4">
-								<div class="text-sm text-gray-600">Total Amount</div>
-								<div class="text-2xl font-bold text-brand-900">₱{totalAmount.toFixed(2)}</div>
-								{#if formData.quantity > 0 && formData.unit_price > 0}
-									<div class="text-xs text-gray-500 mt-1">
-										{formData.quantity} kg × ₱{formData.unit_price}/kg
+							<div class="space-y-2">
+								<div class="flex justify-between text-sm">
+									<span class="text-gray-600">Subtotal:</span>
+									<span class="font-medium">₱{subtotalAmount.toFixed(2)}</span>
+								</div>
+								{#if addOnsAmount > 0}
+									<div class="flex justify-between text-sm">
+										<span class="text-gray-600">Add-ons:</span>
+										<span class="font-medium">₱{addOnsAmount.toFixed(2)}</span>
 									</div>
 								{/if}
+								<div class="border-t border-gray-200 pt-2">
+									<div class="flex justify-between">
+										<span class="text-base font-semibold text-gray-900">Total Amount</span>
+										<span class="text-2xl font-bold text-brand-900">₱{totalAmount.toFixed(2)}</span>
+									</div>
+									{#if formData.quantity > 0 && formData.unit_price > 0}
+										<div class="text-xs text-gray-500 mt-1">
+											{formData.quantity} kg × ₱{formData.unit_price}/kg
+											{#if addOnsAmount > 0}
+												+ ₱{addOnsAmount.toFixed(2)} add-ons
+											{/if}
+										</div>
+									{/if}
+								</div>
 							</div>
 						</div>
 					</div>

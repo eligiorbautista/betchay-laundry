@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import type { Order } from '$lib/types/order';
 import { fail } from '@sveltejs/kit';
 import { createSupabaseServerClient, getServerSession } from '$lib/config/supabaseServer';
-import { createOrder } from '$lib/utils/database';
+import { createOrder, fetchAddOns } from '$lib/utils/database';
 
 export const load: PageServerLoad = async (event) => {
 	try {
@@ -16,12 +16,15 @@ export const load: PageServerLoad = async (event) => {
 			console.error('Error fetching service pricing:', servicePricingError);
 		}
 
+		const addOns = await fetchAddOns(supabase);
+
 		return {
-			servicePricing: servicePricing || []
+			servicePricing: servicePricing || [],
+			addOns
 		};
 	} catch (err) {
-		console.error('Error loading service pricing:', err);
-		throw new Error('Failed to load service pricing data');
+		console.error('Error loading data:', err);
+		throw new Error('Failed to load data');
 	}
 };
 
@@ -40,6 +43,26 @@ export const actions: Actions = {
 		const delivery_date = formData.get('delivery_date') as string;
 		const remarks = formData.get('remarks') as string;
 		const userEmail = formData.get('user_email') as string;
+		
+		// Parse add-ons from form data
+		const addOns: Array<{add_on_id: string; quantity: number; unit_price: number}> = [];
+		const addOnIds = formData.getAll('add_on_id') as string[];
+		const addOnQuantities = formData.getAll('add_on_quantity') as string[];
+		const addOnPrices = formData.getAll('add_on_price') as string[];
+		
+		for (let i = 0; i < addOnIds.length; i++) {
+			if (addOnIds[i] && addOnQuantities[i] && addOnPrices[i]) {
+				const quantity = parseFloat(addOnQuantities[i]);
+				const price = parseFloat(addOnPrices[i]);
+				if (quantity > 0 && price >= 0) {
+					addOns.push({
+						add_on_id: addOnIds[i],
+						quantity,
+						unit_price: price
+					});
+				}
+			}
+		}
 
 		if (!customer_name?.trim()) {
 			return fail(400, { error: 'Customer name is required' });
@@ -81,7 +104,8 @@ export const actions: Actions = {
 				status,
 				pickup_date,
 				delivery_date,
-				remarks
+				remarks,
+				add_ons: addOns
 			}, event.request, userEmail);
 			// return success response
 			return { success: true };

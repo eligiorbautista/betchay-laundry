@@ -27,7 +27,8 @@
 		Banknote,
 		Building2,
 		CheckCircle2,
-		Eye
+		Eye,
+		Plus
 	} from 'lucide-svelte';
 
 	export let data: PageData;
@@ -361,11 +362,46 @@
 					</div>
 
 					<div>
+						<span class="block text-sm font-medium text-gray-500">Subtotal</span>
+						<p class="text-base font-medium text-brand-900">₱{order.subtotal_amount?.toFixed(2) || (order.quantity * order.unit_price).toFixed(2)}</p>
+					</div>
+					{#if order.add_ons_amount && order.add_ons_amount > 0}
+						<div>
+							<span class="block text-sm font-medium text-gray-500">Add-ons</span>
+							<p class="text-base font-medium text-brand-900">₱{order.add_ons_amount.toFixed(2)}</p>
+						</div>
+					{/if}
+					<div>
 						<span class="block text-sm font-medium text-gray-500">Total Amount</span>
 						<p class="text-xl font-bold text-green-600">₱{order.total_amount.toFixed(2)}</p>
 					</div>
 				</div>
 			</div>
+
+			<!-- Add-ons Section -->
+			{#if order.order_add_ons && order.order_add_ons.length > 0}
+				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+					<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-brand-900">
+						<Plus class="h-5 w-5 text-gray-600" />
+						Add-ons & Extras
+					</h2>
+					<div class="space-y-3">
+						{#each order.order_add_ons as addOn}
+							<div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+								<div class="flex-1">
+									<h4 class="font-medium text-gray-900">{addOn.add_on?.name || 'Unknown Add-on'}</h4>
+									{#if addOn.add_on?.description}
+										<p class="text-sm text-gray-500 mt-1">{addOn.add_on.description}</p>
+									{/if}
+									<p class="text-sm text-gray-600">
+										{addOn.quantity} × ₱{addOn.unit_price.toFixed(2)} = ₱{addOn.total_price.toFixed(2)}
+									</p>
+								</div>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
 			<!-- Schedule Information -->
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

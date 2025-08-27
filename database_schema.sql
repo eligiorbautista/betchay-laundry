@@ -21,6 +21,20 @@ CREATE TABLE IF NOT EXISTS public.service_pricing (
 );
 
 -- =====================================================
+-- 2.5. ADD-ONS TABLE (new)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.add_ons (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
+    unit TEXT DEFAULT 'piece' CHECK (unit IN ('piece', 'kg', 'set', 'order')),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =====================================================
 -- 3. CUSTOMERS TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.customers (
@@ -45,6 +59,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
     service_type TEXT NOT NULL,
     quantity DECIMAL(8,2) NOT NULL CHECK (quantity > 0),
     unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
+    subtotal_amount DECIMAL(10,2) NOT NULL CHECK (subtotal_amount >= 0),
+    add_ons_amount DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (add_ons_amount >= 0),
     total_amount DECIMAL(10,2) NOT NULL CHECK (total_amount >= 0),
     payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('paid', 'unpaid', 'partial')),
     payment_method TEXT CHECK (payment_method IN ('cash', 'gcash', 'paymaya', 'bank_transfer', 'credit_card')),
@@ -55,6 +71,20 @@ CREATE TABLE IF NOT EXISTS public.orders (
     updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =====================================================
+-- 4.5. ORDER ADD-ONS TABLE (junction table for orders and add-ons)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.order_add_ons (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE NOT NULL,
+    add_on_id UUID REFERENCES public.add_ons(id) ON DELETE CASCADE NOT NULL,
+    quantity DECIMAL(8,2) NOT NULL CHECK (quantity > 0),
+    unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
+    total_price DECIMAL(10,2) NOT NULL CHECK (total_price >= 0),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(order_id, add_on_id)
 );
 
 -- =====================================================
@@ -132,6 +162,10 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON public.orders(customer_p
 -- Order items indexes
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
 
+-- Order add-ons indexes
+CREATE INDEX IF NOT EXISTS idx_order_add_ons_order_id ON public.order_add_ons(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_add_ons_add_on_id ON public.order_add_ons(add_on_id);
+
 -- Payments indexes
 CREATE INDEX IF NOT EXISTS idx_payments_order_id ON public.payments(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_payment_date ON public.payments(payment_date);
@@ -166,6 +200,7 @@ $$ language 'plpgsql';
 -- Create triggers for updated_at
 
 CREATE TRIGGER update_service_pricing_updated_at BEFORE UPDATE ON public.service_pricing FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_add_ons_updated_at BEFORE UPDATE ON public.add_ons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON public.customers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -177,9 +212,11 @@ CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH 
 -- Enable RLS on all tables
 
 ALTER TABLE public.service_pricing ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.add_ons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_add_ons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
@@ -189,6 +226,10 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 -- Service pricing policies (read-only for all authenticated users)
 CREATE POLICY "Authenticated users can view service pricing" ON public.service_pricing FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Authenticated users can manage service pricing" ON public.service_pricing FOR ALL USING (auth.role() = 'authenticated');
+
+-- Add-ons policies
+CREATE POLICY "Authenticated users can view add-ons" ON public.add_ons FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can manage add-ons" ON public.add_ons FOR ALL USING (auth.role() = 'authenticated');
 
 -- Customers policies
 CREATE POLICY "Authenticated users can view customers" ON public.customers FOR SELECT USING (auth.role() = 'authenticated');
@@ -201,6 +242,10 @@ CREATE POLICY "Authenticated users can manage orders" ON public.orders FOR ALL U
 -- Order items policies
 CREATE POLICY "Authenticated users can view order items" ON public.order_items FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Authenticated users can manage order items" ON public.order_items FOR ALL USING (auth.role() = 'authenticated');
+
+-- Order add-ons policies
+CREATE POLICY "Authenticated users can view order add-ons" ON public.order_add_ons FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can manage order add-ons" ON public.order_add_ons FOR ALL USING (auth.role() = 'authenticated');
 
 -- Payments policies
 CREATE POLICY "Authenticated users can view payments" ON public.payments FOR SELECT USING (auth.role() = 'authenticated');
@@ -229,6 +274,18 @@ CREATE POLICY "Authenticated users can view audit logs" ON public.audit_logs FOR
 -- ('Delicate Care', 'Hand wash for delicate items', 100.00, 'kg'),
 -- ('Ironing Only', 'Press and iron service only', 30.00, 'kg')
 -- ON CONFLICT (service_name) DO NOTHING;
+
+-- Insert sample add-ons
+-- INSERT INTO public.add_ons (name, description, price, unit) VALUES
+-- ('Fabric Softener', 'Add fabric softener to your laundry', 10.00, 'order'),
+-- ('Starch', 'Add starch for crisp finish', 15.00, 'order'),
+-- ('Express Service', 'Same day service (2-4 hours)', 50.00, 'order'),
+-- ('Hanger Service', 'Clothes returned on hangers', 5.00, 'order'),
+-- ('Dry Clean Press', 'Professional pressing after dry cleaning', 20.00, 'order'),
+-- ('Spot Treatment', 'Special stain removal treatment', 25.00, 'order'),
+-- ('Fragrance Boost', 'Extra fragrance added to laundry', 8.00, 'order'),
+-- ('Wrinkle Free', 'Anti-wrinkle treatment', 12.00, 'order')
+-- ON CONFLICT (name) DO NOTHING;
 
 
 
@@ -299,9 +356,11 @@ $$ LANGUAGE plpgsql;
 
 
 COMMENT ON TABLE public.service_pricing IS 'Service pricing configuration';
+COMMENT ON TABLE public.add_ons IS 'Additional services and add-ons';
 COMMENT ON TABLE public.customers IS 'Customer information';
 COMMENT ON TABLE public.orders IS 'Main orders table';
 COMMENT ON TABLE public.order_items IS 'Individual items within an order';
+COMMENT ON TABLE public.order_add_ons IS 'Add-ons associated with orders';
 COMMENT ON TABLE public.payments IS 'Payment transactions';
 COMMENT ON TABLE public.order_status_history IS 'Order status change history';
 

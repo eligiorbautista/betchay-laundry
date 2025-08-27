@@ -197,12 +197,38 @@
 					<span class="font-medium text-black">₱{order.unit_price.toFixed(2)}</span>
 				</div>
 
+				<!-- Add-ons Section -->
+				{#if order.order_add_ons && order.order_add_ons.length > 0}
+					<div class="mt-3 border-t border-gray-300 pt-3">
+						<h4 class="mb-2 text-xs font-semibold uppercase tracking-wider text-black sm:text-sm print:text-[10px]">
+							Add-ons & Extras
+						</h4>
+						<div class="space-y-2">
+							{#each order.order_add_ons as addOn}
+								<div class="flex items-center justify-between">
+									<div class="flex-1">
+										<span class="text-black">{addOn.add_on?.name || 'Unknown Add-on'}</span>
+										<span class="text-black"> ({addOn.quantity} × ₱{addOn.unit_price.toFixed(2)})</span>
+									</div>
+									<span class="font-medium text-black">₱{addOn.total_price.toFixed(2)}</span>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
 				<!-- Pricing Breakdown -->
 				<div class="space-y-2 bg-gray-50 p-2 sm:p-3">
 					<div class="flex items-center justify-between">
-						<span class="text-black">Subtotal:</span>
-						<span class="font-medium text-black">₱{subtotal.toFixed(2)}</span>
+						<span class="text-black">Service Subtotal:</span>
+						<span class="font-medium text-black">₱{order.subtotal_amount?.toFixed(2) || (order.quantity * order.unit_price).toFixed(2)}</span>
 					</div>
+					{#if order.add_ons_amount && order.add_ons_amount > 0}
+						<div class="flex items-center justify-between">
+							<span class="text-black">Add-ons:</span>
+							<span class="font-medium text-black">₱{order.add_ons_amount.toFixed(2)}</span>
+						</div>
+					{/if}
 					{#if tax > 0}
 						<div class="flex items-center justify-between">
 							<span class="text-black">Tax:</span>

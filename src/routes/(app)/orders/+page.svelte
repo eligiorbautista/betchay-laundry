@@ -93,6 +93,15 @@
 	let totalPages = 1;
 	let totalItems = 0;
 
+	// Summary statistics - reactive to filtered orders
+	$: summaryStats = {
+		totalCompleted: filteredOrders.filter(o => o.status === 'completed').length,
+		totalPending: filteredOrders.filter(o => o.status === 'pending').length,
+		totalCompletedAmount: filteredOrders
+			.filter(o => o.status === 'completed')
+			.reduce((sum, order) => sum + order.total_amount, 0)
+	};
+
 	const statusOptions = [
 		{ value: 'all', label: 'All Orders', count: 0, color: 'text-gray-600' },
 		{ value: 'pending', label: 'Pending', count: 0, color: 'text-orange-600' },
@@ -620,6 +629,48 @@
 					<Plus class="w-4 md:w-5 h-4 md:h-5 mr-2" />
 					New Order
 				</a>
+			</div>
+		</div>
+	</div>
+
+	<!-- Summary Statistics -->
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+		<!-- Total Completed Orders -->
+		<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm font-medium text-gray-600">Completed Orders</p>
+					<p class="text-2xl font-bold text-emerald-600">{summaryStats.totalCompleted}</p>
+				</div>
+				<div class="p-3 bg-emerald-100 rounded-full">
+					<CheckCircle class="w-6 h-6 text-emerald-600" />
+				</div>
+			</div>
+		</div>
+
+		<!-- Total Pending Orders -->
+		<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm font-medium text-gray-600">Pending Orders</p>
+					<p class="text-2xl font-bold text-orange-600">{summaryStats.totalPending}</p>
+				</div>
+				<div class="p-3 bg-orange-100 rounded-full">
+					<Clock class="w-6 h-6 text-orange-600" />
+				</div>
+			</div>
+		</div>
+
+		<!-- Total Amount from Completed Orders -->
+		<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm font-medium text-gray-600">Completed Revenue</p>
+					<p class="text-2xl font-bold text-brand-600">{formatCurrency(summaryStats.totalCompletedAmount)}</p>
+				</div>
+				<div class="p-3 bg-brand-100 rounded-full">
+					<Scale class="w-6 h-6 text-brand-600" />
+				</div>
 			</div>
 		</div>
 	</div>

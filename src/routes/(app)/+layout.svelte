@@ -80,7 +80,7 @@
 
 		<!-- Main Content -->
 		<div class="md:pl-40 lg:pl-40 xl:pl-64 transition-all duration-300 print:pl-0">
-			<main class="pt-20 min-h-screen print:pt-0 print:min-h-0">
+			<main class="pt-12 md:pt-12 lg:pt-16 xl:pt-20 min-h-screen print:pt-0 print:min-h-0">
 				<slot />
 			</main>
 		</div>

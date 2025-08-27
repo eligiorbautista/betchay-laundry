@@ -82,46 +82,46 @@
 </script>
 
 <!-- Updated header with responsive positioning to match sidebar -->
-<header class="flex items-center justify-between bg-white shadow-sm border-b border-gray-200 fixed top-0 z-[50] h-16 px-4 md:px-6 transition-all duration-300
+<header class="flex items-center justify-between bg-white shadow-sm border-b border-gray-200 fixed top-0 z-[50] h-10 md:h-10 lg:h-12 xl:h-16 px-2 md:px-3 lg:px-4 xl:px-6 transition-all duration-300
 	left-0 right-0 md:left-40 md:right-0 lg:left-40 lg:right-0 xl:left-64 xl:right-0">
 	<div class="flex items-center">
 		<!-- hamburger menu -->
 		<button
-			class="p-2 text-gray-600 hover:text-brand-900 hover:bg-gray-100 rounded-lg lg:hidden min-h-[44px] min-w-[44px] transition-colors"
+			class="p-1 md:p-1.5 lg:p-2 text-gray-600 hover:text-brand-900 hover:bg-gray-100 rounded-lg lg:hidden min-h-[32px] md:min-h-[36px] lg:min-h-[44px] min-w-[32px] md:min-w-[36px] lg:min-w-[44px] transition-colors"
 			on:click={toggleSidebar}
 			aria-label="Toggle sidebar"
 			data-menu-button
 		>
-			<Menu class="w-6 h-6" />
+			<Menu class="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
 		</button>
 
 		<!-- page title for desktop -->
 		<div class="hidden lg:flex items-center">
-			<h1 class="text-xl font-semibold text-brand-900">{pageTitle}</h1>
+			<h1 class="text-lg md:text-xl lg:text-lg xl:text-xl font-semibold text-brand-900">{pageTitle}</h1>
 		</div>
 	</div>
 
 	<div class="flex items-center lg:hidden">
 		<!-- page title for mobile -->
-		<h1 class="text-lg font-semibold text-brand-900">{pageTitle}</h1>
+		<h1 class="text-sm md:text-base lg:text-base xl:text-lg font-semibold text-brand-900">{pageTitle}</h1>
 	</div>
 
 	<div class="flex items-center gap-1 md:gap-2">
 		<!-- current date/time (desktop only) -->
-		<div class="hidden lg:flex flex-col items-end mr-4 text-right">
-			<div class="text-sm font-medium text-brand-900">{formattedDate}</div>
-			<div class="text-xs text-gray-500">{formattedDay} • {formattedTime}</div>
+		<div class="hidden lg:flex flex-col items-end mr-3 md:mr-4 text-right">
+			<div class="text-xs md:text-sm font-medium text-brand-900">{formattedDate}</div>
+			<div class="text-[10px] md:text-xs text-gray-500">{formattedDay} • {formattedTime}</div>
 		</div>
 
 		<!-- user menu -->
 		<div class="relative">
 			<button 
-				class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+				class="p-1 md:p-1.5 lg:p-2 rounded-full hover:bg-gray-100 transition-colors"
 				on:click={() => showDropdown = !showDropdown}
 				on:blur={() => setTimeout(() => showDropdown = false, 150)}
 			>
-				<div class="w-8 h-8 rounded-full bg-brand-800 text-white flex items-center justify-center hover:bg-brand-900 transition-colors">
-					<span class="text-sm font-medium">
+				<div class="w-6 h-6 md:w-6 md:h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 rounded-full bg-brand-800 text-white flex items-center justify-center hover:bg-brand-900 transition-colors">
+					<span class="text-xs md:text-xs lg:text-xs xl:text-sm font-medium">
 						{avatarInitial}
 					</span>
 				</div>

@@ -376,18 +376,18 @@
 							<label for="unit_price" class="block text-sm font-medium text-gray-500 mb-2">
 								Price per kg *
 							</label>
-							<input
-								type="number"
+							<div
 								id="unit_price"
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+							>
+								₱{formData.unit_price.toFixed(2)}
+							</div>
+							<input
+								type="hidden"
 								name="unit_price"
-								bind:value={formData.unit_price}
-								min="0"
-								step="0.01"
-								required
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-								placeholder="Enter price per kg"
+								value={formData.unit_price}
 							/>
-							<p class="text-xs text-gray-500 mt-1">Price per kilogram</p>
+							<p class="text-xs text-gray-500 mt-1">Price per kilogram (automatically set based on service type)</p>
 						</div>
 					</div>
 				</div>

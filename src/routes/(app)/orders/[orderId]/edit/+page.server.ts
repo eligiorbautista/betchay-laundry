@@ -184,7 +184,37 @@ export const actions: Actions = {
 				throw new Error(`Failed to update order: ${updateError.message}`);
 			}
 
-			// Add-ons are now stored directly in the orders table columns
+			// Update order_add_ons table - delete existing and insert new ones
+			// First, delete existing add-ons for this order
+			const { error: deleteError } = await supabase
+				.from('order_add_ons')
+				.delete()
+				.eq('order_id', orderId);
+
+			if (deleteError) {
+				console.error('Error deleting existing order add-ons:', deleteError);
+				// Continue anyway - we'll try to insert new ones
+			}
+
+			// Insert new add-ons if any
+			if (addOns && addOns.length > 0) {
+				const orderAddOnsToInsert = addOns.map(addOn => ({
+					order_id: orderId,
+					add_on_id: addOn.add_on_id,
+					quantity: addOn.quantity,
+					unit_price: addOn.unit_price,
+					total_price: addOn.quantity * addOn.unit_price
+				}));
+
+				const { error: addOnsInsertError } = await supabase
+					.from('order_add_ons')
+					.insert(orderAddOnsToInsert);
+
+				if (addOnsInsertError) {
+					console.error('Error inserting order add-ons:', addOnsInsertError);
+					// Don't throw error, just log it - the JSON field still has the data
+				}
+			}
 
 			// User email is now passed from the form data
 

@@ -123,9 +123,50 @@ export async function fetchOrderWithAddOns(supabase: SupabaseClient, orderId: st
 		return null;
 	}
 
-	// Convert add_ons JSON to order_add_ons format for compatibility
+	// Fetch add-ons from order_add_ons table with join to add_ons table
+	const { data: orderAddOnsData, error: addOnsError } = await supabase
+		.from('order_add_ons')
+		.select(`
+			id,
+			order_id,
+			add_on_id,
+			quantity,
+			unit_price,
+			total_price,
+			created_at,
+			add_ons (
+				id,
+				name,
+				description,
+				price,
+				unit,
+				is_active,
+				created_at,
+				updated_at
+			)
+		`)
+		.eq('order_id', orderId);
+
+	if (addOnsError) {
+		console.error('Error fetching order add-ons:', addOnsError);
+		// Continue even if add-ons fetch fails, just return empty array
+	}
+
+	// Convert to the expected format
 	let order_add_ons = [];
-	if (order.add_ons && Array.isArray(order.add_ons)) {
+	if (orderAddOnsData && Array.isArray(orderAddOnsData) && orderAddOnsData.length > 0) {
+		order_add_ons = orderAddOnsData.map((item: any) => ({
+			id: item.id,
+			order_id: item.order_id,
+			add_on_id: item.add_on_id,
+			quantity: item.quantity,
+			unit_price: item.unit_price,
+			total_price: item.total_price,
+			created_at: item.created_at,
+			add_on: Array.isArray(item.add_ons) ? item.add_ons[0] : item.add_ons
+		}));
+	} else if (order.add_ons && Array.isArray(order.add_ons)) {
+		// Fallback: Convert add_ons JSON to order_add_ons format for compatibility (legacy support)
 		order_add_ons = order.add_ons.map((addOn: any) => ({
 			id: addOn.id,
 			order_id: orderId,
@@ -271,7 +312,25 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 		throw new Error(`Failed to create order: ${insertError.message}`);
 	}
 
-	// Add-ons are now stored directly in the orders table columns
+	// Insert add-ons into order_add_ons table
+	if (orderData.add_ons && orderData.add_ons.length > 0 && newOrder.id) {
+		const orderAddOnsToInsert = orderData.add_ons.map(addOn => ({
+			order_id: newOrder.id,
+			add_on_id: addOn.add_on_id,
+			quantity: addOn.quantity,
+			unit_price: addOn.unit_price,
+			total_price: addOn.quantity * addOn.unit_price
+		}));
+
+		const { error: addOnsInsertError } = await supabase
+			.from('order_add_ons')
+			.insert(orderAddOnsToInsert);
+
+		if (addOnsInsertError) {
+			console.error('Error inserting order add-ons:', addOnsInsertError);
+			// Don't throw error, just log it - the JSON field still has the data
+		}
+	}
 
 	// log audit event for order creation
 	await logAuditEvent(

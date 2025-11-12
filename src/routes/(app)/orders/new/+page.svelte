@@ -24,7 +24,7 @@
 		customer_name: '',
 		customer_phone: '',
 		service_type: '',
-		quantity: 0.5, // Weight in kg, start with 0.5kg minimum
+		quantity: 1, // Load, start with 1
 		unit_price: 0,
 		payment_method: 'cash' as const,
 		payment_status: 'unpaid' as string,
@@ -155,7 +155,7 @@
 			errors.push('Service type is required');
 		}
 		if (formData.quantity <= 0) {
-			errors.push('Weight must be greater than 0 kg');
+			errors.push('Load must be greater than 0 kg');
 		}
 		if (formData.unit_price <= 0) {
 			errors.push('Unit price must be greater than 0');
@@ -350,14 +350,14 @@
 								<option value="">Select service type</option>
 								{#each serviceTypes.filter((s) => s.is_active) as service}
 									<option value={service.service_name}
-										>{service.service_name} - ₱{service.price}/kg</option
+										>{service.service_name} - ₱{service.price}/load</option
 									>
 								{/each}
 							</select>
 						</div>
 						<div>
 							<label for="quantity" class="block text-sm font-medium text-gray-500 mb-2">
-								Weight (kg) *
+								Load *
 							</label>
 							<input
 								type="number"
@@ -368,13 +368,13 @@
 								step="0.1"
 								required
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-								placeholder="Enter weight in kg"
+								placeholder="Enter load"
 							/>
-							<p class="text-xs text-gray-500 mt-1">Weight of laundry in kilograms</p>
+							<p class="text-xs text-gray-500 mt-1">Load of laundry in kilograms</p>
 						</div>
 						<div>
 							<label for="unit_price" class="block text-sm font-medium text-gray-500 mb-2">
-								Price per kg *
+								Price per load *
 							</label>
 							<div
 								id="unit_price"
@@ -387,7 +387,7 @@
 								name="unit_price"
 								value={formData.unit_price}
 							/>
-							<p class="text-xs text-gray-500 mt-1">Price per kilogram (automatically set based on service type)</p>
+							<p class="text-xs text-gray-500 mt-1">Price per load (automatically set based on service type)</p>
 						</div>
 					</div>
 				</div>
@@ -532,12 +532,12 @@
 							</p>
 						</div>
 						<div>
-							<span class="block text-sm font-medium text-gray-500">Weight</span>
+							<span class="block text-sm font-medium text-gray-500">Load</span>
 							<p class="text-base font-medium text-brand-900">{formData.quantity} kg</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Unit Price</span>
-							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per kg</p>
+							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per load</p>
 						</div>
 						<!-- Cost Breakdown -->
 						<div class="border-t border-gray-200 pt-4">
@@ -559,7 +559,7 @@
 									</div>
 									{#if formData.quantity > 0 && formData.unit_price > 0}
 										<div class="text-xs text-gray-500 mt-1">
-											{formData.quantity} kg × ₱{formData.unit_price}/kg
+											{formData.quantity} kg × ₱{formData.unit_price}/load
 											{#if addOnsAmount > 0}
 												+ ₱{addOnsAmount.toFixed(2)} add-ons
 											{/if}

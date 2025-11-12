@@ -104,6 +104,23 @@
 	// Reactive statement to filter monthly trends by year
 	$: filteredMonthlyTrends = reports.monthlyTrends.filter(trend => trend.year === selectedYear);
 
+	// Get display period text based on selected filter
+	$: displayPeriod = (() => {
+		if (selectedPeriod === 'all') {
+			return 'All Data';
+		} else if (selectedPeriod === '7days') {
+			return 'Last 7 Days';
+		} else if (selectedPeriod === '30days') {
+			return 'Last 30 Days';
+		} else if (selectedPeriod === '90days') {
+			return 'Last 90 Days';
+		} else if (selectedPeriod === 'custom') {
+			return reports.summary.period;
+		} else {
+			return reports.summary.period;
+		}
+	})();
+
 	// Browser print dialog for reports
 	function printReport() {
 		window.print();
@@ -413,7 +430,7 @@
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-2 text-sm text-gray-600">
 					<Calendar class="w-4 h-4" />
-					<span>Showing data for: <strong class="text-brand-900">{reports.summary.period}</strong></span>
+					<span>Showing data for: <strong class="text-brand-900">{displayPeriod}</strong></span>
 				</div>
 				<button
 					on:click={() => applyDateFilter()}

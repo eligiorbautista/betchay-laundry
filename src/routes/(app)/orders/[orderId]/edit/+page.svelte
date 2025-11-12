@@ -41,17 +41,32 @@
 	};
 
 	// Add-ons state - initialize with existing add-ons
+	// Try order_add_ons from table first, fallback to JSON field
 	let selectedAddOns: Array<{
 		add_on_id: string;
 		quantity: number;
 		unit_price: number;
 		name: string;
-	}> = data.order.order_add_ons?.map(addOn => ({
-		add_on_id: addOn.add_on_id,
-		quantity: addOn.quantity,
-		unit_price: addOn.unit_price,
-		name: addOn.add_on?.name || 'Unknown Add-on'
-	})) || [];
+	}> = [];
+	
+	// Initialize from order_add_ons table (preferred)
+	if (data.order.order_add_ons && data.order.order_add_ons.length > 0) {
+		selectedAddOns = data.order.order_add_ons.map(addOn => ({
+			add_on_id: addOn.add_on_id,
+			quantity: addOn.quantity,
+			unit_price: addOn.unit_price,
+			name: addOn.add_on?.name || 'Unknown Add-on'
+		}));
+	} 
+	// Fallback to JSON field if table is empty (legacy support)
+	else if (data.order.add_ons && Array.isArray(data.order.add_ons) && data.order.add_ons.length > 0) {
+		selectedAddOns = data.order.add_ons.map((addOn: any) => ({
+			add_on_id: addOn.id,
+			quantity: addOn.quantity,
+			unit_price: addOn.unit_price,
+			name: addOn.name || 'Unknown Add-on'
+		}));
+	}
 
 	// Available services and add-ons from backend
 	$: serviceTypes = data.servicePricing || [];
@@ -155,7 +170,7 @@
 		}
 		
 		if (formData.quantity <= 0) {
-			errors.push('Weight must be greater than 0 kg');
+			errors.push('Load must be greater than 0 kg');
 		}
 		
 		if (formData.unit_price <= 0) {
@@ -202,6 +217,13 @@
 			if (formData.remarks) {
 				formDataToSubmit.append('remarks', formData.remarks.trim());
 			}
+			
+			// Add add-ons to form data
+			selectedAddOns.forEach(addOn => {
+				formDataToSubmit.append('add_on_id', addOn.add_on_id);
+				formDataToSubmit.append('add_on_quantity', addOn.quantity.toString());
+				formDataToSubmit.append('add_on_price', addOn.unit_price.toString());
+			});
 			
 			// Add user email for audit logging
 			formDataToSubmit.append('user_email', userEmail || '');
@@ -376,14 +398,14 @@
 							>
 								<option value="">Select service type</option>
 								{#each serviceTypes.filter(s => s.is_active) as service}
-									<option value={service.service_name}>{service.service_name} - ₱{service.price}/kg</option>
+									<option value={service.service_name}>{service.service_name} - ₱{service.price}/load</option>
 								{/each}
 							</select>
 						</div>
 
 						<div>
 							<label for="quantity" class="block text-sm font-medium text-gray-500 mb-2">
-								Weight (kg) *
+								Load *
 							</label>
 							<input
 								type="number"
@@ -393,26 +415,27 @@
 								step="0.1"
 								required
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-								placeholder="Enter weight in kg"
+								placeholder="Enter load"
 							/>
-							<p class="text-xs text-gray-500 mt-1">Weight of laundry in kilograms</p>
+							<p class="text-xs text-gray-500 mt-1">Load of laundry in kilograms</p>
 						</div>
 
 						<div>
 							<label for="unit_price" class="block text-sm font-medium text-gray-500 mb-2">
-								Price per kg *
+								Price per load *
 							</label>
-							<input
-								type="number"
+							<div
 								id="unit_price"
-								bind:value={formData.unit_price}
-								min="0"
-								step="0.01"
-								required
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-								placeholder="Enter price per kg"
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+							>
+								₱{formData.unit_price.toFixed(2)}
+							</div>
+							<input
+								type="hidden"
+								name="unit_price"
+								value={formData.unit_price}
 							/>
-							<p class="text-xs text-gray-500 mt-1">Price per kilogram</p>
+							<p class="text-xs text-gray-500 mt-1">Price per load (automatically set based on service type)</p>
 						</div>
 					</div>
 				</div>
@@ -553,12 +576,12 @@
 							</p>
 						</div>
 						<div>
-							<span class="block text-sm font-medium text-gray-500">Weight</span>
+							<span class="block text-sm font-medium text-gray-500">Load</span>
 							<p class="text-base font-medium text-brand-900">{formData.quantity} kg</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Unit Price</span>
-							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per kg</p>
+							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per load</p>
 						</div>
 						<!-- Cost Breakdown -->
 						<div class="border-t border-gray-200 pt-4">
@@ -580,7 +603,7 @@
 									</div>
 									{#if formData.quantity > 0 && formData.unit_price > 0}
 										<div class="text-xs text-gray-500 mt-1">
-											{formData.quantity} kg × ₱{formData.unit_price}/kg
+											{formData.quantity} kg × ₱{formData.unit_price}/load
 											{#if addOnsAmount > 0}
 												+ ₱{addOnsAmount.toFixed(2)} add-ons
 											{/if}

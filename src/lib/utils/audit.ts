@@ -37,11 +37,19 @@ export async function logAuditEvent(
 		});
 
 		if (error) {
-			console.error('Error logging audit event:', error);
+			// Only log non-404 errors (function doesn't exist) to avoid console noise
+			// 404 means the RPC function doesn't exist in the database, which is fine
+			if (error.code !== 'PGRST116' && error.message && !error.message.includes('404')) {
+				console.error('Error logging audit event:', error);
+			}
 			// don't throw error to avoid breaking the main functionality
 		}
 	} catch (error) {
-		console.error('Error in logAuditEvent:', error);
+		// Silently handle errors - audit logging should never break main functionality
+		// Only log if it's not a 404 or function not found error
+		if (error instanceof Error && !error.message.includes('404') && !error.message.includes('not found')) {
+			console.error('Error in logAuditEvent:', error);
+		}
 		// don't throw error to avoid breaking the main functionality
 	}
 }

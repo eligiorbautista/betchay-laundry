@@ -338,7 +338,7 @@
 										<div class="flex items-center gap-2">
 											<a 
 												href="/orders/{order.id}" 
-												class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand-900 border border-brand-900 rounded-lg hover:bg-brand-800 hover:border-brand-800 transition-colors shadow-sm hover:shadow-md"
+												class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-brand-900 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 hover:border-brand-300 transition-colors"
 												on:click|stopPropagation
 												title="View order details"
 											>
@@ -347,7 +347,7 @@
 											</a>
 											<a 
 												href="/orders/{order.id}/edit" 
-												class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand-900 border border-brand-900 rounded-lg hover:bg-brand-800 hover:border-brand-800 transition-colors shadow-sm hover:shadow-md"
+												class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-brand-900 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 hover:border-brand-300 transition-colors"
 												on:click|stopPropagation
 												title="Edit order"
 											>

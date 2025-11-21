@@ -1,5 +1,8 @@
 export interface ReportSummary {
+	grossRevenue: number;
 	totalRevenue: number;
+	totalExpenses: number;
+	netRevenue: number;
 	totalOrders: number;
 	completedOrdersCount: number;
 	averageOrderValue: number;
@@ -38,6 +41,10 @@ export interface MonthlyTrend {
 	averageOrderValue: number;
 }
 
+export interface ExpenseCategoryReport {
+	category: string;
+	totalAmount: number;
+}
 
 
 export interface ReportsData {
@@ -47,6 +54,7 @@ export interface ReportsData {
 	serviceTypePerformance: ServiceTypeReport[];
 	monthlyTrends: MonthlyTrend[];
 	availableYears: number[];
+	expenseBreakdown: ExpenseCategoryReport[];
 	dateRange: {
 		start: string;
 		end: string;

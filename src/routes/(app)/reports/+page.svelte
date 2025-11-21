@@ -453,36 +453,38 @@
 	{:else}
 		<!-- Summary Cards -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-		<!-- Total Revenue -->
+		<!-- Gross Revenue -->
 		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-600 mb-1">Total Revenue (Completed Orders)</p>
+					<p class="text-sm font-medium text-gray-600 mb-1">Gross Revenue (Completed Orders)</p>
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-2xl font-bold text-brand-900">{formatCurrency(reports.summary.totalRevenue)}</p>
+						<p class="text-2xl font-bold text-brand-900">{formatCurrency(reports.summary.grossRevenue)}</p>
 					{/if}
 				</div>
-				<div class="p-3 bg-slate-50 rounded-xl">
-					<Icon icon="mdi:currency-php" class="w-6 h-6 text-slate-600" />
+				<div class="p-3 bg-indigo-50 rounded-xl">
+					<Icon icon="mdi:currency-php" class="w-6 h-6 text-indigo-600" />
 				</div>
 			</div>
 		</div>
 
-		<!-- Total Orders -->
+		<!-- Net Revenue -->
 		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-600 mb-1">Total Orders</p>
+					<p class="text-sm font-medium text-gray-600 mb-1">Net Revenue</p>
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-3xl font-bold text-brand-900">{reports.summary.totalOrders}</p>
+						<p class="text-2xl font-bold {reports.summary.netRevenue < 0 ? 'text-red-600' : 'text-brand-900'}">
+							{formatCurrency(reports.summary.netRevenue)}
+						</p>
 					{/if}
 				</div>
-				<div class="p-3 bg-indigo-50 rounded-xl">
-					<FileText class="w-6 h-6 text-indigo-600" />
+				<div class="p-3 bg-slate-50 rounded-xl">
+					<Icon icon="mdi:currency-php" class="w-6 h-6 text-slate-600" />
 				</div>
 			</div>
 		</div>
@@ -504,20 +506,63 @@
 			</div>
 		</div>
 
-		<!-- Completed Orders -->
+		<!-- Total Orders -->
 		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-600 mb-1">Completed Orders</p>
+					<p class="text-sm font-medium text-gray-600 mb-1">Total Orders</p>
 					{#if loading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-3xl font-bold text-emerald-600">{reports.summary.completedOrdersCount}</p>
+						<p class="text-3xl font-bold text-brand-900">{reports.summary.totalOrders}</p>
 					{/if}
 				</div>
 				<div class="p-3 bg-emerald-50 rounded-xl">
-					<CheckCircle class="w-6 h-6 text-emerald-600" />
+					<FileText class="w-6 h-6 text-emerald-600" />
 				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Revenue & Expense Breakdown -->
+	<div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 md:mb-8">
+		<div class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+			<h2 class="text-base sm:text-lg md:text-xl font-semibold text-brand-900">Revenue & Expense Breakdown</h2>
+		</div>
+		<div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div>
+				<h3 class="text-sm font-semibold text-gray-700 mb-3">Summary</h3>
+				<div class="space-y-2 text-sm">
+					<div class="flex justify-between">
+						<span class="text-gray-600">Gross Revenue (Completed Orders)</span>
+						<span class="font-semibold text-brand-900">{formatCurrency(reports.summary.grossRevenue)}</span>
+					</div>
+					<div class="flex justify-between">
+						<span class="text-gray-600">Total Expenses</span>
+						<span class="font-semibold text-red-600">-{formatCurrency(reports.summary.totalExpenses)}</span>
+					</div>
+					<div class="flex justify-between border-t border-dashed border-gray-200 pt-2 mt-1">
+						<span class="text-gray-800 font-semibold">Net Revenue</span>
+						<span class="font-bold {reports.summary.netRevenue < 0 ? 'text-red-600' : 'text-emerald-600'}">
+							{formatCurrency(reports.summary.netRevenue)}
+						</span>
+					</div>
+				</div>
+			</div>
+			<div>
+				<h3 class="text-sm font-semibold text-gray-700 mb-3">Expenses by Category</h3>
+				{#if reports.expenseBreakdown && reports.expenseBreakdown.length > 0}
+					<div class="space-y-2 text-sm">
+						{#each reports.expenseBreakdown as expCat}
+							<div class="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2 hover:border-red-200 hover:bg-red-50/50 transition-colors">
+								<span class="text-gray-700">{expCat.category}</span>
+								<span class="font-semibold text-red-600">-{formatCurrency(expCat.totalAmount)}</span>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<p class="text-xs text-gray-500 italic">No expenses recorded for this period.</p>
+				{/if}
 			</div>
 		</div>
 	</div>

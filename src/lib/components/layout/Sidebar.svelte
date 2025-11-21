@@ -10,7 +10,8 @@
 		LogOut,
 		Lock,
 		Unlock,
-		Activity
+		Activity,
+		Wallet
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { auth, authStore } from '$lib/stores/authStore';
@@ -24,6 +25,12 @@
 			href: '/dashboard',
 			icon: LayoutDashboard,
 			adminOnly: true
+		},
+		{
+			label: 'Expenses',
+			href: '/expenses',
+			icon: Wallet,
+			adminOnly: false
 		},
 		{
 			label: 'Orders',

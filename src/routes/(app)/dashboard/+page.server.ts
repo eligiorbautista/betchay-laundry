@@ -83,7 +83,11 @@ async function getDashboardStats(supabase: any) {
 			.select('total_amount')
 			.eq('status', 'completed');
 
-		const revenue = revenueData?.reduce((sum: number, order: any) => sum + parseFloat(order.total_amount), 0) || 0;
+		const revenue =
+			revenueData?.reduce(
+				(sum: number, order: any) => sum + parseFloat(order.total_amount),
+				0
+			) || 0;
 
 		return {
 			totalOrders: totalOrders || 0,

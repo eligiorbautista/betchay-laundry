@@ -531,12 +531,53 @@ export async function generateReportsData(supabase: SupabaseClient, startDate?: 
 
 		const ordersData = orders || [];
 
-		// calculate summary statistics
+		// calculate summary statistics for revenue
 		const completedOrders = ordersData.filter(order => order.status === 'completed');
 		const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
 		const totalOrders = ordersData.length;
 		const completedOrdersCount = completedOrders.length;
 		const averageOrderValue = completedOrdersCount > 0 ? totalRevenue / completedOrdersCount : 0;
+
+		// fetch expenses for the same period (shop-level)
+		let expensesQuery = supabase.from('expenses').select('*');
+		if (startDate && endDate) {
+			const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+			if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+				throw new Error('Invalid date format. Use YYYY-MM-DD');
+			}
+
+			expensesQuery = expensesQuery
+				.gte('incurred_on', startDate)
+				.lte('incurred_on', endDate);
+		}
+
+		const { data: expenses, error: expensesError } = await expensesQuery;
+
+		if (expensesError) {
+			console.error('Error fetching expenses for reports:', expensesError);
+			throw new Error('Failed to fetch expenses for reports');
+		}
+
+		const expensesData = expenses || [];
+		const totalExpenses = expensesData.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0);
+		const netRevenue = totalRevenue - totalExpenses;
+
+		// expense breakdown by category
+		const expenseCategoryMap: Record<string, number> = {};
+		expensesData.forEach((exp: any) => {
+			const cat = exp.category || 'Uncategorized';
+			if (!expenseCategoryMap[cat]) {
+				expenseCategoryMap[cat] = 0;
+			}
+			expenseCategoryMap[cat] += exp.amount || 0;
+		});
+
+		const expenseBreakdown = Object.entries(expenseCategoryMap)
+			.map(([category, amount]) => ({
+				category,
+				totalAmount: amount as number
+			}))
+			.sort((a, b) => b.totalAmount - a.totalAmount);
 
 		// calculate order status distribution
 		const statusCounts: Record<string, { count: number; revenue: number }> = {};
@@ -705,7 +746,10 @@ export async function generateReportsData(supabase: SupabaseClient, startDate?: 
 
 		return {
 			summary: {
-				totalRevenue,
+				grossRevenue: totalRevenue,
+				totalRevenue, // kept for backwards compatibility
+				totalExpenses,
+				netRevenue,
 				totalOrders,
 				completedOrdersCount,
 				averageOrderValue,
@@ -718,6 +762,7 @@ export async function generateReportsData(supabase: SupabaseClient, startDate?: 
 			serviceTypePerformance,
 			monthlyTrends,
 			availableYears: Array.from(availableYears).sort((a, b) => b - a), // sort years descending
+			expenseBreakdown,
 			dateRange: {
 				start: periodStart,
 				end: periodEnd

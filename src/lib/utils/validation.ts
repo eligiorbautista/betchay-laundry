@@ -177,7 +177,7 @@ export function validateDate(date: string): { isValid: boolean; error?: string }
  * Validate order status
  */
 export function validateOrderStatus(status: string): { isValid: boolean; error?: string } {
-	const validStatuses = ['pending', 'processing', 'ready', 'completed', 'cancelled'];
+	const validStatuses = ['pending', 'completed', 'cancelled'];
 	
 	if (!validStatuses.includes(status)) {
 		return { isValid: false, error: 'Invalid order status' };
@@ -190,7 +190,7 @@ export function validateOrderStatus(status: string): { isValid: boolean; error?:
  * Validate payment status
  */
 export function validatePaymentStatus(status: string): { isValid: boolean; error?: string } {
-	const validStatuses = ['paid', 'unpaid', 'partial'];
+	const validStatuses = ['paid', 'unpaid'];
 	
 	if (!validStatuses.includes(status)) {
 		return { isValid: false, error: 'Invalid payment status' };
@@ -203,7 +203,7 @@ export function validatePaymentStatus(status: string): { isValid: boolean; error
  * Validate payment method
  */
 export function validatePaymentMethod(method: string): { isValid: boolean; error?: string } {
-	const validMethods = ['cash', 'gcash', 'paymaya', 'bank_transfer', 'credit_card'];
+	const validMethods = ['cash', 'gcash', 'others'];
 	
 	if (!validMethods.includes(method)) {
 		return { isValid: false, error: 'Invalid payment method' };

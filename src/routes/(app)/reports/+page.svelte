@@ -214,8 +214,6 @@
 	function getStatusColor(status: string): string {
 		switch (status) {
 			case 'pending': return 'bg-orange-100 text-orange-800 border border-orange-200';
-			case 'processing': return 'bg-blue-100 text-blue-800 border border-blue-200';
-			case 'ready': return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'cancelled': return 'bg-red-100 text-red-800 border border-red-200';
 			default: return 'bg-gray-100 text-gray-800 border border-gray-200';
@@ -225,8 +223,6 @@
 	function getStatusIcon(status: string) {
 		switch (status) {
 			case 'pending': return Clock;
-			case 'processing': return Package;
-			case 'ready': return CheckCircle;
 			case 'completed': return CheckCircle;
 			case 'cancelled': return XCircle;
 			default: return Clock;
@@ -237,9 +233,7 @@
 		switch (method) {
 			case 'cash': return Banknote;
 			case 'gcash': return Smartphone;
-			case 'paymaya': return Smartphone;
-			case 'bank_transfer': return Building2;
-			case 'credit_card': return CreditCard;
+			case 'others': return CreditCard;
 			default: return CreditCard;
 		}
 	}
@@ -247,8 +241,6 @@
 	function getStatusText(status: string): string {
 		switch (status) {
 			case 'pending': return 'Pending';
-			case 'processing': return 'In Progress';
-			case 'ready': return 'Ready for Pickup';
 			case 'completed': return 'Completed';
 			case 'cancelled': return 'Cancelled';
 			default: return status;
@@ -259,9 +251,7 @@
 		switch (method) {
 			case 'cash': return 'Cash';
 			case 'gcash': return 'GCash';
-			case 'paymaya': return 'PayMaya';
-			case 'bank_transfer': return 'Bank Transfer';
-			case 'credit_card': return 'Credit Card';
+			case 'others': return 'Other Method';
 			default: return method;
 		}
 	}

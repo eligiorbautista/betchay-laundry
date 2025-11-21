@@ -34,8 +34,26 @@
 	export let data: PageData;
 	export let form: { error?: string; success?: boolean } = {};
 
-	const orderId = $page.params.orderId;
-	const order = data.order;
+const orderId = $page.params.orderId;
+const order = data.order;
+// computed helpers
+$: totalWeightDisplay = order
+	? (order.total_weight_kg ?? (order.load_count && order.kg_per_load ? order.load_count * order.kg_per_load : 0))
+	: 0;
+
+// Parse load_details safely (in case it's a string from JSONB)
+$: parsedLoadDetails = (() => {
+	if (!order?.load_details) return [];
+	if (Array.isArray(order.load_details)) return order.load_details;
+	if (typeof order.load_details === 'string') {
+		try {
+			return JSON.parse(order.load_details);
+		} catch {
+			return [];
+		}
+	}
+	return [];
+})();
 	// Status update state
 	let isUpdatingStatus = false;
 	
@@ -86,10 +104,6 @@
 		switch (status) {
 			case 'pending':
 				return 'bg-orange-100 text-orange-800 border border-orange-200';
-			case 'processing':
-				return 'bg-blue-100 text-blue-800 border border-blue-200';
-			case 'ready':
-				return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed':
 				return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'cancelled':
@@ -102,8 +116,6 @@
 	function getStatusIcon(status: string) {
 		switch (status) {
 			case 'pending': return Clock;
-			case 'processing': return Package;
-			case 'ready': return CheckCircle;
 			case 'completed': return CheckCircle;
 			case 'cancelled': return XCircle;
 			default: return Clock;
@@ -134,12 +146,8 @@
 				return 'Cash';
 			case 'gcash':
 				return 'GCash';
-			case 'paymaya':
-				return 'PayMaya';
-			case 'bank_transfer':
-				return 'Bank Transfer';
-			case 'credit_card':
-				return 'Credit Card';
+			case 'others':
+				return 'Other Method';
 			default:
 				return method;
 		}
@@ -149,11 +157,8 @@
 			case 'cash':
 				return Banknote;
 			case 'gcash':
-			case 'paymaya':
 				return Smartphone;
-			case 'bank_transfer':
-				return Building2;
-			case 'credit_card':
+			case 'others':
 				return CreditCard;
 			default:
 				return CreditCard;
@@ -165,12 +170,8 @@
 				return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'gcash':
 				return 'bg-gray-100 text-gray-800 border border-gray-200';
-			case 'paymaya':
-				return 'bg-green-100 text-green-800 border border-green-200';
-			case 'bank_transfer':
+			case 'others':
 				return 'bg-purple-100 text-purple-800 border border-purple-200';
-			case 'credit_card':
-				return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
 			default:
 				return 'bg-gray-100 text-gray-800 border border-gray-200';
 		}
@@ -253,13 +254,8 @@
 	}
 	// Navigation
 	function goBack() {
-		// Use browser history to go back to previous page
-		if (window.history.length > 1) {
-			window.history.back();
-		} else {
-			// Fallback to orders page if no history
-			goto('/orders');
-		}
+		// Redirect to orders page
+		goto('/orders');
 	}
 
 	function editOrder() {
@@ -299,7 +295,7 @@
 
 			<button
 				on:click={editOrder}
-				class="inline-flex items-center gap-2 rounded-lg border border-transparent bg-gray-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-700 focus:border-transparent focus:ring-2 focus:ring-gray-500"
+				class="inline-flex items-center gap-2 rounded-lg border border-brand-900 bg-brand-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-800 hover:border-brand-800 focus:border-transparent focus:ring-2 focus:ring-brand-500 shadow-sm hover:shadow-md"
 			>
 				<Edit2 class="h-4 w-4" />
 				Edit Order
@@ -346,10 +342,34 @@
 					</div>
 
 					<div>
-						<span class="block text-sm font-medium text-gray-500">Weight</span>
+						<span class="block text-sm font-medium text-gray-500">Loads</span>
+						<div class="flex items-center gap-2">
+							<Package class="h-4 w-4 text-gray-400" />
+							<p class="text-base text-brand-900">{Math.round(order.load_count || 0)}</p>
+						</div>
+					</div>
+
+					<div>
+						<span class="block text-sm font-medium text-gray-500">Load Details</span>
+						<div class="mt-1 space-y-1">
+							{#if parsedLoadDetails && parsedLoadDetails.length > 0}
+								{#each parsedLoadDetails as loadDetail, index}
+									<div class="flex items-center gap-2 text-sm">
+										<Weight class="h-4 w-4 text-gray-400" />
+										<span class="text-brand-900">Load {index + 1}: {loadDetail.weight} kg</span>
+									</div>
+								{/each}
+							{:else}
+								<p class="text-sm text-gray-500 italic">No load details available</p>
+							{/if}
+						</div>
+					</div>
+
+					<div>
+						<span class="block text-sm font-medium text-gray-500">Total Weight</span>
 						<div class="flex items-center gap-2">
 							<Weight class="h-4 w-4 text-gray-400" />
-							<p class="text-base text-brand-900">{order.quantity} kg</p>
+							<p class="text-base text-brand-900">{totalWeightDisplay ? totalWeightDisplay.toFixed(2) : '0.00'} kg</p>
 						</div>
 					</div>
 
@@ -357,13 +377,13 @@
 						<span class="block text-sm font-medium text-gray-500">Unit Price</span>
 						<div class="flex items-center gap-2">
 							<DollarSign class="h-4 w-4 text-gray-400" />
-							<p class="text-base text-brand-900">₱{order.unit_price.toFixed(2)} per kg</p>
+							<p class="text-base text-brand-900">₱{order.unit_price.toFixed(2)} per load</p>
 						</div>
 					</div>
 
 					<div>
 						<span class="block text-sm font-medium text-gray-500">Subtotal</span>
-						<p class="text-base font-medium text-brand-900">₱{order.subtotal_amount?.toFixed(2) || (order.quantity * order.unit_price).toFixed(2)}</p>
+						<p class="text-base font-medium text-brand-900">₱{order.subtotal_amount?.toFixed(2) || (order.load_count * order.unit_price).toFixed(2)}</p>
 					</div>
 					{#if order.add_ons_amount && order.add_ons_amount > 0}
 						<div>
@@ -409,37 +429,44 @@
 					<Calendar class="h-5 w-5 text-gray-600" />
 					Schedule Information
 				</h2>
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-					{#if order.pickup_date}
-						<div>
-							<span class="block text-sm font-medium text-gray-500">Expected Pickup</span>
-							<div class="mt-1 flex items-center gap-2">
-								<Clock class="h-4 w-4 text-gray-400" />
-								<div>
-									<p class="text-base font-medium text-brand-900">
-										{formatDateOnly(order.pickup_date)}
-									</p>
-									<p class="text-sm text-gray-600">{formatTime(order.pickup_date)}</p>
+				{#if order.pickup_date || order.delivery_date}
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+						{#if order.pickup_date}
+							<div>
+								<span class="block text-sm font-medium text-gray-500">Expected Pickup</span>
+								<div class="mt-1 flex items-center gap-2">
+									<Clock class="h-4 w-4 text-gray-400" />
+									<div>
+										<p class="text-base font-medium text-brand-900">
+											{formatDateOnly(order.pickup_date)}
+										</p>
+										<p class="text-sm text-gray-600">{formatTime(order.pickup_date)}</p>
+									</div>
 								</div>
 							</div>
-						</div>
-					{/if}
+						{/if}
 
-					{#if order.delivery_date}
-						<div>
-							<span class="block text-sm font-medium text-gray-500">Delivery Date</span>
-							<div class="mt-1 flex items-center gap-2">
-								<Clock class="h-4 w-4 text-gray-400" />
-								<div>
-									<p class="text-base font-medium text-brand-900">
-										{formatDateOnly(order.delivery_date)}
-									</p>
-									<p class="text-sm text-gray-600">{formatTime(order.delivery_date)}</p>
+						{#if order.delivery_date}
+							<div>
+								<span class="block text-sm font-medium text-gray-500">Delivery Date</span>
+								<div class="mt-1 flex items-center gap-2">
+									<Clock class="h-4 w-4 text-gray-400" />
+									<div>
+										<p class="text-base font-medium text-brand-900">
+											{formatDateOnly(order.delivery_date)}
+										</p>
+										<p class="text-sm text-gray-600">{formatTime(order.delivery_date)}</p>
+									</div>
 								</div>
 							</div>
-						</div>
-					{/if}
-				</div>
+						{/if}
+					</div>
+				{:else}
+					<div class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
+						<AlertCircle class="h-5 w-5 text-gray-400 flex-shrink-0" />
+						<p class="text-sm text-gray-600">No schedule information available. Pickup and delivery dates have not been set.</p>
+					</div>
+				{/if}
 			</div>
 
 			<!-- Remarks -->
@@ -506,21 +533,13 @@
 					<!-- Order Status Updates -->
 					<div>
 						<span class="mb-2 block text-sm font-medium text-gray-700">Update Order Status</span>
-						<div class="grid grid-cols-2 gap-2">
+						<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
 							<button
-								on:click={() => updateOrderStatus('processing')}
-								disabled={isUpdatingStatus || order.status === 'processing'}
-								class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+								on:click={() => updateOrderStatus('pending')}
+								disabled={isUpdatingStatus || order.status === 'pending'}
+								class="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
 							>
-								Mark Processing
-							</button>
-
-							<button
-								on:click={() => updateOrderStatus('ready')}
-								disabled={isUpdatingStatus || order.status === 'ready'}
-								class="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-100 focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-							>
-								Mark Ready
+								Mark Pending
 							</button>
 
 							<button

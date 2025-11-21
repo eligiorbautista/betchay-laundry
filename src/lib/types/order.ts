@@ -1,17 +1,28 @@
+export type OrderStatus = 'pending' | 'completed' | 'cancelled';
+export type PaymentStatus = 'paid' | 'unpaid';
+export type PaymentMethod = 'cash' | 'gcash' | 'others';
+
+export interface LoadDetail {
+	id: string;
+	weight: number; // kg for this load (max 8kg)
+}
+
 export interface Order {
 	id: string;
 	order_number: string;
 	customer_name: string;
 	customer_phone: string; // required now
-	status: 'pending' | 'processing' | 'ready' | 'completed' | 'cancelled';
+	status: OrderStatus;
 	service_type: string;
-	quantity: number;
+	load_count: number;
+	total_weight_kg: number;
 	unit_price: number;
 	subtotal_amount: number;
 	add_ons_amount: number;
 	total_amount: number;
-	payment_status: 'paid' | 'unpaid' | 'partial';
-	payment_method: 'cash' | 'gcash' | 'paymaya' | 'bank_transfer' | 'credit_card';
+	payment_status: PaymentStatus;
+	payment_method: PaymentMethod;
+	load_details?: LoadDetail[];
 	pickup_date?: string;
 	delivery_date?: string;
 	remarks?: string;

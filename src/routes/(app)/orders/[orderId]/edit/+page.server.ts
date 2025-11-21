@@ -4,6 +4,7 @@ import { error, fail } from '@sveltejs/kit';
 import { createSupabaseServerClient, getServerSession } from '$lib/config/supabaseServer';
 import { logAuditEvent } from '$lib/utils/audit';
 import { fetchOrderWithAddOns, fetchAddOns } from '$lib/utils/database';
+import { randomUUID } from 'crypto';
 
 export const load: PageServerLoad = async (event) => {
 	const { params } = event;
@@ -52,7 +53,6 @@ export const actions: Actions = {
 		const customer_name = formData.get('customer_name') as string;
 		const customer_phone = formData.get('customer_phone') as string;
 		const service_type = formData.get('service_type') as string;
-		const quantity = parseFloat(formData.get('quantity') as string);
 		const unit_price = parseFloat(formData.get('unit_price') as string);
 		const payment_method = formData.get('payment_method') as string;
 		const payment_status = formData.get('payment_status') as string;
@@ -92,9 +92,25 @@ export const actions: Actions = {
 		if (!service_type) {
 			return fail(400, { error: 'Service type is required' });
 		}
-		if (!quantity || quantity <= 0) {
-			return fail(400, { error: 'Quantity must be greater than 0' });
+		const loadIds = formData.getAll('load_id') as string[];
+		const loadWeights = formData.getAll('load_weight') as string[];
+		const loadDetails: Array<{ id: string; weight: number }> = [];
+
+		for (let i = 0; i < loadWeights.length; i++) {
+			const weight = parseFloat(loadWeights[i]);
+			if (Number.isNaN(weight)) {
+				continue;
+			}
+			const id = loadIds[i] && typeof loadIds[i] === 'string' && loadIds[i].trim().length > 0
+				? loadIds[i]
+				: randomUUID();
+			loadDetails.push({ id, weight });
 		}
+
+		if (loadDetails.length === 0) {
+			return fail(400, { error: 'Please add at least one load entry.' });
+		}
+
 		if (!unit_price || unit_price <= 0) {
 			return fail(400, { error: 'Unit price must be greater than 0' });
 		}
@@ -108,8 +124,20 @@ export const actions: Actions = {
 			// create supabase client
 			const supabase = createSupabaseServerClient(event);
 
+			// calculate load metrics
+			// Each load entry counts as 1 load (rounded up), regardless of weight
+			const total_weight_kg = parseFloat(loadDetails.reduce((sum, load) => sum + load.weight, 0).toFixed(2));
+			const load_count = loadDetails.length;
+
+			if (load_count <= 0) {
+				return fail(400, { error: 'Total loads must be greater than 0.' });
+			}
+			if (load_count > 8.3) {
+				return fail(400, { error: 'Total loads cannot exceed 8.3 per order.' });
+			}
+
 			// calculate amounts
-			const subtotal_amount = quantity * unit_price;
+			const subtotal_amount = parseFloat((load_count * unit_price).toFixed(2));
 			let add_ons_amount = 0;
 			if (addOns && addOns.length > 0) {
 				add_ons_amount = addOns.reduce((sum, addOn) => {
@@ -161,7 +189,8 @@ export const actions: Actions = {
 					customer_phone: customer_phone.trim(),
 					status,
 					service_type,
-					quantity,
+					load_count,
+					total_weight_kg,
 					unit_price,
 					subtotal_amount,
 					add_ons_amount,
@@ -171,6 +200,7 @@ export const actions: Actions = {
 					pickup_date: pickup_date || null,
 					delivery_date: delivery_date || null,
 					remarks: remarks?.trim() || null,
+					load_details: loadDetails,
 					// New add-ons columns
 					add_ons: add_ons_json,
 					add_ons_quantity: add_ons_quantity,

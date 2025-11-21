@@ -17,7 +17,8 @@
 		Edit2,
 		AlertCircle,
 		Plus,
-		XCircle
+		XCircle,
+		Scale
 	} from 'lucide-svelte';
 
 	export let data: PageData;
@@ -30,7 +31,6 @@
 		customer_name: data.order.customer_name,
 		customer_phone: data.order.customer_phone || '',
 		service_type: data.order.service_type,
-		quantity: data.order.quantity,
 		unit_price: data.order.unit_price,
 		payment_method: data.order.payment_method,
 		payment_status: data.order.payment_status,
@@ -39,6 +39,35 @@
 		delivery_date: data.order.delivery_date ? new Date(data.order.delivery_date).toISOString().slice(0, 16) : '',
 		remarks: data.order.remarks || ''
 	};
+
+	type LoadEntry = { id: string; weight: number };
+	const MAX_LOADS = 8.3;
+	const MAX_KG_PER_LOAD = 8;
+
+	function generateLoadId() {
+		if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+			return crypto.randomUUID();
+		}
+		return Math.random().toString(36).slice(2);
+	}
+
+	function createLoadEntry(weight = 8): LoadEntry {
+		return {
+			id: generateLoadId(),
+			weight
+		};
+	}
+
+	const initialLoadEntries = Array.isArray(data.order.load_details) && data.order.load_details.length > 0
+		? data.order.load_details
+		: [createLoadEntry(Math.min(data.order.total_weight_kg || 8, MAX_KG_PER_LOAD))];
+
+	let loadEntries: LoadEntry[] = initialLoadEntries.map((load) => ({
+		id: load.id || generateLoadId(),
+		weight: load.weight ?? Math.min(data.order.total_weight_kg || 8, MAX_KG_PER_LOAD)
+	}));
+	let totalWeightKg = 0;
+	let loadCount = 0;
 
 	// Add-ons state - initialize with existing add-ons
 	// Try order_add_ons from table first, fallback to JSON field
@@ -68,6 +97,24 @@
 		}));
 	}
 
+	function addLoadEntry() {
+		if (loadEntries.length >= 20 || loadCount >= MAX_LOADS) {
+			return;
+		}
+		loadEntries = [...loadEntries, createLoadEntry(8)];
+	}
+
+	function removeLoadEntry(id: string) {
+		if (loadEntries.length === 1) {
+			return;
+		}
+		loadEntries = loadEntries.filter(entry => entry.id !== id);
+	}
+
+	function updateLoadEntryWeight(id: string, weight: number) {
+		loadEntries = loadEntries.map(entry => entry.id === id ? { ...entry, weight } : entry);
+	}
+
 	// Available services and add-ons from backend
 	$: serviceTypes = data.servicePricing || [];
 	$: availableAddOns = data.addOns || [];
@@ -75,20 +122,16 @@
 	const paymentMethods = [
 		{ value: 'cash', label: 'Cash' },
 		{ value: 'gcash', label: 'GCash' },
-		{ value: 'paymaya', label: 'PayMaya' },
-		{ value: 'bank_transfer', label: 'Bank Transfer' }
+		{ value: 'others', label: 'Others' }
 	];
 
 	const paymentStatuses = [
 		{ value: 'paid', label: 'Paid' },
-		{ value: 'unpaid', label: 'Unpaid' },
-		{ value: 'partial', label: 'Partial' }
+		{ value: 'unpaid', label: 'Unpaid' }
 	];
 
 	const orderStatuses = [
 		{ value: 'pending', label: 'Pending' },
-		{ value: 'processing', label: 'Processing' },
-		{ value: 'ready', label: 'Ready' },
 		{ value: 'completed', label: 'Completed' },
 		{ value: 'cancelled', label: 'Cancelled' }
 	];
@@ -110,7 +153,10 @@
 	}
 
 	// Computed amounts
-	$: subtotalAmount = formData.quantity * formData.unit_price;
+	$: totalWeightKg = parseFloat(loadEntries.reduce((sum, entry) => sum + (Number.isFinite(entry.weight) ? entry.weight : 0), 0).toFixed(2));
+	// Each load entry counts as 1 load (rounded up), regardless of weight
+	$: loadCount = loadEntries.length || 0;
+	$: subtotalAmount = loadCount * formData.unit_price;
 	$: addOnsAmount = selectedAddOns.reduce((sum, addOn) => sum + (addOn.quantity * addOn.unit_price), 0);
 	$: totalAmount = subtotalAmount + addOnsAmount;
 
@@ -168,17 +214,30 @@
 		if (!formData.service_type) {
 			errors.push('Service type is required');
 		}
-		
-		if (formData.quantity <= 0) {
-			errors.push('Load must be greater than 0 kg');
+
+		if (loadEntries.length === 0) {
+			errors.push('Please add at least one load entry');
+		}
+
+		loadEntries.forEach((entry, index) => {
+			if (!Number.isFinite(entry.weight) || entry.weight <= 0) {
+				errors.push(`Load #${index + 1} must be greater than 0 kg`);
+			}
+			if (entry.weight > MAX_KG_PER_LOAD) {
+				errors.push(`Load #${index + 1} cannot exceed ${MAX_KG_PER_LOAD} kg`);
+			}
+		});
+
+		if (loadCount <= 0) {
+			errors.push('Total loads must be greater than 0');
+		}
+
+		if (loadCount > MAX_LOADS) {
+			errors.push(`Total loads cannot exceed ${MAX_LOADS}`);
 		}
 		
 		if (formData.unit_price <= 0) {
 			errors.push('Unit price must be greater than 0');
-		}
-		
-		if (!formData.pickup_date) {
-			errors.push('Expected pickup date is required');
 		}
 
 		// Payment validation: Prevent marking as completed if payment is unpaid
@@ -205,7 +264,6 @@
 			formDataToSubmit.append('customer_name', formData.customer_name.trim());
 			formDataToSubmit.append('customer_phone', formData.customer_phone.trim());
 			formDataToSubmit.append('service_type', formData.service_type);
-			formDataToSubmit.append('quantity', formData.quantity.toString());
 			formDataToSubmit.append('unit_price', formData.unit_price.toString());
 			formDataToSubmit.append('payment_method', formData.payment_method);
 			formDataToSubmit.append('payment_status', formData.payment_status);
@@ -217,6 +275,12 @@
 			if (formData.remarks) {
 				formDataToSubmit.append('remarks', formData.remarks.trim());
 			}
+			
+			// Add load details to form data
+			loadEntries.forEach(load => {
+				formDataToSubmit.append('load_id', load.id);
+				formDataToSubmit.append('load_weight', load.weight.toString());
+			});
 			
 			// Add add-ons to form data
 			selectedAddOns.forEach(addOn => {
@@ -254,13 +318,8 @@
 
 	// Navigation
 	function goBack() {
-		// Use browser history to go back to previous page
-		if (window.history.length > 1) {
-			window.history.back();
-		} else {
-			// Fallback to order view page if no history
-			goto(`/orders/${orderId}`);
-		}
+		// Redirect to orders page
+		goto('/orders');
 	}
 </script>
 
@@ -384,7 +443,7 @@
 						<Package class="h-5 w-5 text-brand-800" />
 						Service Details
 					</h2>
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 						<div>
 							<label for="service_type" class="block text-sm font-medium text-gray-500 mb-2">
 								Service Type *
@@ -402,24 +461,6 @@
 								{/each}
 							</select>
 						</div>
-
-						<div>
-							<label for="quantity" class="block text-sm font-medium text-gray-500 mb-2">
-								Load *
-							</label>
-							<input
-								type="number"
-								id="quantity"
-								bind:value={formData.quantity}
-								min="0.1"
-								step="0.1"
-								required
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-								placeholder="Enter load"
-							/>
-							<p class="text-xs text-gray-500 mt-1">Load of laundry in kilograms</p>
-						</div>
-
 						<div>
 							<label for="unit_price" class="block text-sm font-medium text-gray-500 mb-2">
 								Price per load *
@@ -436,6 +477,72 @@
 								value={formData.unit_price}
 							/>
 							<p class="text-xs text-gray-500 mt-1">Price per load (automatically set based on service type)</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Load Breakdown Section -->
+				<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+					<div class="flex items-center justify-between mb-4">
+						<div>
+							<h2 class="flex items-center gap-2 text-lg font-semibold text-brand-900">
+								<Scale class="h-5 w-5 text-gray-600" />
+								Load Breakdown
+							</h2>
+							<p class="text-sm text-gray-500">Maximum {MAX_KG_PER_LOAD} kg per load, up to {MAX_LOADS} loads per order.</p>
+						</div>
+						<button
+							type="button"
+							on:click={addLoadEntry}
+							class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+							disabled={loadEntries.length >= 20 || loadCount >= MAX_LOADS}
+						>
+							<Plus class="h-4 w-4" />
+							Add Load
+						</button>
+					</div>
+
+					<div class="space-y-4">
+						{#each loadEntries as load, index}
+							<div class="rounded-lg border border-gray-200 p-4">
+								<div class="flex items-center justify-between">
+									<div class="text-sm font-medium text-gray-700">Load {index + 1}</div>
+									{#if loadEntries.length > 1}
+										<button
+											type="button"
+											on:click={() => removeLoadEntry(load.id)}
+											class="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+										>
+											<XCircle class="h-4 w-4" />
+											Remove
+										</button>
+									{/if}
+								</div>
+								<div class="mt-3">
+									<label class="block text-sm font-medium text-gray-500 mb-1">
+										Weight (kg)
+									</label>
+									<input
+										type="number"
+										name="load_weight"
+										min="0.1"
+										max={MAX_KG_PER_LOAD}
+										step="0.1"
+										value={load.weight}
+										on:input={(event) => updateLoadEntryWeight(load.id, parseFloat((event.currentTarget as HTMLInputElement).value) || 0)}
+										required
+										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+									/>
+									<input type="hidden" name="load_id" value={load.id} />
+									<p class="text-xs text-gray-500 mt-1">Maximum {MAX_KG_PER_LOAD} kg per load</p>
+								</div>
+							</div>
+						{/each}
+						<div class="rounded-lg bg-gray-50 border border-dashed border-gray-200 p-3 text-sm text-gray-600">
+							<div class="flex flex-wrap gap-4">
+								<span><strong>Total loads:</strong> {loadCount}</span>
+								<span><strong>Total weight:</strong> {totalWeightKg.toFixed(2)} kg</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -512,21 +619,20 @@
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div>
 							<label for="pickup_date" class="block text-sm font-medium text-gray-500 mb-2">
-								Expected Pickup Date & Time *
+								Expected Pickup Date & Time <span class="text-gray-400">(optional)</span>
 							</label>
 							<input
 								type="datetime-local"
 								id="pickup_date"
 								bind:value={formData.pickup_date}
-								required
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
 							/>
-							<p class="text-xs text-gray-500 mt-1">When customer plans to pick up</p>
+							<p class="text-xs text-gray-500 mt-1">When customer plans to pick up (if known)</p>
 						</div>
 
 						<div>
 							<label for="delivery_date" class="block text-sm font-medium text-gray-500 mb-2">
-								Delivery Date & Time
+								Delivery Date & Time <span class="text-gray-400">(optional)</span>
 							</label>
 							<input
 								type="datetime-local"
@@ -534,7 +640,7 @@
 								bind:value={formData.delivery_date}
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
 							/>
-							<p class="text-xs text-gray-500 mt-1">Optional delivery date</p>
+							<p class="text-xs text-gray-500 mt-1">When order will be delivered (if known)</p>
 						</div>
 					</div>
 				</div>
@@ -576,12 +682,18 @@
 							</p>
 						</div>
 						<div>
-							<span class="block text-sm font-medium text-gray-500">Load</span>
-							<p class="text-base font-medium text-brand-900">{formData.quantity} kg</p>
+							<span class="block text-sm font-medium text-gray-500">Total Loads</span>
+							<p class="text-base font-medium text-brand-900">{loadCount} {loadCount === 1 ? 'load' : 'loads'}</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Unit Price</span>
 							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per load</p>
+						</div>
+						<div>
+							<span class="block text-sm font-medium text-gray-500">Total Weight</span>
+							<p class="text-base font-medium text-brand-900">
+								{totalWeightKg ? totalWeightKg.toFixed(2) : '0.00'} kg
+							</p>
 						</div>
 						<!-- Cost Breakdown -->
 						<div class="border-t border-gray-200 pt-4">
@@ -601,9 +713,12 @@
 										<span class="text-base font-semibold text-gray-900">Total Amount</span>
 										<span class="text-2xl font-bold text-brand-900">₱{totalAmount.toFixed(2)}</span>
 									</div>
-									{#if formData.quantity > 0 && formData.unit_price > 0}
+									{#if loadCount > 0 && formData.unit_price > 0}
 										<div class="text-xs text-gray-500 mt-1">
-											{formData.quantity} kg × ₱{formData.unit_price}/load
+											{loadCount} {loadCount === 1 ? 'load' : 'loads'} × ₱{formData.unit_price}/load
+											{#if totalWeightKg > 0}
+												(≈ {totalWeightKg.toFixed(2)} kg)
+											{/if}
 											{#if addOnsAmount > 0}
 												+ ₱{addOnsAmount.toFixed(2)} add-ons
 											{/if}
@@ -657,7 +772,7 @@
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							class="px-6 py-2 text-white bg-brand-800 border border-transparent rounded-lg hover:bg-brand-900 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							class="px-6 py-2 text-white bg-brand-900 border border-brand-900 rounded-lg hover:bg-brand-800 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
 						>							{isSubmitting ? 'Updating Order...' : 'Update Order'}
 						</button>
 					</div>

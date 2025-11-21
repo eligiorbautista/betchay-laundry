@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Order, AddOn, OrderAddOn, OrderWithAddOns } from '$lib/types/order';
+import type { Order, AddOn, OrderAddOn, OrderWithAddOns, LoadDetail } from '$lib/types/order';
 import { logAuditEvent, getClientIP, getUserAgent } from './audit';
 
 // database utility functions for common operations
@@ -22,11 +22,6 @@ function validateOrderData(orderData: any) {
 		throw new Error('Invalid phone number format');
 	}
 	
-	// Validate quantity
-	if (!orderData.quantity || orderData.quantity <= 0) {
-		throw new Error('Quantity must be greater than 0');
-	}
-	
 	// Validate unit price
 	if (!orderData.unit_price || orderData.unit_price < 0) {
 		throw new Error('Unit price must be non-negative');
@@ -41,6 +36,39 @@ function validateOrderData(orderData: any) {
 	if (orderData.remarks && orderData.remarks.trim().length > 500) {
 		throw new Error('Remarks too long (max 500 characters)');
 	}
+}
+
+function calculateLoadMetrics(loadDetails: LoadDetail[] | undefined) {
+	if (!loadDetails || loadDetails.length === 0) {
+		throw new Error('At least one load entry is required');
+	}
+
+	let totalWeight = 0;
+	loadDetails.forEach((load, index) => {
+		if (!load || typeof load.weight !== 'number' || Number.isNaN(load.weight)) {
+			throw new Error(`Load #${index + 1} has an invalid weight`);
+		}
+		if (load.weight <= 0) {
+			throw new Error(`Load #${index + 1} must be greater than 0 kg`);
+		}
+		if (load.weight > 8) {
+			throw new Error(`Load #${index + 1} exceeds the 8 kg per load limit`);
+		}
+		totalWeight += load.weight;
+	});
+
+	// Each load entry counts as 1 load (rounded up), regardless of weight
+	// So if you have 3 load entries, that's 3 loads total
+	const loadCount = loadDetails.length;
+
+	if (loadCount > 8.3) {
+		throw new Error('Total loads cannot exceed 8.3');
+	}
+
+	return {
+		totalWeight: parseFloat(totalWeight.toFixed(2)),
+		loadCount: parseFloat(loadCount.toFixed(2))
+	};
 }
 
 /**
@@ -201,7 +229,7 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 	customer_name: string;
 	customer_phone: string; // required now
 	service_type: string;
-	quantity: number;
+	load_details: LoadDetail[];
 	unit_price: number;
 	payment_method: string;
 	payment_status: string;
@@ -217,12 +245,13 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 }, request?: Request, userEmail?: string) {
 	// Validate input data
 	validateOrderData(orderData);
+	const { totalWeight, loadCount } = calculateLoadMetrics(orderData.load_details);
 
 	// get current user for created_by field
 	const { data: { user } } = await supabase.auth.getUser();
 
 	// calculate subtotal amount
-	const subtotal_amount = orderData.quantity * orderData.unit_price;
+	const subtotal_amount = parseFloat((loadCount * orderData.unit_price).toFixed(2));
 	
 	// calculate add-ons amount
 	let add_ons_amount = 0;
@@ -288,7 +317,8 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 			customer_phone: orderData.customer_phone.trim(),
 			status: orderData.status,
 			service_type: orderData.service_type,
-			quantity: orderData.quantity,
+			load_count: loadCount,
+			total_weight_kg: totalWeight,
 			unit_price: orderData.unit_price,
 			subtotal_amount,
 			add_ons_amount,
@@ -298,6 +328,7 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
 			pickup_date: orderData.pickup_date || null,
 			delivery_date: orderData.delivery_date || null,
 			remarks: orderData.remarks?.trim() || null,
+			load_details: orderData.load_details,
 			// New add-ons columns
 			add_ons: add_ons_json,
 			add_ons_quantity: add_ons_quantity,
@@ -352,7 +383,7 @@ export async function createOrder(supabase: SupabaseClient, orderData: {
  */
 export async function updateOrderStatus(supabase: SupabaseClient, orderId: string, newStatus: string, request?: Request, userEmail?: string) {
 	// Validate status
-	const validStatuses = ['pending', 'processing', 'ready', 'completed', 'cancelled'];
+	const validStatuses = ['pending', 'completed', 'cancelled'];
 	if (!validStatuses.includes(newStatus)) {
 		throw new Error('Invalid order status');
 	}
@@ -403,7 +434,7 @@ export async function updateOrderStatus(supabase: SupabaseClient, orderId: strin
  */
 export async function updatePaymentStatus(supabase: SupabaseClient, orderId: string, newPaymentStatus: string, request?: Request, userEmail?: string) {
 	// Validate payment status
-	const validPaymentStatuses = ['paid', 'unpaid', 'partial'];
+	const validPaymentStatuses = ['paid', 'unpaid'];
 	if (!validPaymentStatuses.includes(newPaymentStatus)) {
 		throw new Error('Invalid payment status');
 	}

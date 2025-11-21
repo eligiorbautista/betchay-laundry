@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { FileText, Clock, CheckCircle, Plus, Users, BarChart3, TrendingUp, Scale, LayoutDashboard, Package, XCircle, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, User, Eye, Edit, ExternalLink, LogIn, LogOut, Key, Activity } from 'lucide-svelte';
+	import { FileText, Clock, CheckCircle, Plus, Users, BarChart3, TrendingUp, Scale, LayoutDashboard, Package, XCircle, CreditCard, Banknote, Smartphone, Building2, AlertCircle, CheckCircle2, User, Eye, Edit, Edit3, ExternalLink, LogIn, LogOut, Key, Activity } from 'lucide-svelte';
 	import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
 	import AdminOnly from '$lib/components/common/AdminOnly.svelte';
 	import Icon from '@iconify/svelte';
@@ -47,8 +47,6 @@
 	function getStatusColor(status: string) {
 		switch (status) {
 			case 'pending': return 'border-orange';
-			case 'processing': return 'border-blue';
-			case 'ready': return 'border-purple';
 			case 'completed': return 'border-emerald';
 			case 'cancelled': return 'border-red';
 			default: return 'border-gray';
@@ -58,8 +56,6 @@
 	function getStatusBadgeColor(status: string) {
 		switch (status) {
 			case 'pending': return 'bg-orange-100 text-orange-800 border border-orange-200';
-			case 'processing': return 'bg-gray-100 text-brand-800 border border-gray-200';
-			case 'ready': return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'cancelled': return 'bg-red-100 text-red-800 border border-red-200';
 			default: return 'bg-gray-100 text-brand-800 border border-gray-200';
@@ -69,8 +65,6 @@
 	function getStatusIcon(status: string) {
 		switch (status) {
 			case 'pending': return Clock;
-			case 'processing': return Package;
-			case 'ready': return CheckCircle;
 			case 'completed': return CheckCircle;
 			case 'cancelled': return XCircle;
 			default: return Clock;
@@ -80,8 +74,6 @@
 	function getStatusText(status: string) {
 		switch (status) {
 			case 'pending': return 'Pending';
-			case 'processing': return 'Processing';
-			case 'ready': return 'Ready';
 			case 'completed': return 'Completed';
 			case 'cancelled': return 'Cancelled';
 			default: return status;
@@ -92,9 +84,7 @@
 		switch (paymentMethod) {
 			case 'cash': return Banknote;
 			case 'gcash': return Smartphone;
-			case 'paymaya': return Smartphone;
-			case 'bank_transfer': return Building2;
-			case 'credit_card': return CreditCard;
+		case 'others': return CreditCard;
 			default: return CreditCard;
 		}
 	}
@@ -103,7 +93,6 @@
 		switch (paymentStatus) {
 			case 'paid': return CheckCircle2;
 			case 'unpaid': return AlertCircle;
-			case 'partial': return Clock;
 			default: return AlertCircle;
 		}
 	}
@@ -112,7 +101,6 @@
 		switch (paymentStatus) {
 			case 'paid': return 'bg-emerald-100 text-emerald-800';
 			case 'unpaid': return 'bg-red-100 text-red-800';
-			case 'partial': return 'bg-amber-100 text-amber-800';
 			default: return 'bg-brand-100 text-brand-800';
 		}
 	}
@@ -121,9 +109,7 @@
 		switch (paymentMethod) {
 			case 'cash': return 'bg-green-100 text-green-800';
 			case 'gcash': return 'bg-gray-100 text-brand-800';
-			case 'bank_transfer': return 'bg-purple-100 text-purple-800';
-			case 'credit_card': return 'bg-indigo-100 text-indigo-800';
-			case 'paymaya': return 'bg-pink-100 text-pink-800';
+		case 'others': return 'bg-purple-100 text-purple-800';
 			default: return 'bg-gray-100 text-brand-800';
 		}
 	}
@@ -132,7 +118,6 @@
 		switch (paymentStatus) {
 			case 'paid': return 'Paid';
 			case 'unpaid': return 'Unpaid';
-			case 'partial': return 'Partial';
 			default: return paymentStatus;
 		}
 	}
@@ -141,9 +126,7 @@
 		switch (paymentMethod) {
 			case 'cash': return 'Cash';
 			case 'gcash': return 'GCash';
-			case 'bank_transfer': return 'Bank Transfer';
-			case 'credit_card': return 'Credit Card';
-			case 'paymaya': return 'PayMaya';
+		case 'others': return 'Other Method';
 			default: return paymentMethod;
 		}
 	}
@@ -222,15 +205,15 @@
 				</div>
 			</div>
 		</div>
-		<!-- Completed Today -->
+		<!-- Completed Orders -->
 		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-600 mb-1">Completed Today</p>
+					<p class="text-sm font-medium text-gray-600 mb-1">Completed Orders</p>
 					{#if isLoading}
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
-						<p class="text-3xl font-bold text-emerald-600">{stats.completedToday}</p>
+						<p class="text-3xl font-bold text-emerald-600">{stats.totalCompleted ?? 0}</p>
 					{/if}
 				</div>
 				<div class="p-3 bg-emerald-50 rounded-xl">
@@ -320,8 +303,12 @@
 										<div class="flex items-center gap-4 text-sm text-gray-600">
 											<span>{order.service_type}</span>
 											<span class="flex items-center gap-1">
+												<Package class="w-4 h-4" />
+												{Math.round(order.load_count || 0)} {Math.round(order.load_count || 0) === 1 ? 'load' : 'loads'}
+											</span>
+											<span class="flex items-center gap-1">
 												<Scale class="w-4 h-4" />
-												{order.quantity} kg
+												{(order.total_weight_kg ?? (order.load_count * order.kg_per_load)).toFixed(2)} kg
 											</span>
 											<span>{formatDate(new Date(order.created_at))}</span>
 										</div>
@@ -348,20 +335,23 @@
 										<div class="text-right">
 											<p class="text-lg font-bold text-brand-900">{formatCurrency(order.total_amount)}</p>
 										</div>
-										<div class="flex items-center gap-2 text-xs">
+										<div class="flex items-center gap-2">
 											<a 
 												href="/orders/{order.id}" 
-												class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+												class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand-900 border border-brand-900 rounded-lg hover:bg-brand-800 hover:border-brand-800 transition-colors shadow-sm hover:shadow-md"
 												on:click|stopPropagation
+												title="View order details"
 											>
+												<Eye class="w-3.5 h-3.5" />
 												View
 											</a>
-											<span class="text-gray-300">|</span>
 											<a 
 												href="/orders/{order.id}/edit" 
-												class="text-green-600 hover:text-green-800 text-sm font-medium"
+												class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand-900 border border-brand-900 rounded-lg hover:bg-brand-800 hover:border-brand-800 transition-colors shadow-sm hover:shadow-md"
 												on:click|stopPropagation
+												title="Edit order"
 											>
+												<Edit3 class="w-3.5 h-3.5" />
 												Edit
 											</a>
 										</div>
@@ -385,7 +375,7 @@
 								href="/orders" 
 								class="inline-flex items-center gap-2 text-sm font-medium text-gray-800 hover:text-brand-900 transition-colors"
 							>
-								<span>View all {recentOrders.length + 1} orders</span>
+								<span>View all {stats.totalOrders} orders</span>
 								<ExternalLink class="w-4 h-4" />
 							</a>
 						</div>

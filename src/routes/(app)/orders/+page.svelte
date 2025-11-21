@@ -102,14 +102,12 @@
 			.reduce((sum, order) => sum + order.total_amount, 0)
 	};
 
-	const statusOptions = [
-		{ value: 'all', label: 'All Orders', count: 0, color: 'text-gray-600' },
-		{ value: 'pending', label: 'Pending', count: 0, color: 'text-orange-600' },
-		{ value: 'processing', label: 'Processing', count: 0, color: 'text-blue-700' },
-		{ value: 'ready', label: 'Ready', count: 0, color: 'text-purple-600' },
-		{ value: 'completed', label: 'Completed', count: 0, color: 'text-emerald-600' },
-		{ value: 'cancelled', label: 'Cancelled', count: 0, color: 'text-red-600' }
-	];
+const statusOptions = [
+	{ value: 'all', label: 'All Orders', count: 0, color: 'text-gray-600' },
+	{ value: 'pending', label: 'Pending', count: 0, color: 'text-orange-600' },
+	{ value: 'completed', label: 'Completed', count: 0, color: 'text-emerald-600' },
+	{ value: 'cancelled', label: 'Cancelled', count: 0, color: 'text-red-600' }
+];
 
 	const paymentStatusOptions = [
 		{ value: 'all', label: 'All Payments', count: 0, color: 'text-gray-600' },
@@ -179,10 +177,8 @@
 		// Status counts
 		statusOptions[0].count = orders.length; // All
 		statusOptions[1].count = orders.filter(o => o.status === 'pending').length;
-		statusOptions[2].count = orders.filter(o => o.status === 'processing').length;
-		statusOptions[3].count = orders.filter(o => o.status === 'ready').length;
-		statusOptions[4].count = orders.filter(o => o.status === 'completed').length;
-		statusOptions[5].count = orders.filter(o => o.status === 'cancelled').length;
+		statusOptions[2].count = orders.filter(o => o.status === 'completed').length;
+		statusOptions[3].count = orders.filter(o => o.status === 'cancelled').length;
 
 		// Payment status counts
 		paymentStatusOptions[0].count = orders.length; // All
@@ -207,7 +203,8 @@
 				order.remarks?.toLowerCase().includes(searchLower) ||
 				order.total_amount.toString().includes(searchLower) ||
 				order.unit_price.toString().includes(searchLower) ||
-				order.quantity.toString().includes(searchLower)
+				(order.load_count?.toString() || '').includes(searchLower) ||
+				(order.total_weight_kg?.toString() || '').includes(searchLower)
 			);
 		}
 
@@ -421,8 +418,8 @@
 					bValue = new Date(b.created_at).getTime();
 					break;
 				case 'quantity':
-					aValue = a.quantity || 0;
-					bValue = b.quantity || 0;
+				aValue = getTotalWeight(a);
+				bValue = getTotalWeight(b);
 					break;
 				default:
 					return 0;
@@ -442,8 +439,6 @@
 	function getStatusColor(status: string) {
 		switch (status) {
 			case 'pending': return 'border-orange';
-			case 'processing': return 'border-blue';
-			case 'ready': return 'border-purple';
 			case 'completed': return 'border-emerald';
 			case 'cancelled': return 'border-red';
 			default: return 'border-gray';
@@ -453,8 +448,6 @@
 	function getStatusBadgeColor(status: string) {
 		switch (status) {
 			case 'pending': return 'bg-orange-100 text-orange-800 border border-orange-200';
-			case 'processing': return 'bg-blue-100 text-blue-800 border border-blue-200';
-			case 'ready': return 'bg-purple-100 text-purple-800 border border-purple-200';
 			case 'completed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'cancelled': return 'bg-red-100 text-red-800 border border-red-200';
 			default: return 'bg-gray-100 text-brand-800 border border-gray-200';
@@ -464,8 +457,6 @@
 	function getStatusIcon(status: string) {
 		switch (status) {
 			case 'pending': return Clock;
-			case 'processing': return Package;
-			case 'ready': return CheckCircle;
 			case 'completed': return CheckCircle;
 			case 'cancelled': return XCircle;
 			default: return Clock;
@@ -475,8 +466,6 @@
 	function getStatusText(status: string) {
 		switch (status) {
 			case 'pending': return 'Pending';
-			case 'processing': return 'Processing';
-			case 'ready': return 'Ready for Pickup';
 			case 'completed': return 'Completed';
 			case 'cancelled': return 'Cancelled';
 			default: return status;
@@ -486,8 +475,6 @@
 	function getStatusBadgeText(status: string) {
 		switch (status) {
 			case 'pending': return 'Pending';
-			case 'processing': return 'Processing';
-			case 'ready': return 'Ready';
 			case 'completed': return 'Completed';
 			case 'cancelled': return 'Cancelled';
 			default: return status;
@@ -498,9 +485,7 @@
 		switch (paymentMethod) {
 			case 'cash': return Banknote;
 			case 'gcash': return Smartphone;
-			case 'paymaya': return Smartphone;
-			case 'bank_transfer': return Building2;
-			case 'credit_card': return CreditCard;
+		case 'others': return CreditCard;
 			default: return CreditCard;
 		}
 	}
@@ -509,9 +494,7 @@
 		switch (paymentMethod) {
 			case 'cash': return 'Cash';
 			case 'gcash': return 'GCash';
-			case 'paymaya': return 'PayMaya';
-			case 'bank_transfer': return 'Bank Transfer';
-			case 'credit_card': return 'Credit Card';
+		case 'others': return 'Other Method';
 			default: return paymentMethod;
 		}
 	}
@@ -520,9 +503,7 @@
 		switch (paymentMethod) {
 			case 'cash': return 'bg-green-100 text-green-800 border border-green-200';
 			case 'gcash': return 'bg-gray-100 text-brand-800 border border-gray-200';
-			case 'paymaya': return 'bg-pink-100 text-pink-800 border border-pink-200';
-			case 'bank_transfer': return 'bg-purple-100 text-purple-800 border border-purple-200';
-			case 'credit_card': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
+		case 'others': return 'bg-purple-100 text-purple-800 border border-purple-200';
 			default: return 'bg-gray-100 text-brand-800 border border-gray-200';
 		}
 	}
@@ -531,7 +512,6 @@
 		switch (paymentStatus) {
 			case 'paid': return CheckCircle2;
 			case 'unpaid': return AlertCircle;
-			case 'partial': return Clock;
 			default: return AlertCircle;
 		}
 	}
@@ -540,7 +520,6 @@
 		switch (paymentStatus) {
 			case 'paid': return 'Paid';
 			case 'unpaid': return 'Unpaid';
-			case 'partial': return 'Partial';
 			default: return paymentStatus;
 		}
 	}
@@ -549,7 +528,6 @@
 		switch (paymentStatus) {
 			case 'paid': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
 			case 'unpaid': return 'bg-red-100 text-red-800 border border-red-200';
-			case 'partial': return 'bg-amber-100 text-amber-800 border border-amber-200';
 			default: return 'bg-gray-100 text-brand-800 border border-gray-200';
 		}
 	}
@@ -588,9 +566,15 @@
 		}).format(new Date(dateString));
 	}
 
-	function getTotalWeight(order: Order) {
-		return order.quantity || 0;
+function getTotalWeight(order: Order) {
+	if (typeof order.total_weight_kg === 'number') {
+		return order.total_weight_kg;
 	}
+	if (typeof order.load_count === 'number' && typeof order.kg_per_load === 'number') {
+		return order.load_count * order.kg_per_load;
+	}
+	return 0;
+}
 </script>
 
 <svelte:head>
@@ -956,8 +940,12 @@
 								<div class="flex items-center gap-4 text-sm text-gray-600">
 									<span>{order.service_type}</span>
 									<span class="flex items-center gap-1">
+										<Package class="w-4 h-4" />
+										{Math.round(order.load_count || 0)} {Math.round(order.load_count || 0) === 1 ? 'load' : 'loads'}
+									</span>
+									<span class="flex items-center gap-1">
 										<Scale class="w-4 h-4" />
-										{order.quantity} kg
+										{getTotalWeight(order).toFixed(2)} kg
 									</span>
 									<span>{formatDate(order.created_at)}</span>
 								</div>
@@ -998,24 +986,27 @@
 								<!-- Payment Amount -->
 								<div class="text-right">
 									<p class="text-xl font-bold text-brand-900">{formatCurrency(order.total_amount)}</p>
-									<p class="text-sm text-gray-500">₱{order.unit_price}/kg</p>
+									<p class="text-sm text-gray-500">₱{order.unit_price}/load</p>
 								</div>
 								
-								<!-- Simple Actions -->
+								<!-- Action Buttons -->
 								<div class="flex items-center gap-2">
 									<a 
 										href="/orders/{order.id}" 
-										class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+										class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand-900 border border-brand-900 rounded-lg hover:bg-brand-800 hover:border-brand-800 transition-colors shadow-sm hover:shadow-md"
 										on:click|stopPropagation
+										title="View order details"
 									>
+										<Eye class="w-3.5 h-3.5" />
 										View
 									</a>
-									<span class="text-gray-300">|</span>
 									<a 
 										href="/orders/{order.id}/edit" 
-										class="text-green-600 hover:text-green-800 text-sm font-medium"
+										class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand-900 border border-brand-900 rounded-lg hover:bg-brand-800 hover:border-brand-800 transition-colors shadow-sm hover:shadow-md"
 										on:click|stopPropagation
+										title="Edit order"
 									>
+										<Edit3 class="w-3.5 h-3.5" />
 										Edit
 									</a>
 								</div>

@@ -28,6 +28,7 @@ export const load: PageServerLoad = async (event) => {
 				totalOrders: 0,
 				pendingOrders: 0,
 				completedToday: 0,
+				totalCompleted: 0,
 				revenue: 0,
 				loading: false
 			},
@@ -53,14 +54,28 @@ async function getDashboardStats(supabase: any) {
 			.select('*', { count: 'exact', head: true })
 			.eq('status', 'pending');
 
-		// get completed orders today
+		// get completed orders today (check both updated_at and created_at to catch orders completed today)
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
+		const todayStart = today.toISOString();
+		
+		// Get tomorrow's start to use as upper bound
+		const tomorrow = new Date(today);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+		const tomorrowStart = tomorrow.toISOString();
+		
 		const { count: completedToday } = await supabase
 			.from('orders')
 			.select('*', { count: 'exact', head: true })
 			.eq('status', 'completed')
-			.gte('updated_at', today.toISOString());
+			.gte('updated_at', todayStart)
+			.lt('updated_at', tomorrowStart);
+		
+		// Also get total completed orders count for verification
+		const { count: totalCompleted } = await supabase
+			.from('orders')
+			.select('*', { count: 'exact', head: true })
+			.eq('status', 'completed');
 
 		// get total revenue (sum of all completed orders)
 		const { data: revenueData } = await supabase
@@ -74,6 +89,7 @@ async function getDashboardStats(supabase: any) {
 			totalOrders: totalOrders || 0,
 			pendingOrders: pendingOrders || 0,
 			completedToday: completedToday || 0,
+			totalCompleted: totalCompleted || 0,
 			revenue: parseFloat(revenue.toFixed(2)),
 			loading: false
 		};
@@ -83,6 +99,7 @@ async function getDashboardStats(supabase: any) {
 			totalOrders: 0,
 			pendingOrders: 0,
 			completedToday: 0,
+			totalCompleted: 0,
 			revenue: 0,
 			loading: false
 		};
@@ -115,9 +132,13 @@ async function getRecentOrders(supabase: any): Promise<Order[]> {
 			payment_status: order.payment_status,
 			payment_method: order.payment_method,
 			service_type: order.service_type,
-			quantity: order.quantity,
+			load_count: order.load_count,
+			total_weight_kg: order.total_weight_kg ?? 0,
+			load_details: order.load_details || [],
 			unit_price: order.unit_price,
 			total_amount: order.total_amount,
+			subtotal_amount: order.subtotal_amount,
+			add_ons_amount: order.add_ons_amount,
 			pickup_date: order.pickup_date,
 			delivery_date: order.delivery_date,
 			remarks: order.remarks,

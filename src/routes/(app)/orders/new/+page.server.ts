@@ -3,6 +3,7 @@ import type { Order } from '$lib/types/order';
 import { fail } from '@sveltejs/kit';
 import { createSupabaseServerClient, getServerSession } from '$lib/config/supabaseServer';
 import { createOrder, fetchAddOns } from '$lib/utils/database';
+import { randomUUID } from 'crypto';
 
 export const load: PageServerLoad = async (event) => {
 	try {
@@ -34,7 +35,6 @@ export const actions: Actions = {
 		const customer_name = formData.get('customer_name') as string;
 		const customer_phone = formData.get('customer_phone') as string;
 		const service_type = formData.get('service_type') as string;
-		const quantity = parseFloat(formData.get('quantity') as string);
 		const unit_price = parseFloat(formData.get('unit_price') as string);
 		const payment_method = formData.get('payment_method') as string;
 		const payment_status = formData.get('payment_status') as string;
@@ -73,8 +73,23 @@ export const actions: Actions = {
 		if (!service_type) {
 			return fail(400, { error: 'Service type is required' });
 		}
-		if (!quantity || quantity <= 0) {
-			return fail(400, { error: 'Quantity must be greater than 0' });
+		const loadIds = formData.getAll('load_id') as string[];
+		const loadWeights = formData.getAll('load_weight') as string[];
+		const loadDetails: Array<{ id: string; weight: number }> = [];
+
+		for (let i = 0; i < loadWeights.length; i++) {
+			const weight = parseFloat(loadWeights[i]);
+			if (Number.isNaN(weight)) {
+				continue;
+			}
+			const id = loadIds[i] && typeof loadIds[i] === 'string' && loadIds[i].trim().length > 0
+				? loadIds[i]
+				: randomUUID();
+			loadDetails.push({ id, weight });
+		}
+
+		if (loadDetails.length === 0) {
+			return fail(400, { error: 'Please add at least one load entry.' });
 		}
 		if (!unit_price || unit_price <= 0) {
 			return fail(400, { error: 'Unit price must be greater than 0' });
@@ -97,7 +112,7 @@ export const actions: Actions = {
 				customer_name,
 				customer_phone,
 				service_type,
-				quantity,
+				load_details: loadDetails,
 				unit_price,
 				payment_method,
 				payment_status,

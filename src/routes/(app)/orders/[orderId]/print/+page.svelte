@@ -5,6 +5,21 @@
 
 	export let data: PageData;
 	const order = data.order;
+	const totalWeightDisplay = order.total_weight_kg ?? (order.load_count && order.kg_per_load ? order.load_count * order.kg_per_load : 0);
+
+	// Parse load_details safely (in case it's a string from JSONB)
+	$: parsedLoadDetails = (() => {
+		if (!order?.load_details) return [];
+		if (Array.isArray(order.load_details)) return order.load_details;
+		if (typeof order.load_details === 'string') {
+			try {
+				return JSON.parse(order.load_details);
+			} catch {
+				return [];
+			}
+		}
+		return [];
+	})();
 
 	// Receipt date formatting
 	function formatDate(dateString: string) {
@@ -40,12 +55,8 @@
 				return 'Cash';
 			case 'gcash':
 				return 'GCash';
-			case 'paymaya':
-				return 'PayMaya';
-			case 'bank_transfer':
-				return 'Bank Transfer';
-			case 'credit_card':
-				return 'Credit Card';
+		case 'others':
+			return 'Other Method';
 			default:
 				return method;
 		}
@@ -120,210 +131,162 @@
 	class="mx-3 mx-auto my-4 max-w-md border border-gray-300 bg-white sm:mx-auto sm:my-8 print:mx-0 print:my-0 print:max-w-full print:break-inside-avoid print:border-gray-400 print:shadow-none"
 >
 	<!-- Clean Header with Logo -->
-	<div class="border-b border-black p-4 text-center sm:p-6">
-		<div class="mb-3 sm:mb-4">
+	<div class="border-b border-black p-3 text-center print:p-2 print:pb-1">
+		<div class="mb-1 print:mb-0.5">
 			<img
 				src="/logo/logo_banner.png"
 				alt="Betchay Laundry Logo"
-				class="mx-auto mb-2 h-10 sm:mb-3 sm:h-12 print:h-10 px-2 rounded-sm shadow-sm group-hover:shadow-md transition-shadow duration-200"
+				class="mx-auto h-8 print:h-6"
 			/>
 		</div>
-		<div class="space-y-1 text-xs text-black sm:text-sm print:text-[10px]">
-			<p class="font-medium">Lucena City, Quezon Province</p>
-			<p class="break-words">Tel: (02) 123-4567 | Mobile: +63 912 345 6789</p>
+		<div class="space-y-0.5 text-[10px] text-black print:text-[9px]">
+			<p class="font-bold print:text-[10px]">BETCHAY LAUNDRY</p>
+			<p>Lucena City, Quezon Province</p>
+			<p class="break-words text-gray-700">Tel: (02) 123-4567 | Mobile: +63 912 345 6789</p>
 		</div>
 	</div>
-	<div class="space-y-4 p-4 sm:space-y-6 sm:p-6 print:space-y-2 print:p-2">
-		<!-- Order Information -->
-		<div class="bg-gray-50 p-3 sm:p-4">
-			<h3
-				class="mb-2 text-xs font-bold uppercase tracking-wider text-black sm:mb-3 sm:text-sm print:text-[10px]"
-			>
-				Order Information
-			</h3>
-			<div class="grid grid-cols-2 gap-2 text-xs sm:gap-3 sm:text-sm print:text-[10px]">
+	<div class="space-y-2 p-3 print:space-y-1 print:p-2">
+		<!-- Order & Customer Information (Combined) -->
+		<div class="text-[10px] print:text-[9px]">
+			<div class="grid grid-cols-2 gap-x-3 gap-y-1 border-b border-gray-300 pb-1 mb-1">
 				<div>
-					<span class="text-black">Order #</span>
-					<p class="break-words font-bold text-black">{order.order_number}</p>
+					<span class="text-gray-600">Order #:</span>
+					<span class="font-bold text-black ml-1">{order.order_number}</span>
 				</div>
 				<div>
-					<span class="text-black">Date</span>
-					<p class="font-bold text-black">{formatDateOnly(order.created_at)}</p>
+					<span class="text-gray-600">Date:</span>
+					<span class="font-bold text-black ml-1">{formatDateOnly(order.created_at)}</span>
 				</div>
-				<div class="col-span-2">
-					<span class="text-black">Time</span>
-					<p class="font-bold text-black">{formatTime(order.created_at)}</p>
+				<div>
+					<span class="text-gray-600">Time:</span>
+					<span class="font-bold text-black ml-1">{formatTime(order.created_at)}</span>
 				</div>
-			</div>
-		</div>
-		<!-- Customer Details -->
-		<div>
-			<h3
-				class="mb-2 text-xs font-bold uppercase tracking-wider text-black sm:mb-3 sm:text-sm print:text-[10px]"
-			>
-				Customer Details
-			</h3>
-			<div class="space-y-2 text-xs sm:text-sm print:text-[10px]">
-				<div class="flex items-start justify-between sm:items-center">
-					<span class="text-black">Name:</span>
-					<span class="max-w-[60%] break-words text-right font-medium text-black"
-						>{order.customer_name}</span
-					>
+				<div>
+					<span class="text-gray-600">Customer:</span>
+					<span class="font-bold text-black ml-1 break-words">{order.customer_name}</span>
 				</div>
 				{#if order.customer_phone}
-					<div class="flex items-start justify-between sm:items-center">
-						<span class="text-black">Phone:</span>
-						<span class="max-w-[60%] break-words text-right font-medium text-black"
-							>{order.customer_phone}</span
-						>
+					<div class="col-span-2">
+						<span class="text-gray-600">Phone:</span>
+						<span class="font-bold text-black ml-1">{order.customer_phone}</span>
 					</div>
 				{/if}
 			</div>
 		</div>
 		<!-- Service Details -->
-		<div>
-			<h3
-				class="mb-2 text-xs font-bold uppercase tracking-wider text-black sm:mb-3 sm:text-sm print:text-[10px]"
-			>
-				Service Details
-			</h3>
-			<div class="space-y-3 text-xs sm:text-sm print:text-[10px]">
-				<div class="flex items-center justify-between py-2">
-					<span class="font-medium text-black">{order.service_type}</span>
-					<span class="text-black">{order.quantity} kg</span>
+		<div class="text-[10px] print:text-[9px]">
+			<div class="font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1">Service Details</div>
+			<div class="space-y-1">
+				<div class="flex justify-between">
+					<span class="text-black">Service:</span>
+					<span class="font-semibold text-black">{order.service_type}</span>
 				</div>
-				<div class="flex items-center justify-between">
-					<span class="text-black">Rate per kg:</span>
-					<span class="font-medium text-black">₱{order.unit_price.toFixed(2)}</span>
+				<div class="flex justify-between">
+					<span class="text-black">Loads:</span>
+					<span class="font-semibold text-black">{Math.round(order.load_count || 0)} ({totalWeightDisplay.toFixed(2)} kg)</span>
 				</div>
-
-				<!-- Add-ons Section -->
-				{#if order.order_add_ons && order.order_add_ons.length > 0}
-					<div class="mt-3 border-t border-gray-300 pt-3">
-						<h4 class="mb-2 text-xs font-semibold uppercase tracking-wider text-black sm:text-sm print:text-[10px]">
-							Add-ons & Extras
-						</h4>
-						<div class="space-y-2">
-							{#each order.order_add_ons as addOn}
-								<div class="flex items-center justify-between">
-									<div class="flex-1">
-										<span class="text-black">{addOn.add_on?.name || 'Unknown Add-on'}</span>
-										<span class="text-black"> ({addOn.quantity} × ₱{addOn.unit_price.toFixed(2)})</span>
-									</div>
-									<span class="font-medium text-black">₱{addOn.total_price.toFixed(2)}</span>
-								</div>
-							{/each}
-						</div>
+				{#if parsedLoadDetails && parsedLoadDetails.length > 0 && parsedLoadDetails.length <= 4}
+					<div class="text-[9px] print:text-[8px] pl-2 border-l-2 border-gray-300">
+						{#each parsedLoadDetails as loadDetail, index}
+							<div class="flex justify-between">
+								<span>L{index + 1}:</span>
+								<span>{loadDetail.weight}kg</span>
+							</div>
+						{/each}
+					</div>
+				{:else if parsedLoadDetails && parsedLoadDetails.length > 4}
+					<div class="text-[9px] print:text-[8px] pl-2 border-l-2 border-gray-300">
+						{#each parsedLoadDetails.slice(0, 3) as loadDetail, index}
+							<div class="flex justify-between">
+								<span>L{index + 1}:</span>
+								<span>{loadDetail.weight}kg</span>
+							</div>
+						{/each}
+						<div class="text-gray-600 italic">+{parsedLoadDetails.length - 3} more loads</div>
 					</div>
 				{/if}
+				<div class="flex justify-between">
+					<span class="text-black">Rate:</span>
+					<span class="font-semibold text-black">₱{order.unit_price.toFixed(2)}/load</span>
+				</div>
+			</div>
 
-				<!-- Pricing Breakdown -->
-				<div class="space-y-2 bg-gray-50 p-2 sm:p-3">
-					<div class="flex items-center justify-between">
-						<span class="text-black">Service Subtotal:</span>
-						<span class="font-medium text-black">₱{order.subtotal_amount?.toFixed(2) || (order.quantity * order.unit_price).toFixed(2)}</span>
+			<!-- Add-ons Section -->
+			{#if order.order_add_ons && order.order_add_ons.length > 0}
+				<div class="mt-1 pt-1 border-t border-gray-300">
+					<div class="font-semibold text-[9px] print:text-[8px] mb-0.5">Add-ons:</div>
+					<div class="space-y-0.5 text-[9px] print:text-[8px]">
+						{#each order.order_add_ons as addOn}
+							<div class="flex justify-between">
+								<span>{addOn.add_on?.name || 'Unknown'} ({addOn.quantity}×):</span>
+								<span class="font-semibold">₱{addOn.total_price.toFixed(2)}</span>
+							</div>
+						{/each}
 					</div>
-					{#if order.add_ons_amount && order.add_ons_amount > 0}
-						<div class="flex items-center justify-between">
-							<span class="text-black">Add-ons:</span>
-							<span class="font-medium text-black">₱{order.add_ons_amount.toFixed(2)}</span>
-						</div>
-					{/if}
-					{#if tax > 0}
-						<div class="flex items-center justify-between">
-							<span class="text-black">Tax:</span>
-							<span class="font-medium text-black">₱{tax.toFixed(2)}</span>
-						</div>
-					{/if}
-					<div class="border-t border-black pt-2">
-						<div class="flex items-center justify-between">
-							<span class="text-base font-bold text-black sm:text-lg print:text-sm">TOTAL</span>
-							<span class="text-base font-bold text-black sm:text-lg print:text-sm"
-								>₱{totalWithTax.toFixed(2)}</span
-							>
-						</div>
+				</div>
+			{/if}
+
+			<!-- Pricing Breakdown -->
+			<div class="mt-1 pt-1 border-t-2 border-black space-y-0.5">
+				<div class="flex justify-between">
+					<span>Subtotal:</span>
+					<span class="font-semibold">₱{order.subtotal_amount?.toFixed(2) || (order.load_count * order.unit_price).toFixed(2)}</span>
+				</div>
+				{#if order.add_ons_amount && order.add_ons_amount > 0}
+					<div class="flex justify-between">
+						<span>Add-ons:</span>
+						<span class="font-semibold">₱{order.add_ons_amount.toFixed(2)}</span>
 					</div>
+				{/if}
+				<div class="flex justify-between border-t border-black pt-0.5 mt-0.5">
+					<span class="font-bold text-[11px] print:text-[10px]">TOTAL:</span>
+					<span class="font-bold text-[11px] print:text-[10px]">₱{totalWithTax.toFixed(2)}</span>
 				</div>
 			</div>
 		</div>
-		<!-- Payment Information -->
-		<div>
-			<h3
-				class="mb-2 text-xs font-bold uppercase tracking-wider text-black sm:mb-3 sm:text-sm print:text-[10px]"
-			>
-				Payment Information
-			</h3>
-			<div class="space-y-2 text-xs sm:text-sm print:text-[10px]">
-				<div class="flex items-start justify-between sm:items-center">
-					<span class="text-black">Method:</span>
-					<span class="text-right font-medium text-black"
-						>{getPaymentMethodText(order.payment_method)}</span
+		<!-- Payment & Schedule (Combined) -->
+		<div class="text-[10px] print:text-[9px] border-t border-gray-300 pt-1">
+			<div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+				<div>
+					<span class="text-gray-600">Payment:</span>
+					<span class="font-semibold text-black ml-1">{getPaymentMethodText(order.payment_method)}</span>
+				</div>
+				<div>
+					<span class="text-gray-600">Status:</span>
+					<span class="font-bold text-black ml-1 {order.payment_status === 'paid' ? 'text-green-700' : 'text-red-700'}"
+						>{order.payment_status === 'paid' ? '✓ PAID' : 'UNPAID'}</span
 					>
 				</div>
-				<div class="flex items-start justify-between sm:items-center">
-					<span class="text-black">Status:</span>
-					<span class="text-right font-bold uppercase text-black">{order.payment_status}</span>
-				</div>
+				{#if order.pickup_date}
+					<div class="col-span-2">
+						<span class="text-gray-600">Pickup:</span>
+						<span class="font-semibold text-black ml-1">{formatDateOnly(order.pickup_date)} {formatTime(order.pickup_date)}</span>
+					</div>
+				{/if}
+				{#if order.delivery_date}
+					<div class="col-span-2">
+						<span class="text-gray-600">Delivery:</span>
+						<span class="font-semibold text-black ml-1">{formatDateOnly(order.delivery_date)} {formatTime(order.delivery_date)}</span>
+					</div>
+				{/if}
 			</div>
 		</div>
-		<!-- Schedule Information -->
-		{#if order.pickup_date || order.delivery_date}
-			<div>
-				<h3
-					class="mb-2 text-xs font-bold uppercase tracking-wider text-black sm:mb-3 sm:text-sm print:text-[10px]"
-				>
-					Schedule
-				</h3>
-				<div class="space-y-2 text-xs sm:text-sm print:text-[10px]">
-					{#if order.pickup_date}
-						<div
-							class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-0"
-						>
-							<span class="text-black">Expected Pickup:</span>
-							<span class="break-words text-right font-medium text-black"
-								>{formatDateOnly(order.pickup_date)} at {formatTime(order.pickup_date)}</span
-							>
-						</div>
-					{/if}
-					{#if order.delivery_date}
-						<div
-							class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-0"
-						>
-							<span class="text-black">Delivery Date:</span>
-							<span class="break-words text-right font-medium text-black"
-								>{formatDateOnly(order.delivery_date)} at {formatTime(order.delivery_date)}</span
-							>
-						</div>
-					{/if}
-				</div>
-			</div>
-		{/if}
+		
 		<!-- Remarks -->
 		{#if order.remarks}
-			<div>
-				<h3
-					class="mb-2 text-xs font-bold uppercase tracking-wider text-black sm:mb-3 sm:text-sm print:text-[10px]"
-				>
-					Special Instructions
-				</h3>
-				<div class="bg-gray-50 p-2 sm:p-3">
-					<p class="break-words text-xs text-black sm:text-sm print:text-[10px]">{order.remarks}</p>
-				</div>
+			<div class="text-[10px] print:text-[9px] border-t border-gray-300 pt-1">
+				<div class="font-semibold mb-0.5">Remarks:</div>
+				<p class="break-words text-[9px] print:text-[8px] leading-tight">{order.remarks}</p>
 			</div>
 		{/if}
 	</div>
 	<!-- Clean Footer -->
-	<div class="space-y-2 border-t border-black p-4 text-center sm:space-y-3 sm:p-6 print:p-2">
-		<div class="mx-auto h-0.5 w-12 bg-black sm:w-16"></div>
-		<div class="space-y-1 text-xs text-black sm:space-y-2 sm:text-sm print:text-[10px]">
-			<p class="font-bold text-black">Thank you for choosing Betchay Laundry!</p>
+	<div class="border-t border-black p-2 text-center print:p-1 print:pt-1">
+		<div class="mx-auto h-0.5 w-12 bg-black print:w-10"></div>
+		<div class="space-y-0.5 text-[9px] text-black print:text-[8px] mt-1">
+			<p class="font-bold">Thank you for choosing Betchay Laundry!</p>
 			<p>Keep this receipt for your records</p>
-			<p class="break-words">For inquiries, call us at (02) 123-4567</p>
-		</div>
-		<div class="pt-1 sm:pt-2">
-			<p class="break-words text-[10px] text-black sm:text-xs print:text-[8px]">
-				Generated on {formatDate(new Date().toISOString())}
-			</p>
+			<p class="break-words">For inquiries: (02) 123-4567</p>
 		</div>
 	</div>
 </div>
@@ -331,6 +294,37 @@
 <style>
 	@page {
 		size: 80mm auto;
-		margin: 0.2in 0.1in;
+		margin: 0.1in 0.08in;
+	}
+	
+	@media print {
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		
+		.print\:text-\[9px\] {
+			font-size: 9px !important;
+		}
+		
+		.print\:text-\[8px\] {
+			font-size: 8px !important;
+		}
+		
+		.print\:text-\[10px\] {
+			font-size: 10px !important;
+		}
+		
+		.print\:p-2 {
+			padding: 0.5rem !important;
+		}
+		
+		.print\:p-1 {
+			padding: 0.25rem !important;
+		}
+		
+		.print\:space-y-1 > * + * {
+			margin-top: 0.25rem !important;
+		}
 	}
 </style>

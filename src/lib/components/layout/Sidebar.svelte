@@ -11,7 +11,8 @@
 		Lock,
 		Unlock,
 		Activity,
-		Wallet
+		Wallet,
+		Users
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { auth, authStore } from '$lib/stores/authStore';
@@ -30,6 +31,18 @@
 			label: 'Expenses',
 			href: '/expenses',
 			icon: Wallet,
+			adminOnly: false
+		},
+		{
+			label: 'Staff',
+			href: '/staff',
+			icon: Users,
+			adminOnly: false
+		},
+		{
+			label: 'Attendance',
+			href: '/attendance',
+			icon: ClipboardList,
 			adminOnly: false
 		},
 		{

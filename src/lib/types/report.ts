@@ -1,7 +1,8 @@
 export interface ReportSummary {
 	grossRevenue: number;
 	totalRevenue: number;
-	totalExpenses: number;
+	totalExpenses: number; // excludes staff salary (Payroll)
+	totalPayroll: number; // staff salary (Payroll) only
 	netRevenue: number;
 	totalOrders: number;
 	completedOrdersCount: number;

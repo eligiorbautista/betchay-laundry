@@ -559,10 +559,18 @@ export async function generateReportsData(supabase: SupabaseClient, startDate?: 
 		}
 
 		const expensesData = expenses || [];
-		const totalExpenses = expensesData.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0);
-		const netRevenue = totalRevenue - totalExpenses;
 
-		// expense breakdown by category
+		// Separate general expenses from staff salary (Payroll)
+		const generalExpensesData = expensesData.filter((exp: any) => exp.category !== 'Payroll');
+		const payrollExpensesData = expensesData.filter((exp: any) => exp.category === 'Payroll');
+
+		const totalExpenses = generalExpensesData.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0);
+		const totalPayroll = payrollExpensesData.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0);
+
+		// Net revenue deducts both general expenses and payroll
+		const netRevenue = totalRevenue - totalExpenses - totalPayroll;
+
+		// expense breakdown by category (includes payroll as its own category)
 		const expenseCategoryMap: Record<string, number> = {};
 		expensesData.forEach((exp: any) => {
 			const cat = exp.category || 'Uncategorized';
@@ -749,6 +757,7 @@ export async function generateReportsData(supabase: SupabaseClient, startDate?: 
 				grossRevenue: totalRevenue,
 				totalRevenue, // kept for backwards compatibility
 				totalExpenses,
+				totalPayroll,
 				netRevenue,
 				totalOrders,
 				completedOrdersCount,

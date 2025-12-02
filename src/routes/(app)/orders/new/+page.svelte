@@ -121,19 +121,31 @@ let loadCount = 0;
 		return true;
 	}
 
+	// Ensure unit_price is always a valid number
+	$: unitPrice = Number.isFinite(formData.unit_price) && formData.unit_price >= 0 ? formData.unit_price : 0;
+	
 	// Computed amounts
 	$: totalWeightKg = parseFloat(loadEntries.reduce((sum, entry) => sum + (Number.isFinite(entry.weight) ? entry.weight : 0), 0).toFixed(2));
 	// Each load entry counts as 1 load (rounded up), regardless of weight
 	$: loadCount = loadEntries.length || 0;
-	$: subtotalAmount = loadCount * formData.unit_price;
+	$: subtotalAmount = loadCount * unitPrice;
 	$: addOnsAmount = selectedAddOns.reduce((sum, addOn) => sum + (addOn.quantity * addOn.unit_price), 0);
 	$: totalAmount = subtotalAmount + addOnsAmount;
 	function handleServiceTypeChange() {
 		const selectedService = serviceTypes.find((s) => s.service_name === formData.service_type);
 		if (selectedService) {
-			formData.unit_price = selectedService.price;
+			// Only auto-set price if it's not "Dry Clean" (clients set the price for Dry Clean)
+			if (formData.service_type !== 'Dry Clean') {
+				formData.unit_price = selectedService.price;
+			} else {
+				// For Dry Clean, set initial price but allow user to change it
+				formData.unit_price = selectedService.price;
+			}
 		}
 	}
+	
+	// Check if current service type is Dry Clean (allows price editing)
+	$: isDryClean = formData.service_type === 'Dry Clean';
 
 	// Generate order number
 	function generateOrderNumber(): string {
@@ -400,14 +412,34 @@ let loadCount = 0;
 							</select>
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-500 mb-2">
+							<label for="unit_price" class="block text-sm font-medium text-gray-500 mb-2">
 								Price per load *
 							</label>
-							<div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-								₱{formData.unit_price.toFixed(2)}
-							</div>
-							<input type="hidden" name="unit_price" value={formData.unit_price} />
-							<p class="text-xs text-gray-500 mt-1">Automatically set based on the service selected</p>
+							{#if isDryClean}
+								<input
+									type="number"
+									id="unit_price"
+									name="unit_price"
+									bind:value={formData.unit_price}
+									min="0"
+									step="0.01"
+									required
+									on:input={(e) => {
+										const input = e.currentTarget as HTMLInputElement;
+										const value = input.value === '' ? 0 : parseFloat(input.value);
+										formData.unit_price = Number.isFinite(value) && value >= 0 ? value : 0;
+									}}
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+									placeholder="Enter price per load"
+								/>
+								<p class="text-xs text-gray-500 mt-1">Enter the price as specified by the client</p>
+							{:else}
+								<div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+									₱{formData.unit_price.toFixed(2)}
+								</div>
+								<input type="hidden" name="unit_price" value={formData.unit_price} />
+								<p class="text-xs text-gray-500 mt-1">Automatically set based on the service selected</p>
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -622,7 +654,7 @@ let loadCount = 0;
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Unit Price</span>
-							<p class="text-base font-medium text-brand-900">₱{formData.unit_price.toFixed(2)} per load</p>
+							<p class="text-base font-medium text-brand-900">₱{unitPrice.toFixed(2)} per load</p>
 						</div>
 						<div>
 							<span class="block text-sm font-medium text-gray-500">Total Weight</span>
@@ -648,9 +680,9 @@ let loadCount = 0;
 										<span class="text-base font-semibold text-gray-900">Total Amount</span>
 										<span class="text-2xl font-bold text-brand-900">₱{totalAmount.toFixed(2)}</span>
 									</div>
-									{#if loadCount > 0 && formData.unit_price > 0}
+									{#if loadCount > 0 && unitPrice > 0}
 										<div class="text-xs text-gray-500 mt-1">
-											{loadCount} {loadCount === 1 ? 'load' : 'loads'} × ₱{formData.unit_price}/load
+											{loadCount} {loadCount === 1 ? 'load' : 'loads'} × ₱{unitPrice}/load
 											{#if totalWeightKg > 0}
 												(≈ {totalWeightKg.toFixed(2)} kg)
 											{/if}

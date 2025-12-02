@@ -434,8 +434,8 @@
 		</div>
 	</div>
 
-	<!-- No Data State -->
-	{#if reports.summary.totalOrders === 0 && !loading}
+	<!-- No Data State (currently disabled so stats always show) -->
+	{#if false}
 		<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 md:p-12 mb-6 md:mb-8">
 			<div class="text-center">
 				<BarChart3 class="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -462,6 +462,9 @@
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
 						<p class="text-2xl font-bold text-brand-900">{formatCurrency(reports.summary.grossRevenue)}</p>
+						{#if reports.summary.grossRevenue === 0}
+							<p class="text-xs text-gray-500 mt-1">No revenue recorded for this period yet.</p>
+						{/if}
 					{/if}
 				</div>
 				<div class="p-3 bg-indigo-50 rounded-xl">
@@ -481,6 +484,9 @@
 						<p class="text-2xl font-bold {reports.summary.netRevenue < 0 ? 'text-red-600' : 'text-brand-900'}">
 							{formatCurrency(reports.summary.netRevenue)}
 						</p>
+						{#if reports.summary.netRevenue === 0 && reports.summary.grossRevenue === 0 && reports.summary.totalExpenses === 0}
+							<p class="text-xs text-gray-500 mt-1">Net revenue is zero because no revenue or expenses have been recorded yet.</p>
+						{/if}
 					{/if}
 				</div>
 				<div class="p-3 bg-slate-50 rounded-xl">
@@ -498,6 +504,9 @@
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
 						<p class="text-2xl font-bold text-brand-900">{formatCurrency(reports.summary.averageOrderValue)}</p>
+						{#if reports.summary.averageOrderValue === 0}
+							<p class="text-xs text-gray-500 mt-1">Average order value is zero because no completed orders exist for this period.</p>
+						{/if}
 					{/if}
 				</div>
 				<div class="p-3 bg-purple-50 rounded-xl">
@@ -515,6 +524,9 @@
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
 						<p class="text-3xl font-bold text-brand-900">{reports.summary.totalOrders}</p>
+						{#if reports.summary.totalOrders === 0}
+							<p class="text-xs text-gray-500 mt-1">No orders have been created for this period.</p>
+						{/if}
 					{/if}
 				</div>
 				<div class="p-3 bg-emerald-50 rounded-xl">
@@ -538,8 +550,12 @@
 						<span class="font-semibold text-brand-900">{formatCurrency(reports.summary.grossRevenue)}</span>
 					</div>
 					<div class="flex justify-between">
-						<span class="text-gray-600">Total Expenses</span>
+						<span class="text-gray-600">Total Expenses (excluding Payroll)</span>
 						<span class="font-semibold text-red-600">-{formatCurrency(reports.summary.totalExpenses)}</span>
+					</div>
+					<div class="flex justify-between">
+						<span class="text-gray-600">Staff Salary (Payroll)</span>
+						<span class="font-semibold text-red-600">-{formatCurrency(reports.summary.totalPayroll)}</span>
 					</div>
 					<div class="flex justify-between border-t border-dashed border-gray-200 pt-2 mt-1">
 						<span class="text-gray-800 font-semibold">Net Revenue</span>
@@ -577,24 +593,28 @@
 				</div>
 				<div class="p-4 sm:p-5 md:p-6">
 					<div class="space-y-4">
-						{#each reports.orderStatusDistribution as statusReport}
-							<div class="group border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200">
-								<div class="flex items-center justify-between">
-									<div class="flex items-center gap-3">
-										<div class="w-10 h-10 {getStatusColor(statusReport.status)} flex items-center justify-center rounded-lg shadow-sm flex-shrink-0">
-											<svelte:component this={getStatusIcon(statusReport.status)} class="w-5 h-5" />
+						{#if reports.orderStatusDistribution && reports.orderStatusDistribution.length > 0}
+							{#each reports.orderStatusDistribution as statusReport}
+								<div class="group border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+									<div class="flex items-center justify-between">
+										<div class="flex items-center gap-3">
+											<div class="w-10 h-10 {getStatusColor(statusReport.status)} flex items-center justify-center rounded-lg shadow-sm flex-shrink-0">
+												<svelte:component this={getStatusIcon(statusReport.status)} class="w-5 h-5" />
+											</div>
+											<div class="flex-1 min-w-0">
+												<p class="font-semibold text-brand-900 group-hover:text-blue-900 transition-colors">{getStatusText(statusReport.status)}</p>
+												<p class="text-sm text-gray-600">{statusReport.count} orders • {formatCurrency(statusReport.revenue)}</p>
+											</div>
 										</div>
-										<div class="flex-1 min-w-0">
-											<p class="font-semibold text-brand-900 group-hover:text-blue-900 transition-colors">{getStatusText(statusReport.status)}</p>
-											<p class="text-sm text-gray-600">{statusReport.count} orders • {formatCurrency(statusReport.revenue)}</p>
+										<div class="text-right flex-shrink-0 ml-2">
+											<p class="text-lg font-bold text-brand-900">{formatPercentage(statusReport.percentage)}</p>
 										</div>
-									</div>
-									<div class="text-right flex-shrink-0 ml-2">
-										<p class="text-lg font-bold text-brand-900">{formatPercentage(statusReport.percentage)}</p>
 									</div>
 								</div>
-							</div>
-						{/each}
+							{/each}
+						{:else}
+							<p class="text-sm text-gray-500 italic">No order status data available for this period.</p>
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -607,21 +627,25 @@
 					<h2 class="text-lg sm:text-xl font-semibold text-brand-900">Payment Methods</h2>
 				</div>
 				<div class="p-4 sm:p-6 space-y-3">
-					{#each reports.paymentMethodAnalysis as payment}
-						<div class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200">
-							<div class="w-8 h-8 bg-gray-100 flex items-center justify-center rounded-lg flex-shrink-0">
-								<svelte:component this={getPaymentMethodIcon(payment.method)} class="w-4 h-4 text-gray-600" />
+					{#if reports.paymentMethodAnalysis && reports.paymentMethodAnalysis.length > 0}
+						{#each reports.paymentMethodAnalysis as payment}
+							<div class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200">
+								<div class="w-8 h-8 bg-gray-100 flex items-center justify-center rounded-lg flex-shrink-0">
+									<svelte:component this={getPaymentMethodIcon(payment.method)} class="w-4 h-4 text-gray-600" />
+								</div>
+								<div class="flex-1 min-w-0">
+									<p class="font-medium text-brand-900 text-sm">{getPaymentMethodText(payment.method)}</p>
+									<p class="text-xs text-gray-500">{payment.count} transactions</p>
+								</div>
+								<div class="text-right flex-shrink-0">
+									<p class="font-semibold text-brand-900 text-sm">{formatCurrency(payment.totalAmount)}</p>
+									<p class="text-xs text-gray-500">{formatPercentage(payment.percentage)}</p>
+								</div>
 							</div>
-							<div class="flex-1 min-w-0">
-								<p class="font-medium text-brand-900 text-sm">{getPaymentMethodText(payment.method)}</p>
-								<p class="text-xs text-gray-500">{payment.count} transactions</p>
-							</div>
-							<div class="text-right flex-shrink-0">
-								<p class="font-semibold text-brand-900 text-sm">{formatCurrency(payment.totalAmount)}</p>
-								<p class="text-xs text-gray-500">{formatPercentage(payment.percentage)}</p>
-							</div>
-						</div>
-					{/each}
+						{/each}
+					{:else}
+						<p class="text-sm text-gray-500 italic">No payment method data available for this period.</p>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -633,30 +657,34 @@
 			<h2 class="text-base sm:text-lg md:text-xl font-semibold text-brand-900">Service Performance</h2>
 		</div>
 		<div class="p-4 sm:p-5 md:p-6">
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				{#each reports.serviceTypePerformance as service}
-					<div class="group border border-gray-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200">
-						<div class="flex items-start justify-between mb-4">
-							<h3 class="font-semibold text-brand-900 group-hover:text-blue-900 transition-colors">{service.serviceType}</h3>
-							<span class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{formatPercentage(service.percentage)}</span>
+			{#if reports.serviceTypePerformance && reports.serviceTypePerformance.length > 0}
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					{#each reports.serviceTypePerformance as service}
+						<div class="group border border-gray-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+							<div class="flex items-start justify-between mb-4">
+								<h3 class="font-semibold text-brand-900 group-hover:text-blue-900 transition-colors">{service.serviceType}</h3>
+								<span class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{formatPercentage(service.percentage)}</span>
+							</div>
+							<div class="grid grid-cols-3 gap-3 text-sm">
+								<div class="text-center">
+									<p class="text-xs text-gray-500 mb-1">Orders</p>
+									<p class="text-lg font-bold text-brand-900">{service.orderCount}</p>
+								</div>
+								<div class="text-center">
+									<p class="text-xs text-gray-500 mb-1">Revenue</p>
+									<p class="text-sm font-semibold text-brand-900">{formatCurrency(service.totalRevenue)}</p>
+								</div>
+								<div class="text-center">
+									<p class="text-xs text-gray-500 mb-1">Avg Price</p>
+									<p class="text-sm font-semibold text-brand-900">{formatCurrency(service.averagePrice)}</p>
+								</div>
+							</div>
 						</div>
-						<div class="grid grid-cols-3 gap-3 text-sm">
-							<div class="text-center">
-								<p class="text-xs text-gray-500 mb-1">Orders</p>
-								<p class="text-lg font-bold text-brand-900">{service.orderCount}</p>
-							</div>
-							<div class="text-center">
-								<p class="text-xs text-gray-500 mb-1">Revenue</p>
-								<p class="text-sm font-semibold text-brand-900">{formatCurrency(service.totalRevenue)}</p>
-							</div>
-							<div class="text-center">
-								<p class="text-xs text-gray-500 mb-1">Avg Price</p>
-								<p class="text-sm font-semibold text-brand-900">{formatCurrency(service.averagePrice)}</p>
-							</div>
-						</div>
-					</div>
-				{/each}
-			</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="text-sm text-gray-500 italic">No service performance data available for this period.</p>
+			{/if}
 		</div>
 	</div>
 

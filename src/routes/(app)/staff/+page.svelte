@@ -5,6 +5,7 @@
 	import type { Staff } from '$lib/types/staff';
 	import type { PageData } from './$types';
 	import { enhance } from '$app/forms';
+	import AdminOnly from '$lib/components/common/AdminOnly.svelte';
 
 	export let data: PageData;
 
@@ -70,6 +71,7 @@
 	<meta name="description" content="Manage staff and their daily rates" />
 </svelte:head>
 
+<AdminOnly>
 <div class="min-h-screen w-full bg-gray-50 p-4 lg:p-6">
 	<!-- Header -->
 	<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -371,5 +373,6 @@
 		</div>
 	{/if}
 </div>
+</AdminOnly>
 
 

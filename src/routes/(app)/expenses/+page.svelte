@@ -254,12 +254,12 @@
 			<div class="flex items-center justify-between">
 				<div>
 					<p class="text-sm font-medium text-gray-600">Total Expenses (Filtered)</p>
-					<p class="text-2xl font-bold text-red-600">
-						-{formatCurrency(totalExpenses)}
+					<p class="text-2xl font-bold {totalExpenses < 0 ? 'text-red-600' : 'text-brand-900'}">
+						{totalExpenses < 0 ? '-' : ''}{formatCurrency(Math.abs(totalExpenses))}
 					</p>
 				</div>
-				<div class="p-3 bg-red-50 rounded-full">
-					<Wallet class="w-6 h-6 text-red-600" />
+				<div class="p-3 {totalExpenses < 0 ? 'bg-red-50' : 'bg-brand-50'} rounded-full">
+					<Wallet class="w-6 h-6 {totalExpenses < 0 ? 'text-red-600' : 'text-brand-800'}" />
 				</div>
 			</div>
 		</div>
@@ -269,8 +269,8 @@
 			<div class="flex items-center justify-between">
 				<div>
 					<p class="text-sm font-medium text-gray-600">This Month</p>
-					<p class="text-2xl font-bold text-brand-900">
-						-{formatCurrency(monthExpenses)}
+					<p class="text-2xl font-bold {monthExpenses < 0 ? 'text-red-600' : 'text-brand-900'}">
+						{monthExpenses < 0 ? '-' : ''}{formatCurrency(Math.abs(monthExpenses))}
 					</p>
 				</div>
 				<div class="p-3 bg-brand-50 rounded-full">
@@ -284,8 +284,8 @@
 			<div class="flex items-center justify-between mb-2">
 				<div>
 					<p class="text-sm font-medium text-gray-600">Today</p>
-					<p class="text-xl font-bold text-brand-900">
-						-{formatCurrency(todayExpenses)}
+					<p class="text-xl font-bold {todayExpenses < 0 ? 'text-red-600' : 'text-brand-900'}">
+						{todayExpenses < 0 ? '-' : ''}{formatCurrency(Math.abs(todayExpenses))}
 					</p>
 				</div>
 			</div>

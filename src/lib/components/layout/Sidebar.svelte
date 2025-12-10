@@ -37,13 +37,13 @@
 			label: 'Staff',
 			href: '/staff',
 			icon: Users,
-			adminOnly: false
+			adminOnly: true
 		},
 		{
 			label: 'Attendance',
 			href: '/attendance',
 			icon: ClipboardList,
-			adminOnly: false
+			adminOnly: true
 		},
 		{
 			label: 'Orders',

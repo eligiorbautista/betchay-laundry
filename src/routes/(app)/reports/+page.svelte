@@ -482,7 +482,7 @@
 						<LoadingSpinner size="xl" color="primary" center={true} />
 					{:else}
 						<p class="text-2xl font-bold {reports.summary.netRevenue < 0 ? 'text-red-600' : 'text-brand-900'}">
-							{formatCurrency(reports.summary.netRevenue)}
+							{reports.summary.netRevenue < 0 ? '-' : ''}{formatCurrency(Math.abs(reports.summary.netRevenue))}
 						</p>
 						{#if reports.summary.netRevenue === 0 && reports.summary.grossRevenue === 0 && reports.summary.totalExpenses === 0}
 							<p class="text-xs text-gray-500 mt-1">Net revenue is zero because no revenue or expenses have been recorded yet.</p>
@@ -551,16 +551,20 @@
 					</div>
 					<div class="flex justify-between">
 						<span class="text-gray-600">Total Expenses (excluding Payroll)</span>
-						<span class="font-semibold text-red-600">-{formatCurrency(reports.summary.totalExpenses)}</span>
+						<span class="font-semibold {reports.summary.totalExpenses < 0 ? 'text-red-600' : 'text-brand-900'}">
+							{reports.summary.totalExpenses < 0 ? '-' : ''}{formatCurrency(Math.abs(reports.summary.totalExpenses))}
+						</span>
 					</div>
 					<div class="flex justify-between">
 						<span class="text-gray-600">Staff Salary (Payroll)</span>
-						<span class="font-semibold text-red-600">-{formatCurrency(reports.summary.totalPayroll)}</span>
+						<span class="font-semibold {reports.summary.totalPayroll < 0 ? 'text-red-600' : 'text-brand-900'}">
+							{reports.summary.totalPayroll < 0 ? '-' : ''}{formatCurrency(Math.abs(reports.summary.totalPayroll))}
+						</span>
 					</div>
 					<div class="flex justify-between border-t border-dashed border-gray-200 pt-2 mt-1">
 						<span class="text-gray-800 font-semibold">Net Revenue</span>
 						<span class="font-bold {reports.summary.netRevenue < 0 ? 'text-red-600' : 'text-emerald-600'}">
-							{formatCurrency(reports.summary.netRevenue)}
+							{reports.summary.netRevenue < 0 ? '-' : ''}{formatCurrency(Math.abs(reports.summary.netRevenue))}
 						</span>
 					</div>
 				</div>
@@ -572,7 +576,9 @@
 						{#each reports.expenseBreakdown as expCat}
 							<div class="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2 hover:border-red-200 hover:bg-red-50/50 transition-colors">
 								<span class="text-gray-700">{expCat.category}</span>
-								<span class="font-semibold text-red-600">-{formatCurrency(expCat.totalAmount)}</span>
+								<span class="font-semibold {expCat.totalAmount < 0 ? 'text-red-600' : 'text-brand-900'}">
+									{expCat.totalAmount < 0 ? '-' : ''}{formatCurrency(Math.abs(expCat.totalAmount))}
+								</span>
 							</div>
 						{/each}
 					</div>

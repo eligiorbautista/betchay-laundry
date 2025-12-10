@@ -12,9 +12,14 @@ if (!ADMIN_EMAIL) {
 }
 
 /**
+ * Dev account email that also has admin access
+ */
+export const DEV_EMAIL = env.PUBLIC_DEV_EMAIL;
+
+/**
  * Check if the current user is an admin
  * @param user - The current user object from Supabase
- * @returns boolean - true if user is admin, false otherwise
+ * @returns boolean - true if user is admin or dev account, false otherwise
  */
 export function isAdmin(user: User | null): boolean {
 	if (!user || !user.email || !ADMIN_EMAIL) {
@@ -23,8 +28,9 @@ export function isAdmin(user: User | null): boolean {
 	
 	const userEmail = user.email.toLowerCase().trim();
 	const adminEmail = ADMIN_EMAIL.toLowerCase().trim();
+	const devEmail = DEV_EMAIL.toLowerCase().trim();
 	
-	return userEmail === adminEmail;
+	return userEmail === adminEmail || userEmail === devEmail;
 }
 
 

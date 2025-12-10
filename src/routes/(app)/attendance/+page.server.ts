@@ -3,13 +3,23 @@ import type { Staff, StaffAttendance, StaffSalary } from '$lib/types/staff';
 import { createSupabaseServerClient } from '$lib/config/supabaseServer';
 import { fail } from '@sveltejs/kit';
 
+/**
+ * Get the current local date in YYYY-MM-DD format
+ * Uses local timezone instead of UTC
+ */
+function getLocalDateString(date: Date = new Date()): string {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	return `${year}-${month}-${day}`;
+}
+
 export const load: PageServerLoad = async (event) => {
 	const supabase = createSupabaseServerClient(event);
 
 	const url = new URL(event.request.url);
 	const dateParam = url.searchParams.get('date');
-	const today = new Date();
-	const defaultDate = today.toISOString().slice(0, 10);
+	const defaultDate = getLocalDateString();
 	const targetDate = dateParam || defaultDate;
 
 	try {
@@ -69,7 +79,7 @@ export const actions: Actions = {
 		const supabase = createSupabaseServerClient(event);
 		const formData = await event.request.formData();
 
-		const date = (formData.get('attendance_date') as string) || new Date().toISOString().slice(0, 10);
+		const date = (formData.get('attendance_date') as string) || getLocalDateString();
 		const staffIds = formData.getAll('staff_id') as string[];
 		const statuses = formData.getAll('status') as string[];
 
@@ -112,7 +122,7 @@ export const actions: Actions = {
 		const formData = await event.request.formData();
 
 		const staff_id = formData.get('staff_id') as string;
-		const salary_date = (formData.get('salary_date') as string) || new Date().toISOString().slice(0, 10);
+		const salary_date = (formData.get('salary_date') as string) || getLocalDateString();
 
 		if (!staff_id) {
 			return fail(400, { error: 'Missing staff id' });
@@ -209,7 +219,7 @@ export const actions: Actions = {
 		const formData = await event.request.formData();
 
 		const staff_id = formData.get('staff_id') as string;
-		const salary_date = (formData.get('salary_date') as string) || new Date().toISOString().slice(0, 10);
+		const salary_date = (formData.get('salary_date') as string) || getLocalDateString();
 
 		if (!staff_id) {
 			return fail(400, { error: 'Missing staff id' });

@@ -12,7 +12,8 @@
 		LogOut,
 		Lock,
 		Unlock,
-		Activity
+		Activity,
+		Wallet
 	} from 'lucide-svelte';
 	import { APP_NAME } from '$lib/utils/constants';
 	import { createEventDispatcher } from 'svelte';
@@ -31,6 +32,24 @@
 			label: 'Dashboard',
 			href: '/dashboard',
 			icon: LayoutDashboard,
+			adminOnly: true
+		},
+		{
+			label: 'Expenses',
+			href: '/expenses',
+			icon: Wallet,
+			adminOnly: false
+		},
+		{
+			label: 'Staff',
+			href: '/staff',
+			icon: Users,
+			adminOnly: true
+		},
+		{
+			label: 'Attendance',
+			href: '/attendance',
+			icon: ClipboardList,
 			adminOnly: true
 		},
 		{
